@@ -1,20 +1,18 @@
+import re
 from typing import Optional, Union
 
 from fastapi import Depends, Request
-from fastapi_users import (
-    BaseUserManager, FastAPIUsers, IntegerIDMixin, InvalidPasswordException
-)
-from fastapi_users.authentication import (
-    AuthenticationBackend, BearerTransport, JWTStrategy
-)
+from fastapi_users import (BaseUserManager, FastAPIUsers, IntegerIDMixin,
+                           InvalidPasswordException)
+from fastapi_users.authentication import (AuthenticationBackend,
+                                          BearerTransport, JWTStrategy)
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import settings
-from src.db import get_async_session
-from src.models.users import UserModel
-from src.schemas.users import UserCreate
-import re
+from backend.src.config import settings
+from backend.src.db import get_async_session
+from backend.src.models.users import UserModel
+from backend.src.schemas.users import UserCreate
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
