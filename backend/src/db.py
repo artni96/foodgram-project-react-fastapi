@@ -15,7 +15,7 @@ class PreBase:
 
     @declared_attr
     def __tablename__(cls):
-        return cls.__name__.split('model')[0].lower()
+        return cls.__name__.lower().split('model')[0]
     id: Mapped[int] = mapped_column(primary_key=True)
 
 

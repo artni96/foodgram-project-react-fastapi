@@ -1,3 +1,3 @@
-test_str = 'usermodel'
+test_str = 'UserModel'
 
-print(test_str.split('model')[0])
+print(test_str.split('Model')[0])

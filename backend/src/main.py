@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from backend.src.api.routers.users import user_router
+from backend.src.api.routers.users import user_router # noqa
 
 
 app = FastAPI()
