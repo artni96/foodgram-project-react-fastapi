@@ -1,12 +1,13 @@
-from sqlalchemy import insert, select
+from http import HTTPStatus
+
 from fastapi import HTTPException
+from sqlalchemy import insert, select
+from sqlalchemy.exc import IntegrityError
 
 from backend.src.models.users import SubscriptionModel, UserModel
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.users import (BaseUserRead, SubscriptionCreate,
-                                       SubscriptionResponse)
-from sqlalchemy.exc import IntegrityError
-from http import HTTPStatus
+from backend.src.schemas.subscriptions import SubscriptionCreate
+from backend.src.schemas.users import BaseUserRead
 
 
 class SubscriptionRepository(BaseRepository):

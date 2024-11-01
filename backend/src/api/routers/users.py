@@ -1,12 +1,14 @@
 from fastapi import APIRouter, status
-from passlib.context import CryptContext
 from sqlalchemy import select
 
 from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.db import async_session_maker
 from backend.src.models.users import UserModel
-from backend.src.schemas.users import (BaseUserRead,
-                                       UserCreate, UserCreateRequest)
+from backend.src.repositories.utils.users import PasswordManager
+from backend.src.schemas.users import (BaseUserRead, UserCreate,
+                                       UserCreateRequest,
+                                       UserPasswordChangeRequest,
+                                       UserPasswordUpdate)
 from backend.src.services.users import auth_backend, fastapi_users
 
 
@@ -19,7 +21,11 @@ user_router.include_router(
 )
 
 
-@user_router.get('/')
+@user_router.get(
+    '/',
+    status_code=status.HTTP_200_OK,
+    summary='Список пользователей',
+)
 async def get_user_list():
 
     async with async_session_maker() as session:
@@ -71,8 +77,7 @@ async def create_new_user(
     db: DBDep,
     user_data: UserCreateRequest
 ):
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    hashed_password = pwd_context.hash(user_data.password)
+    hashed_password = PasswordManager().hash_password(user_data.password)
     _user_data = UserCreate(
         username=user_data.username,
         email=user_data.email,
@@ -83,3 +88,26 @@ async def create_new_user(
     new_user = await db.users.create(data=_user_data)
     await db.commit()
     return new_user
+
+
+@user_router.post(
+    '/set_password',
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def change_password(
+    db: DBDep,
+    password_data: UserPasswordUpdate,
+    current_user: UserDep
+):
+    user = await db.users.get_user_hashed_password(current_user.id)
+    if PasswordManager().verify_password(user.hashed_password, password_data.current_password):
+        new_hashed_password = ph.hash(password_data.new_password)
+        password_updated_data = UserPasswordChangeRequest(
+            hashed_password=new_hashed_password
+        )
+        await db.users.update(
+            id=current_user.id,
+            data=password_updated_data,
+            exclude_unset=True
+        )
+        await db.commit()

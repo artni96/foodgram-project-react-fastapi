@@ -1,9 +1,9 @@
-from sqlalchemy import insert, select, delete
+from fastapi import HTTPException, status
 from pydantic import BaseModel
-from backend.src.db import engine
-from fastapi import HTTPException
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import NoResultFound
-from fastapi import status
+
+from backend.src.db import engine
 
 
 class BaseRepository:
@@ -51,3 +51,20 @@ class BaseRepository:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Не удалось отписаться от пользователя'
             )
+
+    async def update(
+        self,
+        data: BaseModel,
+        exclude_unset: bool = False,
+        **filter_by
+    ):
+        stmt = (
+            update(self.model)
+            .filter_by(**filter_by)
+            .values(**data.model_dump(exclude_unset=exclude_unset))
+            .returning(self.model)
+        )
+        result = await self.session.execute(stmt)
+        result = result.scalars().one_or_none()
+        if result:
+            return self.schema.model_validate(result, from_attributes=True)

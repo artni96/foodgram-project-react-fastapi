@@ -1,5 +1,5 @@
-from pydantic import BaseModel, ConfigDict, model_validator
 from fastapi import HTTPException, status
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class SubscriptionCreate(BaseModel):

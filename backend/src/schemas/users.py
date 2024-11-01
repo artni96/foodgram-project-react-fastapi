@@ -1,8 +1,7 @@
 from fastapi_users import schemas
 from fastapi_users.schemas import model_dump
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from fastapi import HTTPException
-from http import HTTPStatus
 
 
 class CreateUpdateDictModel(BaseModel):
@@ -66,20 +65,21 @@ class UserUpdate(schemas.BaseUserUpdate):
     last_name: str | None = Field(default=None, max_length=128)
 
 
-class SubscriptionCreate(BaseModel):
-    author_id: int
-    subscriber_id: int
-
-    model_config = ConfigDict(from_attributes=True)
+class UserPasswordUpdate(BaseModel):
+    current_password: str = Field(max_length=150)
+    new_password: str = Field(max_length=150)
 
     @model_validator(mode='after')
-    def check_author_isnt_subscriber(self):
-        if self.author_id == self.subscriber_id:
+    def check_passwords(self):
+        if self.current_password == self.new_password:
             raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST,
-                detail='Пользователь не может подписаться на себя!'
-            )
+                status_code=400,
+                detail='Новый пароль должен отличаться от текущего!')
 
 
-class SubscriptionResponse(SubscriptionCreate):
-    id: int
+class UserWithHashedPasswordRead(BaseUserRead):
+    hashed_password: str
+
+
+class UserPasswordChangeRequest(BaseModel):
+    hashed_password: str

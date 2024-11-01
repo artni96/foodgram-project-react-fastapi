@@ -5,7 +5,8 @@ from sqlalchemy import select
 
 from backend.src.models.users import SubscriptionModel, UserModel
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.users import ExpendedUserRead
+from backend.src.schemas.users import (ExpendedUserRead,
+                                       UserWithHashedPasswordRead)
 
 
 class UserRepository(BaseRepository):
@@ -46,3 +47,18 @@ class UserRepository(BaseRepository):
             status_code=HTTPStatus.NOT_FOUND,
             detail='Пользователь не найден.'
         )
+
+    async def get_user_hashed_password(self, user_id):
+        hashed_password_stmt = (
+            select(
+                self.model)
+            .select_from(self.model)
+            .filter_by(id=user_id)
+        )
+        result = await self.session.execute(hashed_password_stmt)
+        result = result.scalars().one_or_none()
+        if result:
+            return UserWithHashedPasswordRead.model_validate(
+                result,
+                from_attributes=True
+            )
