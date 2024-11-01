@@ -43,7 +43,8 @@ async def get_user_list():
 
 @user_router.get(
     '/me',
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    summary='Текущий пользователь'
 )
 async def get_current_user(
     db: DBDep,
@@ -56,7 +57,8 @@ async def get_current_user(
 
 @user_router.get(
     '/{id}',
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    summary='Профиль пользователя'
 )
 async def get_user_by_id(
     db: DBDep,
@@ -71,7 +73,8 @@ async def get_user_by_id(
 
 @user_router.post(
     '/',
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    summary='Регистрация пользователя'
 )
 async def create_new_user(
     db: DBDep,
@@ -92,7 +95,8 @@ async def create_new_user(
 
 @user_router.post(
     '/set_password',
-    status_code=status.HTTP_204_NO_CONTENT
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Изменение пароля'
 )
 async def change_password(
     db: DBDep,
@@ -111,3 +115,23 @@ async def change_password(
             exclude_unset=True
         )
         await db.commit()
+
+route_desired_content = [
+    [
+        "auth:jwt.login",
+        "User login to get access to to protected endpoints",
+        "Получить токен авторизации"
+    ],
+    [
+        "auth:jwt.logout",
+        "User logout",
+        "Удаление токена"
+    ]
+]
+
+for x in range(0, len(route_desired_content)):
+    route_name = user_router.routes[x].name
+    for z in route_desired_content:
+        if route_name == z[0]:
+            user_router.routes[x].description = z[1]
+            user_router.routes[x].name = z[2]

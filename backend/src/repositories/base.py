@@ -13,6 +13,16 @@ class BaseRepository:
     def __init__(self, session):
         self.session = session
 
+    async def get_filtered(self, **filter_by):
+        stmt = select(self.model).filter_by(**filter_by)
+        result = await self.session.execute(stmt)
+        result = result.scalars().all()
+        if result:
+            return [
+                self.schema.model_validate(obj, from_attributes=True)
+                for obj in result
+            ]
+
     async def get_one_or_none(self, **filter_by):
         stmt = select(self.model)
         stmt = stmt.filter_by(**filter_by)
