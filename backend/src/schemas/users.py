@@ -1,8 +1,8 @@
-from typing import Generic
-
-from fastapi_users import models, schemas
-from fastapi_users.schemas import PYDANTIC_V2, model_dump
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from fastapi_users import schemas
+from fastapi_users.schemas import model_dump
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
+from fastapi import HTTPException
+from http import HTTPStatus
 
 
 class CreateUpdateDictModel(BaseModel):
@@ -25,29 +25,20 @@ class BaseUserCreate(CreateUpdateDictModel):
     password: str
 
 
-class UserCreate(BaseUserCreate):
-    email: EmailStr = Field(default='artni@ya.ru')
-    password: str = Field(default='12345qwerty')
-    username: str = Field(max_length=32, default='artni')
-    first_name: str | None = Field(default=None, max_length=32)
-    last_name: str | None = Field(default=None, max_length=32)
+class UserCreateRequest(BaseModel):
+    email: EmailStr = Field(default='artni@ya.ru', max_length=254)
+    password: str = Field(default='12345qwerty', max_length=150)
+    username: str = Field(default='artni', max_length=150)
+    first_name: str | None = Field(default=None, max_length=150)
+    last_name: str | None = Field(default=None, max_length=150)
 
 
-class BaseUser(CreateUpdateDictModel, Generic[models.ID]):
-    """Base User model."""
-
-    id: models.ID
-    email: EmailStr
-    is_active: bool = True
-    is_superuser: bool = False
-    is_verified: bool = False
-
-    if PYDANTIC_V2:  # pragma: no cover
-        model_config = ConfigDict(from_attributes=True)  # type: ignore
-    else:  # pragma: no cover
-
-        class Config:
-            orm_mode = True
+class UserCreate(BaseModel):
+    email: EmailStr = Field(max_length=254)
+    hashed_password: str
+    username: str = Field(max_length=150)
+    first_name: str | None = Field(max_length=150)
+    last_name: str | None = Field(max_length=150)
 
 
 class UserRead(schemas.BaseUser[int]):
@@ -63,7 +54,10 @@ class BaseUserRead(BaseModel):
     username: str = Field(max_length=32)
     first_name: str | None = Field(default=None, max_length=32)
     last_name: str | None = Field(default=None, max_length=32)
-    # is_subscribed: bool | None = False
+
+
+class ExpendedUserRead(BaseUserRead):
+    is_subscribed: bool = False
 
 
 class UserUpdate(schemas.BaseUserUpdate):
@@ -77,3 +71,15 @@ class SubscriptionCreate(BaseModel):
     subscriber_id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='after')
+    def check_author_isnt_subscriber(self):
+        if self.author_id == self.subscriber_id:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='Пользователь не может подписаться на себя!'
+            )
+
+
+class SubscriptionResponse(SubscriptionCreate):
+    id: int

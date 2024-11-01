@@ -19,7 +19,7 @@ async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, UserModel)
 
 
-bearer_transport = BearerTransport(tokenUrl='auth/jwt/login')
+bearer_transport = BearerTransport(tokenUrl='api/users/token/login')
 
 
 def get_jwt_strategy() -> JWTStrategy:
@@ -40,7 +40,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[UserModel, int]):
         password: str,
         user: Union[UserCreate, UserModel],
     ) -> None:
-        if len(password) < 6:
+        if len(password) < 8:
             raise InvalidPasswordException(
                 reason='Password should be at least 3 characters'
             )

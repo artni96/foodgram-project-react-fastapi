@@ -16,6 +16,8 @@ fastapi-users = "^13.0.0"
 fastapi-users-db-sqlalchemy = "^6.0.1"
 asyncpg = "^0.30.0"
 black = "^24.10.0"
+pyjwt = "2.8.0"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 
 
 [build-system]

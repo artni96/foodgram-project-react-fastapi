@@ -12,4 +12,4 @@ async def get_db():
         yield db
 
 UserDep = Annotated[UserModel, Depends(current_user)]
-DPDep = Annotated[DBManager, Depends(get_db)]
+DBDep = Annotated[DBManager, Depends(get_db)]
