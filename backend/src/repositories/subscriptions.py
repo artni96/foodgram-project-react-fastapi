@@ -1,15 +1,16 @@
 from http import HTTPStatus
 
 from fastapi import HTTPException
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, func
 from sqlalchemy.orm import load_only
 from sqlalchemy.exc import IntegrityError
 
 from backend.src.models.users import SubscriptionModel, UserModel
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.subscriptions import SubscriptionCreate
+from backend.src.schemas.subscriptions import SubscriptionCreate, SubscriptionRead
 from backend.src.schemas.users import BaseUserRead
 from backend.src.db import engine
+from backend.src.repositories.utils.subscriptions import subs_url_paginator
 
 
 class SubscriptionRepository(BaseRepository):
@@ -17,26 +18,57 @@ class SubscriptionRepository(BaseRepository):
     model = SubscriptionModel
     schema = BaseUserRead
 
-    async def get_user_subscriptions_ids(self, user_id):
+    async def get_user_subs(
+        self,
+        user_id: int,
+        offset: int,
+        limit: int
+    ):
         author_ids = (
             select(self.model.author_id)
             .filter_by(subscriber_id=user_id)
             .subquery('author_ids'))
-        user_subscriptions_stmt = (
+        user_subs_count_stmt = (
+            select(
+                func.count('*').label('subs_count')
+            )
+            .select_from(self.model)
+            .filter_by(subscriber_id=user_id)
+            .group_by(self.model.subscriber_id)
+        )
+        user_subs_count = await self.session.execute(user_subs_count_stmt)
+        user_subs_count = user_subs_count.scalars().one()
+        user_subs_stmt = (
             select(
                 UserModel.id,
                 UserModel.email,
                 UserModel.username,
                 UserModel.first_name,
-                UserModel.last_name
+                UserModel.last_name,
             )
             .filter(UserModel.id.in_(author_ids))
+            .limit(limit)
             )
-        result = await self.session.execute(user_subscriptions_stmt)
-        return [
-            BaseUserRead.model_validate(obj, from_attributes=True)
-            for obj in result
-        ]
+        if offset:
+            user_subs_stmt = user_subs_stmt.offset(offset)
+        user_subs_result = await self.session.execute(user_subs_stmt)
+        user_subs_result = user_subs_result.mappings().all()
+        paginator_values = await subs_url_paginator(
+            limit=limit,
+            page=offset,
+            count=user_subs_count
+        )
+        response = SubscriptionRead(
+            count=user_subs_count,
+            next=paginator_values['next'],
+            previous=paginator_values['previous'],
+            result=user_subs_result
+        )
+        return response
+        # return [
+        #     BaseUserRead.model_validate(obj, from_attributes=True)
+        #     for obj in result
+        # ]
 
     async def create(self, data: SubscriptionCreate):
         try:

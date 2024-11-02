@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path, status
+from fastapi import APIRouter, Path, status, Query
 
 from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.schemas.users import BaseUserRead
@@ -14,10 +14,24 @@ subscription_router = APIRouter(tags=['Подписки'])
 )
 async def get_my_subscriptions(
     db: DBDep,
-    current_user: UserDep
+    current_user: UserDep,
+    page: int | None = Query(
+        default=None,
+        title='Номер страницы'
+    ),
+    limit: int | None = Query(
+        default=3,
+        title='Количество объектов на странице'
+    )
 ):
-    user_subs = await db.subscriptions.get_user_subscriptions_ids(
-        user_id=current_user.id
+    if page:
+        offset = (page - 1) * limit
+    else:
+        offset = None
+    user_subs = await db.subscriptions.get_user_subs(
+        user_id=current_user.id,
+        limit=limit,
+        offset=offset
     )
     return user_subs
 

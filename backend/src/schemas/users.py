@@ -1,6 +1,6 @@
 from fastapi_users import schemas
 from fastapi_users.schemas import model_dump
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 from fastapi import HTTPException
 
 

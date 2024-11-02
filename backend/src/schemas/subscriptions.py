@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from pydantic import BaseModel, ConfigDict, model_validator
+from backend.src.schemas.users import BaseUserRead
 
 
 class SubscriptionCreate(BaseModel):
@@ -17,5 +18,8 @@ class SubscriptionCreate(BaseModel):
             )
 
 
-class SubscriptionResponse(SubscriptionCreate):
-    id: int
+class SubscriptionRead(BaseModel):
+    count: int
+    next: str | None = 'test123'
+    previous: str | None = 'test123'
+    result: list[BaseUserRead] = []
