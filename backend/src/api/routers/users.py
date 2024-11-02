@@ -5,12 +5,10 @@ from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.db import async_session_maker
 from backend.src.models.users import UserModel
 from backend.src.repositories.utils.users import PasswordManager
-from backend.src.schemas.users import (BaseUserRead, UserCreate,
-                                       UserCreateRequest,
+from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
-                                       UserPasswordUpdate)
+                                       UserPasswordUpdate, UserRead)
 from backend.src.services.users import auth_backend, fastapi_users
-
 
 user_router = APIRouter(prefix='/api/users', tags=['Пользователи',])
 
@@ -37,7 +35,7 @@ async def get_user_list():
             UserModel.last_name
         )
         result = await session.execute(query)
-        return [BaseUserRead.model_validate(obj, from_attributes=True)
+        return [UserRead.model_validate(obj, from_attributes=True)
                 for obj in result.mappings().all()]
 
 
@@ -104,8 +102,13 @@ async def change_password(
     current_user: UserDep
 ):
     user = await db.users.get_user_hashed_password(current_user.id)
-    if PasswordManager().verify_password(user.hashed_password, password_data.current_password):
-        new_hashed_password = ph.hash(password_data.new_password)
+    if PasswordManager().verify_password(
+        user.hashed_password,
+        password_data.current_password
+    ):
+        new_hashed_password = PasswordManager().hash_password(
+            password_data.new_password
+        )
         password_updated_data = UserPasswordChangeRequest(
             hashed_password=new_hashed_password
         )

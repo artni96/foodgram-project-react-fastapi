@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Path, status, Query
 
 from backend.src.api.dependencies import DBDep, UserDep
-from backend.src.schemas.users import BaseUserRead
+from backend.src.schemas.users import UserRead
 from backend.src.schemas.subscriptions import SubscriptionCreate
 
 subscription_router = APIRouter(tags=['Подписки'])
@@ -45,7 +45,7 @@ async def subsrtibe(
     db: DBDep,
     current_user: UserDep,
     user_id: int = Path()
-) -> BaseUserRead:
+) -> UserRead:
     data = SubscriptionCreate(author_id=user_id, subscriber_id=current_user.id)
     subscription = await db.subscriptions.create(data)
     await db.commit()

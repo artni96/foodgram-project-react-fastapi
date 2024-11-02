@@ -1,22 +1,21 @@
 from http import HTTPStatus
 
 from fastapi import HTTPException
-from sqlalchemy import insert, select, func
-from sqlalchemy.orm import load_only
+from sqlalchemy import func, insert, select
 from sqlalchemy.exc import IntegrityError
 
 from backend.src.models.users import SubscriptionModel, UserModel
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.subscriptions import SubscriptionCreate, SubscriptionRead
-from backend.src.schemas.users import BaseUserRead
-from backend.src.db import engine
 from backend.src.repositories.utils.subscriptions import subs_url_paginator
+from backend.src.schemas.subscriptions import (SubscriptionCreate,
+                                               SubscriptionRead)
+from backend.src.schemas.users import FollowedUserRead
 
 
 class SubscriptionRepository(BaseRepository):
 
     model = SubscriptionModel
-    schema = BaseUserRead
+    schema = FollowedUserRead
 
     async def get_user_subs(
         self,
@@ -65,10 +64,6 @@ class SubscriptionRepository(BaseRepository):
             result=user_subs_result
         )
         return response
-        # return [
-        #     BaseUserRead.model_validate(obj, from_attributes=True)
-        #     for obj in result
-        # ]
 
     async def create(self, data: SubscriptionCreate):
         try:
