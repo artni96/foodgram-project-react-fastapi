@@ -17,8 +17,6 @@ async def users_url_paginator(page, limit, count):
     next, previous = None, None
     if not page:
         page = 1
-    else:
-        page += 1
     if page * limit < count:
         next = url + f'?page={page+1}&limit={limit}'
     if page != 1:

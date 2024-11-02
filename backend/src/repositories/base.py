@@ -23,6 +23,9 @@ class BaseRepository:
                 for obj in result
             ]
 
+    async def get_all(self, *args, **kwargs):
+        return await self.get_filtered()
+
     async def get_one_or_none(self, **filter_by):
         stmt = select(self.model)
         stmt = stmt.filter_by(**filter_by)

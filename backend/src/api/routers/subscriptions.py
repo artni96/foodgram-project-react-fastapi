@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Path, status, Query
+from fastapi import APIRouter, Path, Query, status
 
+from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
-from backend.src.schemas.users import UserRead
 from backend.src.schemas.subscriptions import SubscriptionCreate
+from backend.src.schemas.users import UserRead
 
 subscription_router = APIRouter(tags=['Подписки'])
 
@@ -20,10 +21,12 @@ async def get_my_subscriptions(
         title='Номер страницы'
     ),
     limit: int | None = Query(
-        default=3,
+        default=None,
         title='Количество объектов на странице'
     )
 ):
+    if not limit:
+        limit = constants.PAGINATION_LIMIT
     if page:
         offset = (page - 1) * limit
     else:
@@ -31,7 +34,8 @@ async def get_my_subscriptions(
     user_subs = await db.subscriptions.get_user_subs(
         user_id=current_user.id,
         limit=limit,
-        offset=offset
+        offset=offset,
+        page=page
     )
     return user_subs
 

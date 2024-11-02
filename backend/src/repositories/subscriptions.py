@@ -4,11 +4,12 @@ from fastapi import HTTPException
 from sqlalchemy import func, insert, select
 from sqlalchemy.exc import IntegrityError
 
-from backend.src.models.users import SubscriptionModel, UserModel
+from backend.src.models.subscriptions import SubscriptionModel
+from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.repositories.utils.subscriptions import subs_url_paginator
 from backend.src.schemas.subscriptions import (SubscriptionCreate,
-                                               SubscriptionRead)
+                                               SubscriptionListRead)
 from backend.src.schemas.users import FollowedUserRead
 
 
@@ -21,7 +22,8 @@ class SubscriptionRepository(BaseRepository):
         self,
         user_id: int,
         offset: int,
-        limit: int
+        limit: int,
+        page: int
     ):
         author_ids = (
             select(self.model.author_id)
@@ -54,10 +56,10 @@ class SubscriptionRepository(BaseRepository):
         user_subs_result = user_subs_result.mappings().all()
         paginator_values = await subs_url_paginator(
             limit=limit,
-            page=offset,
+            page=page,
             count=user_subs_count
         )
-        response = SubscriptionRead(
+        response = SubscriptionListRead(
             count=user_subs_count,
             next=paginator_values['next'],
             previous=paginator_values['previous'],

@@ -1,14 +1,13 @@
 from fastapi import APIRouter, status
-from sqlalchemy import select
 
 from backend.src.api.dependencies import DBDep, UserDep
-from backend.src.db import async_session_maker
-from backend.src.models.users import UserModel
 from backend.src.repositories.utils.users import PasswordManager
 from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
-                                       UserPasswordUpdate, UserRead)
+                                       UserPasswordUpdate)
+from fastapi import Query
 from backend.src.services.users import auth_backend, fastapi_users
+from backend.src import constants
 
 user_router = APIRouter(prefix='/api/users', tags=['Пользователи',])
 
@@ -24,19 +23,28 @@ user_router.include_router(
     status_code=status.HTTP_200_OK,
     summary='Список пользователей',
 )
-async def get_user_list():
-
-    async with async_session_maker() as session:
-        query = select(
-            UserModel.id,
-            UserModel.username,
-            UserModel.email,
-            UserModel.first_name,
-            UserModel.last_name
-        )
-        result = await session.execute(query)
-        return [UserRead.model_validate(obj, from_attributes=True)
-                for obj in result.mappings().all()]
+async def get_user_list(
+    db: DBDep,
+    current_user: UserDep,
+    page: int | None = Query(default=None, title='Номер страницы'),
+    limit: int | None = Query(
+        default=None,
+        title='Количество объектов на странице'
+    )
+):
+    if not limit:
+        limit = constants.PAGINATION_LIMIT
+    if page:
+        offset = (page - 1) * limit
+    else:
+        offset = None
+    result = await db.users.get_all(
+        user_id=current_user.id,
+        limit=limit,
+        offset=offset,
+        page=page
+    )
+    return result
 
 
 @user_router.get(

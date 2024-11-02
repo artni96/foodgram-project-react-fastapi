@@ -1,7 +1,6 @@
-from fastapi_users import schemas
-from fastapi_users.schemas import model_dump
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 from fastapi import HTTPException
+from fastapi_users import schemas
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
 class UserCreateRequest(BaseModel):
@@ -60,3 +59,14 @@ class UserPasswordChangeRequest(BaseModel):
 
 class FollowedUserRead(UserRead):
     is_subscribed: bool = True
+
+
+class FollowedUserWithRecipiesRead(FollowedUserRead):
+    recipies: str | None = None
+
+
+class UserListRead(BaseModel):
+    count: int
+    next: str | None = 'test123'
+    previous: str | None = 'test123'
+    result: list[FollowedUserRead] = []
