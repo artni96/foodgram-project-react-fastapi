@@ -1,7 +1,5 @@
-from fastapi import HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.exc import NoResultFound
 
 from backend.src.db import engine
 
@@ -50,20 +48,8 @@ class BaseRepository:
             result.scalars().one(), from_attributes=True)
 
     async def delete(self, **filter_by):
-        try:
-            stmt = delete(self.model).filter_by().returning(self.model)
-            result = await self.session.execute(stmt)
-            result = result.scalars().one()
-        except NoResultFound:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Пользователь не найден.'
-            )
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Не удалось отписаться от пользователя'
-            )
+        stmt = delete(self.model).filter_by(**filter_by)
+        await self.session.execute(stmt)
 
     async def update(
         self,

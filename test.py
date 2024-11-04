@@ -1,3 +1,8 @@
-test_str = 'UserModel'
+import re
 
-print(test_str.split('Model')[0])
+test_string = 'test123_фывф'
+
+pattern = '^[-a-zA-Z0-9_]+$'
+
+if re.fullmatch(pattern=pattern, string=test_string):
+    print(True)

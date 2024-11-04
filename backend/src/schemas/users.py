@@ -1,45 +1,43 @@
 from fastapi import HTTPException
-from fastapi_users import schemas
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
+from backend.src.constants import USER_PARAMS_MAX_LENGTH
 
-class UserCreateRequest(BaseModel):
+
+class BaseUser(BaseModel):
     email: EmailStr = Field(default='artni@ya.ru', max_length=254)
-    password: str = Field(default='12345qwerty', max_length=150)
-    username: str = Field(default='artni', max_length=150)
-    first_name: str | None = Field(default=None, max_length=150)
-    last_name: str | None = Field(default=None, max_length=150)
+    username: str = Field(
+        default='artni',
+        max_length=USER_PARAMS_MAX_LENGTH
+    )
+    first_name: str | None = Field(
+        default=None,
+        max_length=USER_PARAMS_MAX_LENGTH
+    )
+    last_name: str | None = Field(
+        default=None,
+        max_length=USER_PARAMS_MAX_LENGTH
+    )
 
 
-class UserCreate(BaseModel):
-    email: EmailStr = Field(max_length=254)
+class UserCreateRequest(BaseUser):
+    password: str = Field(
+        default='12345qwerty',
+        max_length=USER_PARAMS_MAX_LENGTH
+    )
+
+
+class UserCreate(BaseUser):
     hashed_password: str
-    username: str = Field(max_length=150)
-    first_name: str | None = Field(max_length=150)
-    last_name: str | None = Field(max_length=150)
 
 
-class UserRead(BaseModel):
+class UserRead(BaseUser):
     id: int
-    email: EmailStr
-    username: str = Field(max_length=32)
-    first_name: str | None = Field(default=None, max_length=32)
-    last_name: str | None = Field(default=None, max_length=32)
-
-
-class ExpendedUserRead(UserRead):
-    is_subscribed: bool = False
-
-
-class UserUpdate(schemas.BaseUserUpdate):
-    username: str = Field(max_length=64)
-    first_name: str | None = Field(default=None, max_length=64)
-    last_name: str | None = Field(default=None, max_length=128)
 
 
 class UserPasswordUpdate(BaseModel):
-    current_password: str = Field(max_length=150)
-    new_password: str = Field(max_length=150)
+    current_password: str = Field(max_length=USER_PARAMS_MAX_LENGTH)
+    new_password: str = Field(max_length=USER_PARAMS_MAX_LENGTH)
 
     @model_validator(mode='after')
     def check_passwords(self):
@@ -67,6 +65,6 @@ class FollowedUserWithRecipiesRead(FollowedUserRead):
 
 class UserListRead(BaseModel):
     count: int
-    next: str | None = 'test123'
-    previous: str | None = 'test123'
+    next: str | None = None
+    previous: str | None = None
     result: list[FollowedUserRead] = []

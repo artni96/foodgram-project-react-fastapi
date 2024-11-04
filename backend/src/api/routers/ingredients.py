@@ -7,7 +7,8 @@ router = APIRouter(prefix='/api/ingredients', tags=['Ингредиенты'])
 
 @router.get(
     '/{id}',
-    summary='Уникальный идентификатор этого ингредиента.',
+    summary='Получение ингредиента',
+    description='Уникальный идентификатор этого ингредиента.',
     status_code=status.HTTP_200_OK
 )
 async def get_ingredient_by_id(
@@ -20,7 +21,8 @@ async def get_ingredient_by_id(
 
 @router.get(
     '/',
-    summary='Поиск по частичному вхождению в начале названия ингредиента.',
+    summary='Список ингредиентов',
+    description='Список ингредиентов с возможностью поиска по имени.',
     status_code=status.HTTP_200_OK
 )
 async def get_filtered_ingredients_by_name(

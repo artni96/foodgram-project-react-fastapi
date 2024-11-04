@@ -6,15 +6,14 @@ from sqlalchemy import func, select
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.users import (ExpendedUserRead, FollowedUserRead,
-                                       UserListRead,
-                                       UserWithHashedPasswordRead)
 from backend.src.repositories.utils.users import users_url_paginator
+from backend.src.schemas.users import (FollowedUserRead, UserListRead,
+                                       UserWithHashedPasswordRead)
 
 
 class UserRepository(BaseRepository):
     model = UserModel
-    schema = ExpendedUserRead
+    schema = FollowedUserRead
 
     async def get_all(
         self,
@@ -95,8 +94,8 @@ class UserRepository(BaseRepository):
                 if_subscribed_result = (
                     if_subscribed_result.scalars().one_or_none()
                 )
-                if if_subscribed_result:
-                    result.is_subscribed = True
+                if not if_subscribed_result:
+                    result.is_subscribed = False
                     return result
                 return result
             return result

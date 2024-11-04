@@ -1,8 +1,8 @@
 from http import HTTPStatus
 
-from fastapi import HTTPException
-from sqlalchemy import func, insert, select
-from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, status
+from sqlalchemy import delete, func, insert, select
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
@@ -31,14 +31,16 @@ class SubscriptionRepository(BaseRepository):
             .subquery('author_ids'))
         user_subs_count_stmt = (
             select(
-                func.count('*').label('subs_count')
+                func.coalesce(func.count('*').label('subs_count'), 0)
             )
             .select_from(self.model)
             .filter_by(subscriber_id=user_id)
             .group_by(self.model.subscriber_id)
         )
         user_subs_count = await self.session.execute(user_subs_count_stmt)
-        user_subs_count = user_subs_count.scalars().one()
+        user_subs_count = user_subs_count.scalars().one_or_none()
+        if not user_subs_count:
+            user_subs_count = 0
         user_subs_stmt = (
             select(
                 UserModel.id,
@@ -104,3 +106,19 @@ class SubscriptionRepository(BaseRepository):
                     status_code=HTTPStatus.BAD_REQUEST,
                     detail='Вы уже подписанны на данного пользователя!'
                 )
+
+    async def delete(self, **filter_by):
+        try:
+            stmt = delete(self.model).filter_by().returning(self.model)
+            result = await self.session.execute(stmt)
+            result = result.scalars().one()
+        except NoResultFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Пользователь не найден.'
+            )
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Не удалось отписаться от пользователя'
+            )
