@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Body, Depends, status
 
 from backend.src.api.dependencies import DBDep
+from backend.src.schemas.ingredients import IngredientCreate, IngredientRead
 from backend.src.schemas.tags import TagCreate, TagRead
 from backend.src.services.users import current_superuser
-from backend.src.schemas.ingredients import IngredientRead, IngredientCreate
+
 
 router = APIRouter(
     prefix='/api/only-for-admins',

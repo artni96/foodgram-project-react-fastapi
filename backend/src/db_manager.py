@@ -1,7 +1,8 @@
 from backend.src.repositories.ingredients import IngredientRepository
 from backend.src.repositories.subscriptions import SubscriptionRepository
-from backend.src.repositories.tags import TagRepository
+from backend.src.repositories.tags import TagRepository, RecipeTagRepository
 from backend.src.repositories.users import UserRepository
+from backend.src.repositories.recipes import RecipeRepository
 
 
 class DBManager:
@@ -14,6 +15,8 @@ class DBManager:
         self.subscriptions = SubscriptionRepository(self.session)
         self.ingredients = IngredientRepository(self.session)
         self.tags = TagRepository(self.session)
+        self.recipes = RecipeRepository(self.session)
+        self.recipe_tags = RecipeTagRepository(self.session)
         return self
 
     async def __aexit__(self, *args):

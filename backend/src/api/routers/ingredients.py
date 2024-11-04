@@ -2,6 +2,7 @@ from fastapi import APIRouter, status
 
 from backend.src.api.dependencies import DBDep
 
+
 router = APIRouter(prefix='/api/ingredients', tags=['Ингредиенты'])
 
 

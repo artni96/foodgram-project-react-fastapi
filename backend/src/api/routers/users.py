@@ -1,13 +1,13 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 
+from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.repositories.utils.users import PasswordManager
 from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
                                        UserPasswordUpdate)
-from fastapi import Query
 from backend.src.services.users import auth_backend, fastapi_users
-from backend.src import constants
+
 
 user_router = APIRouter(prefix='/api/users', tags=['Пользователи',])
 
@@ -64,7 +64,8 @@ async def get_current_user(
 @user_router.get(
     '/{id}',
     status_code=status.HTTP_200_OK,
-    summary='Профиль пользователя'
+    summary='Профиль пользователя',
+    description='Доступно всем пользователям.'
 )
 async def get_user_by_id(
     db: DBDep,
@@ -102,7 +103,8 @@ async def create_new_user(
 @user_router.post(
     '/set_password',
     status_code=status.HTTP_204_NO_CONTENT,
-    summary='Изменение пароля'
+    summary='Изменение пароля',
+    description='Изменение пароля текущего пользователя'
 )
 async def change_password(
     db: DBDep,
@@ -130,12 +132,13 @@ async def change_password(
 route_desired_content = [
     [
         "auth:jwt.login",
-        "User login to get access to to protected endpoints",
+        "Используется для авторизации по емейлу и паролю, чтобы далее "
+        "использовать токен при запросах",
         "Получить токен авторизации"
     ],
     [
         "auth:jwt.logout",
-        "User logout",
+        "Удаляет токен текущего пользователя",
         "Удаление токена"
     ]
 ]

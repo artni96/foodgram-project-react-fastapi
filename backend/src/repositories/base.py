@@ -47,6 +47,10 @@ class BaseRepository:
         return self.schema.model_validate(
             result.scalars().one(), from_attributes=True)
 
+    async def bulk_create(self, data: list[BaseModel]):
+        stmt = insert(self.model).values([obj.model_dump() for obj in data])
+        await self.session.execute(stmt)
+
     async def delete(self, **filter_by):
         stmt = delete(self.model).filter_by(**filter_by)
         await self.session.execute(stmt)

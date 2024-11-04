@@ -1,7 +1,7 @@
 import re
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from backend.src.constants import PARAMS_MAX_LENGTH
 
@@ -73,3 +73,10 @@ class TagCreate(BaseTag):
 
 class TagRead(BaseTag):
     id: int
+
+
+class RecipeTagCreate(BaseModel):
+    recipe_id: int
+    tag_id: int
+
+    model_config = ConfigDict(from_attributes=True)

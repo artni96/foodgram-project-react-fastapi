@@ -5,13 +5,18 @@ from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.schemas.subscriptions import SubscriptionCreate
 from backend.src.schemas.users import UserRead
 
+
 subscription_router = APIRouter(tags=['Подписки'])
 
 
 @subscription_router.get(
     '/subscriptions',
     status_code=status.HTTP_200_OK,
-    summary='Мои подписки'
+    summary='Мои подписки',
+    description=(
+        'Возвращает пользователей, на которых подписан текущий пользователь. '
+        'В выдачу добавляются рецепты.'
+    )
 )
 async def get_my_subscriptions(
     db: DBDep,
@@ -43,7 +48,8 @@ async def get_my_subscriptions(
 @subscription_router.post(
     '/{user_id}/subscribe',
     status_code=status.HTTP_201_CREATED,
-    summary='Подписаться на пользователя'
+    summary='Подписаться на пользователя',
+    description='Доступно только авторизованным пользователям'
 )
 async def subsrtibe(
     db: DBDep,
@@ -59,7 +65,8 @@ async def subsrtibe(
 @subscription_router.delete(
     '/{user_id}/subscribe',
     status_code=status.HTTP_204_NO_CONTENT,
-    summary='Отписаться от пользователя'
+    summary='Отписаться от пользователя',
+    description='Доступно только авторизованным пользователям'
 )
 async def unsubscribe(
     user_id: int,
