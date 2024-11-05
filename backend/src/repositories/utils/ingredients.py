@@ -38,11 +38,21 @@ if __name__ == '__main__':
 
 
 async def add_ingredients_to_recipe(ingredients_data, recipe_id, db):
-    ingredients_amount_list: list[IngredientAmountCreate] = list()
+    ingredients_amount_list_to_create: list[IngredientAmountCreate] = list()
+    existing_ingredients_amount_ids: list[int] = list()
     ingredients_amount_list_response: list[RecipeIngredientAmountRead] = list()
     for obj in ingredients_data:
-        ingredients_amount_list.append(IngredientAmountCreate(
-            ingredient_id=obj.id, amount=obj.amount))
+        current_ingredient_amount = (
+            await db.ingredients_amount.get_one_or_none(
+                ingredient_id=obj.id,
+                amount=obj.amount)
+        )
+        if current_ingredient_amount:
+            existing_ingredients_amount_ids.append(
+                current_ingredient_amount.id)
+        else:
+            ingredients_amount_list_to_create.append(IngredientAmountCreate(
+                ingredient_id=obj.id, amount=obj.amount))
         current_ingredient = await db.ingredients.get_one_or_none(id=obj.id)
         ingredients_amount_list_response.append(
             RecipeIngredientAmountRead(
@@ -51,10 +61,14 @@ async def add_ingredients_to_recipe(ingredients_data, recipe_id, db):
                 measurement_unit=current_ingredient.measurement_unit,
                 amount=obj.amount
             )
+         )
+    if ingredients_amount_list_to_create:
+        ingredients_amount_ids = await db.ingredients_amount.bulk_create(
+            ingredients_amount_list_to_create
         )
-    ingredients_amount_ids = await db.ingredient_amount.bulk_create(
-        ingredients_amount_list
-    )
+        ingredients_amount_ids += existing_ingredients_amount_ids
+    else:
+        ingredients_amount_ids = existing_ingredients_amount_ids
     print(ingredients_amount_ids)
     recipe_ingredients_amount_data = [
         RecipeIngredientAmountCreate(

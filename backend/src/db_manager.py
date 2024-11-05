@@ -19,7 +19,7 @@ class DBManager:
         self.tags = TagRepository(self.session)
         self.recipes = RecipeRepository(self.session)
         self.recipe_tags = RecipeTagRepository(self.session)
-        self.ingredient_amount = IngredientAmountRepository(self.session)
+        self.ingredients_amount = IngredientAmountRepository(self.session)
         self.recipe_ingredient_amount = RecipeIngredientAmountRepository(
             self.session
         )

@@ -4,6 +4,7 @@ from sqlalchemy import insert, select
 from backend.src.base import IngredientAmountModel, IngredientModel, RecipeIngredientModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.schemas.ingredients import (IngredientAmountRead,
+                                             IngredientAmountCreate,
                                              IngredientRead)
 
 

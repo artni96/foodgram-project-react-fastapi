@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.schemas.ingredients import (IngredientAmountCreate,
@@ -6,6 +6,7 @@ from backend.src.schemas.ingredients import (IngredientAmountCreate,
 from backend.src.schemas.recipes import RecipeCreate, RecipeCreateRequest
 from backend.src.schemas.tags import RecipeTagCreate
 from backend.src.repositories.utils.ingredients import add_ingredients_to_recipe
+from backend.src.services.users import optional_current_user
 
 router = APIRouter(prefix='/recipes', tags=['Рецепты',])
 
@@ -14,8 +15,9 @@ router = APIRouter(prefix='/recipes', tags=['Рецепты',])
 async def get_recipe(
     db: DBDep,
     id: int,
-    current_user: UserDep
+    current_user=Depends(optional_current_user)
 ):
+    print('Its working')
     result = await db.recipes.get_one_or_none(
         recipe_id=id,
         current_user_id=current_user.id,
@@ -42,13 +44,14 @@ async def create_recipe(
             recipe_id=recipe_id,
             db=db
         )
-    tags_data = recipe_data.tag
-    if tags_data:
-        recipe_tags = [RecipeTagCreate(
-            recipe_id=recipe_id, tag_id=tag_id)
-            for tag_id in tags_data
-        ]
-        tags_result = await db.recipe_tags.bulk_create(recipe_tags)
+    tags_data = recipe_data.tag 
+    # if tags_data:
+    #     # Вынести в отдельную функцию в utils
+    #     recipe_tags = [RecipeTagCreate(
+    #         recipe_id=recipe_id, tag_id=tag_id)
+    #         for tag_id in tags_data
+    #     ]
+    #     tags_result = await db.recipe_tags.bulk_create(recipe_tags)
     await db.commit()
 
     return {'status': 'OK'}
