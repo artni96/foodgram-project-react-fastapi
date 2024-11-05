@@ -69,7 +69,6 @@ async def add_ingredients_to_recipe(ingredients_data, recipe_id, db):
         ingredients_amount_ids += existing_ingredients_amount_ids
     else:
         ingredients_amount_ids = existing_ingredients_amount_ids
-    print(ingredients_amount_ids)
     recipe_ingredients_amount_data = [
         RecipeIngredientAmountCreate(
             recipe_id=recipe_id,
