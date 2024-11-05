@@ -1,8 +1,2 @@
-import re
-
-test_string = 'test123_фывф'
-
-pattern = '^[-a-zA-Z0-9_]+$'
-
-if re.fullmatch(pattern=pattern, string=test_string):
-    print(True)
+double = lambda x: x**2
+print(list(map(double, [14, 2])))

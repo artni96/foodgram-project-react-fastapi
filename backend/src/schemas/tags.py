@@ -11,6 +11,8 @@ class BaseTag(BaseModel):
     color: str = Field(max_length=7)
     slug: str = Field(max_length=PARAMS_MAX_LENGTH)
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class TagCreate(BaseTag):
 

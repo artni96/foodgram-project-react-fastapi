@@ -1,7 +1,10 @@
-from backend.src.base import IngredientModel
+from pydantic import BaseModel
+from sqlalchemy import insert, select
+
+from backend.src.base import IngredientAmountModel, IngredientModel, RecipeIngredientModel
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.ingredients import IngredientRead
-from sqlalchemy import select
+from backend.src.schemas.ingredients import (IngredientAmountRead,
+                                             IngredientRead)
 
 
 class IngredientRepository(BaseRepository):
@@ -24,3 +27,13 @@ class IngredientRepository(BaseRepository):
             self.schema.model_validate(obj, from_attributes=True)
             for obj in filtered_ingredients
         ]
+
+
+class IngredientAmountRepository(BaseRepository):
+    model = IngredientAmountModel
+    schema = IngredientAmountRead
+
+
+class RecipeIngredientAmountRepository(BaseRepository):
+    model = RecipeIngredientModel
+    # schema = 

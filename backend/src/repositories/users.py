@@ -80,6 +80,7 @@ class UserRepository(BaseRepository):
                 user_result,
                 from_attributes=True
             )
+            
             if current_user_id:
                 if_subscribed_stmt = (
                     select(SubscriptionModel)
@@ -98,6 +99,7 @@ class UserRepository(BaseRepository):
                     result.is_subscribed = False
                     return result
                 return result
+            result.is_subscribed = False
             return result
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,

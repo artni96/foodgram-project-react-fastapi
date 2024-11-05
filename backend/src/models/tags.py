@@ -29,5 +29,15 @@ class TagModel(Base):
 
 
 class RecipeTagModel(Base):
-    tag_id: Mapped[int] = mapped_column(ForeignKey('tag.id'))
-    recipe_id: Mapped[int] = mapped_column(ForeignKey('recipe.id'))
+    tag_id: Mapped[int] = mapped_column(ForeignKey(
+        'tag.id',
+        ondelete='cascade',
+        onupdate='cascade'
+        )
+    )
+    recipe_id: Mapped[int] = mapped_column(ForeignKey(
+        'recipe.id',
+        ondelete='cascade',
+        onupdate='cascade'
+        )
+    )

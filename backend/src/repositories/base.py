@@ -44,12 +44,19 @@ class BaseRepository:
             .returning(self.model)
         )
         result = await self.session.execute(new_obj_stmt)
+        result = result.scalars().one()
         return self.schema.model_validate(
-            result.scalars().one(), from_attributes=True)
+            result, from_attributes=True)
 
     async def bulk_create(self, data: list[BaseModel]):
-        stmt = insert(self.model).values([obj.model_dump() for obj in data])
-        await self.session.execute(stmt)
+        stmt = (
+            insert(self.model)
+            .values([obj.model_dump() for obj in data])
+            .returning(self.model.id)
+        )
+        result = await self.session.execute(stmt)
+        result = result.scalars().all()
+        return result
 
     async def delete(self, **filter_by):
         stmt = delete(self.model).filter_by(**filter_by)

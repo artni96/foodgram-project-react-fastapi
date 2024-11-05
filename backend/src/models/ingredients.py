@@ -15,11 +15,20 @@ class IngredientModel(Base):
     )
 
 
-# class IngredientAmountModel(Base):
-#     ingredient_id: int = ForeignKey('ingredient.id')
-#     amount: int = Integer()
+class IngredientAmountModel(Base):
+    ingredient_id: Mapped[int] = mapped_column(ForeignKey(
+        'ingredient.id', ondelete='cascade', onupdate='cascade'
+        )
+    )
+    amount: Mapped[int]
 
 
-# class RecipeIngredientModel(Base):
-#     ingredient_amount_id: int = ForeignKey('ingredientamount.id')
-#     recipe_id: int = ForeignKey('recipe.id')
+class RecipeIngredientModel(Base):
+    ingredient_amount_id: Mapped[int] = mapped_column(ForeignKey(
+        'ingredientamount.id', ondelete='cascade', onupdate='cascade'
+        )
+    )
+    recipe_id: Mapped[int] = mapped_column(ForeignKey(
+        'recipe.id', ondelete='cascade', onupdate='cascade'
+        )
+    )

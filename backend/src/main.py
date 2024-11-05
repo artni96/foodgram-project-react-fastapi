@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
+from starlette.middleware import Middleware
+from starlette.middleware.authentication import AuthenticationMiddleware
 
 import uvicorn
 from fastapi import FastAPI

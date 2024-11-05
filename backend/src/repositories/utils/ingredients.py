@@ -7,8 +7,11 @@ from sqlalchemy import insert
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent))
 
-from backend.src.base import IngredientModel # noqa
-from backend.src.db import session # noqa
+from backend.src.base import IngredientModel  # noqa
+from backend.src.db import session  # noqa
+from backend.src.schemas.ingredients import (IngredientAmountCreate,
+                                             RecipeIngredientAmountCreate,
+                                             RecipeIngredientAmountRead)
 
 
 def ingredietns_to_add():
@@ -32,3 +35,34 @@ def ingredietns_to_add():
 
 if __name__ == '__main__':
     ingredietns_to_add()
+
+
+async def add_ingredients_to_recipe(ingredients_data, recipe_id, db):
+    ingredients_amount_list: list[IngredientAmountCreate] = list()
+    ingredients_amount_list_response: list[RecipeIngredientAmountRead] = list()
+    for obj in ingredients_data:
+        ingredients_amount_list.append(IngredientAmountCreate(
+            ingredient_id=obj.id, amount=obj.amount))
+        current_ingredient = await db.ingredients.get_one_or_none(id=obj.id)
+        ingredients_amount_list_response.append(
+            RecipeIngredientAmountRead(
+                id=current_ingredient.id,
+                name=current_ingredient.name,
+                measurement_unit=current_ingredient.measurement_unit,
+                amount=obj.amount
+            )
+        )
+    ingredients_amount_ids = await db.ingredient_amount.bulk_create(
+        ingredients_amount_list
+    )
+    print(ingredients_amount_ids)
+    recipe_ingredients_amount_data = [
+        RecipeIngredientAmountCreate(
+            recipe_id=recipe_id,
+            ingredient_amount_id=_id)
+        for _id in ingredients_amount_ids
+    ]
+    await db.recipe_ingredient_amount.bulk_create(
+        recipe_ingredients_amount_data
+    )
+    return ingredients_amount_list_response

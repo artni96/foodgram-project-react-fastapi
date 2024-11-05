@@ -12,3 +12,29 @@ class IngredientCreate(BaseModel):
 
 class IngredientRead(IngredientCreate):
     id: int
+
+
+class IngredientAmountCreateRequest(BaseModel):
+    id: int
+    amount: int
+
+
+class IngredientAmountCreate(BaseModel):
+    ingredient_id: int
+    amount: int
+
+
+class IngredientAmountRead(IngredientAmountCreate):
+    id: int
+
+
+class RecipeIngredientAmountCreate(BaseModel):
+    recipe_id: int
+    ingredient_amount_id: int
+
+
+class RecipeIngredientAmountRead(BaseModel):
+    id: int
+    name: str
+    measurement_unit: str
+    amount: int
