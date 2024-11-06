@@ -80,7 +80,6 @@ class UserRepository(BaseRepository):
                 user_result,
                 from_attributes=True
             )
-            
             if current_user_id:
                 if_subscribed_stmt = (
                     select(SubscriptionModel)

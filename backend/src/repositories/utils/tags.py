@@ -2,7 +2,7 @@ from backend.src.models.tags import TagModel
 from backend.src.schemas.tags import RecipeTagCreate
 
 
-async def recipe_tags(tags_data, db, recipe_id):
+async def add_recipe_tags(tags_data, db, recipe_id):
     recipe_tags_to_create: list[RecipeTagCreate] = list()
     for tag in tags_data:
         recipe_tags_to_create.append(

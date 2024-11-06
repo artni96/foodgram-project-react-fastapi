@@ -7,10 +7,6 @@ from backend.src.constants import PARAMS_MAX_LENGTH
 
 
 class RecipeModel(Base):
-    # ingredient: Mapped[list[IngredientModel]] = relationship(
-    #     back_populates='ingredientamount',
-    #     secondary='recipeingredient'
-    # )
     author: Mapped[int] = mapped_column(
         ForeignKey('user.id', ondelete='cascade')
     )
@@ -21,6 +17,7 @@ class RecipeModel(Base):
     name: Mapped[str] = mapped_column(String(PARAMS_MAX_LENGTH))
     text: Mapped[str] = mapped_column(Text)
     cooking_time: Mapped[int]
+    image: Mapped[str | None] = mapped_column(default=None, unique=True)
 
     __table_args__ = (
         CheckConstraint(

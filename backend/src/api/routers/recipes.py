@@ -3,10 +3,11 @@ from fastapi import APIRouter, Body, Depends
 from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.repositories.utils.ingredients import \
     add_ingredients_to_recipe
-from backend.src.repositories.utils.tags import recipe_tags
+from backend.src.repositories.utils.tags import add_recipe_tags
 from backend.src.schemas.recipes import (RecipeCreate, RecipeCreateRequest,
                                          RecipeRead)
 from backend.src.services.users import optional_current_user
+
 
 router = APIRouter(prefix='/recipes', tags=['Рецепты',])
 
@@ -48,17 +49,11 @@ async def create_recipe(
         )
     tags_data = recipe_data.tag
     if tags_data:
-        tags_result = await recipe_tags(
+        tags_result = await add_recipe_tags(
             tags_data=tags_data,
             db=db,
             recipe_id=recipe.id
         )
-    #     # Вынести в отдельную функцию в utils
-        # recipe_tags = [RecipeTagCreate(
-        #     recipe_id=recipe_id, tag_id=tag_id)
-        #     for tag_id in tags_data
-        # ]
-        # tags_result = await db.recipe_tags.bulk_create(recipe_tags)
     response = RecipeRead(
         name=recipe.name,
         text=recipe.text,
@@ -66,7 +61,8 @@ async def create_recipe(
         author=recipe.author,
         id=recipe.id,
         tag=tags_result,
-        ingredient=ingredients_result
+        ingredient=ingredients_result,
+        image=recipe.image
     )
     await db.commit()
     return response
