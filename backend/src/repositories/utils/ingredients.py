@@ -9,7 +9,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent))
 
 from backend.src.base import IngredientModel  # noqa
 from backend.src.db import session  # noqa
-from backend.src.schemas.ingredients import (IngredientAmountCreate,
+from backend.src.schemas.ingredients import (IngredientAmountCreate, # noqa
                                              RecipeIngredientAmountCreate,
                                              RecipeIngredientAmountRead)
 
