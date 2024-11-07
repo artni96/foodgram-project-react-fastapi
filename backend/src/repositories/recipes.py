@@ -3,11 +3,12 @@ from pydantic import BaseModel
 from sqlalchemy import insert, select
 from sqlalchemy.orm import selectinload
 
-from backend.src.models.recipes import RecipeModel
-from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.recipes import RecipeAfterCreateRead, RecipeCreate
-from backend.src.utils.image_manager import ImageManager
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
+from backend.src.models.recipes import RecipeImageModel, RecipeModel
+from backend.src.repositories.base import BaseRepository
+from backend.src.schemas.recipes import (RecipeAfterCreateRead, RecipeCreate,
+                                         RecipeUpdate)
+from backend.src.utils.image_manager import ImageManager
 
 
 class RecipeRepository(BaseRepository):
@@ -38,12 +39,16 @@ class RecipeRepository(BaseRepository):
             )
 
     async def create(self, data: RecipeCreate, db):
-        # try:
+        try:
             generated_image_name = ImageManager().create_random_name()
             while await self.check_image_name(generated_image_name):
                 generated_image_name = ImageManager().create_random_name()
             image_base64 = data.image
-            data.image = generated_image_name
+            image_id = await self.create_image(
+                name=generated_image_name,
+                base64=image_base64
+            )
+            data.image = image_id
             new_obj_stmt = (
                 insert(self.model)
                 .values(**data.model_dump())
@@ -51,13 +56,12 @@ class RecipeRepository(BaseRepository):
             )
             recipe_result = await self.session.execute(new_obj_stmt)
             recipe_result = recipe_result.scalars().one()
-            # image_base64 = data.image
             user_result = await db.users.get_one_or_none(
                 user_id=recipe_result.author,
                 current_user_id=recipe_result.id
             )
             if recipe_result:
-                ImageManager().base64_to_file(
+                image_name = ImageManager().base64_to_file(
                     base64_string=image_base64,
                     image_name=generated_image_name)
                 return self.schema(
@@ -66,15 +70,35 @@ class RecipeRepository(BaseRepository):
                     text=recipe_result.text,
                     cooking_time=recipe_result.cooking_time,
                     id=recipe_result.id,
-                    image=f'{DOMAIN_ADDRESS}{MOUNT_PATH}/{generated_image_name}'
+                    image=(
+                        f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
+                        f'/{image_name}'
+                    )
                 )
-        # except Exception:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail='не удалось создать рецепт с предоставленными данными'
-        #     )
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='не удалось создать рецепт с предоставленными данными'
+            )
+
+    async def update(self, data: RecipeUpdate, db):
+        image_stmt = (
+            select(RecipeImageModel.recipe)
+            .join(self.model, self.model.image == RecipeImageModel.id)
+            .filter(self.model.id == data.id)
+        )
+        image_result = await self.session.execute(image_stmt)
+        print(image_result.scalars().one())
+        # проверка картинки: находим ее в бд
 
     async def check_image_name(self, created_image):
-        image_stmt = select(self.model).filter_by(image=created_image)
+        image_stmt = select(RecipeImageModel).filter_by(name=created_image)
         result = await self.session.execute(image_stmt)
         return result.scalars().one_or_none()
+
+    async def create_image(self, name, base64):
+        image_stmt = insert(RecipeImageModel).values(
+            {'name': name, 'base64': base64}
+        ).returning(RecipeImageModel.id)
+        image_result = await self.session.execute(image_stmt)
+        return image_result.scalars().one()

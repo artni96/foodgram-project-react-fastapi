@@ -5,9 +5,9 @@ from backend.src.repositories.utils.ingredients import \
     add_ingredients_to_recipe
 from backend.src.repositories.utils.tags import add_recipe_tags
 from backend.src.schemas.recipes import (RecipeCreate, RecipeCreateRequest,
-                                         RecipeRead)
+                                         RecipeRead, RecipeUpdate,
+                                         RecipeUpdateRequest)
 from backend.src.services.users import optional_current_user
-
 
 router = APIRouter(prefix='/recipes', tags=['Рецепты',])
 
@@ -40,6 +40,50 @@ async def create_recipe(
         author=current_user.id,
     )
     recipe = await db.recipes.create(data=_recipe_data, db=db)
+    ingredients_data = recipe_data.ingredient
+    if ingredients_data:
+        ingredients_result = await add_ingredients_to_recipe(
+            ingredients_data=ingredients_data,
+            recipe_id=recipe.id,
+            db=db
+        )
+    tags_data = recipe_data.tag
+    if tags_data:
+        tags_result = await add_recipe_tags(
+            tags_data=tags_data,
+            db=db,
+            recipe_id=recipe.id
+        )
+    response = RecipeRead(
+        name=recipe.name,
+        text=recipe.text,
+        cooking_time=recipe.cooking_time,
+        author=recipe.author,
+        id=recipe.id,
+        tag=tags_result,
+        ingredient=ingredients_result,
+        image=recipe.image
+    )
+    await db.commit()
+    return response
+
+
+@router.patch('/{id}')
+async def update_recipe(
+    db: DBDep,
+    current_user: UserDep,
+    id: int,
+    recipe_data: RecipeUpdateRequest = Body(
+        openapi_examples=RecipeUpdateRequest.Config.schema_extra['examples']
+    ),
+):
+    # видимо есть смысл создать модель для картинок с исходным base64 и названием файла
+    _recipe_data = RecipeUpdate(
+        **recipe_data.model_dump(),
+        author=current_user.id,
+        id=id
+    )
+    recipe = await db.recipes.update(data=_recipe_data, db=db)
     ingredients_data = recipe_data.ingredient
     if ingredients_data:
         ingredients_result = await add_ingredients_to_recipe(

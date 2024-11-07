@@ -19,7 +19,7 @@ class RecipeCreateRequest(BaseRecipe):
 
     tag: list[int] = []
     ingredient: list[IngredientAmountCreateRequest] = []
-    image: str | None = None
+    image: str
 
     class Config:
         schema_extra = {
@@ -45,6 +45,14 @@ class RecipeCreateRequest(BaseRecipe):
 class RecipeCreate(BaseRecipe):
     author: int
     image: str
+
+
+class RecipeUpdateRequest(RecipeCreateRequest):
+    pass
+
+
+class RecipeUpdate(RecipeCreate):
+    id: int
 
 
 class RecipeAfterCreateRead(RecipeCreate):
