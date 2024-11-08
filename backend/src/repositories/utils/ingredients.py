@@ -3,15 +3,18 @@ import sys
 from asyncio import run
 from pathlib import Path
 
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent))
 
 from backend.src.base import IngredientModel  # noqa
 from backend.src.db import session  # noqa
-from backend.src.schemas.ingredients import (IngredientAmountCreate, # noqa
-                                             RecipeIngredientAmountCreate,
-                                             RecipeIngredientAmountRead)
+from backend.src.models.ingredients import (IngredientAmountModel, # noqa
+                                            RecipeIngredientModel)
+from backend.src.schemas.ingredients import IngredientAmountCreate  # noqa
+from backend.src.schemas.ingredients import \
+    RecipeIngredientAmountCreate  # noqa
+from backend.src.schemas.ingredients import RecipeIngredientAmountRead # noqa
 
 
 def upload_ingredietns():
@@ -80,3 +83,17 @@ async def add_recipe_ingredients(ingredients_data, recipe_id, db):
     )
     return ingredients_amount_list_response
 
+
+async def change_recipe_ingredients(ingredients_data, recipe_id, db):
+    ingredients_amount_stmt = (
+        select(RecipeIngredientModel.ingredient_amount_id)
+        .filter_by(recipe_id=recipe_id)
+        .subquery('ingredients_amount_stmt')
+    )
+    current_ingredient_ids = (
+        select(IngredientAmountModel.ingredient_id)
+        .filter(IngredientAmountModel.id.in_(ingredients_amount_stmt))
+    )
+    print
+    current_ingredient = await db.ingredients_amount.get_filtered(current_ingredient_ids)
+    print('test')

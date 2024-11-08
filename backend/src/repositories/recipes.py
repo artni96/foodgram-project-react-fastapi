@@ -1,3 +1,5 @@
+import os
+
 from fastapi import HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
@@ -90,8 +92,12 @@ class RecipeRepository(BaseRepository):
             .subquery('recipe_image_id')
         )
         image_stmt = (
-            select(ImageModel.base64)
-            .filter(ImageModel.id == recipe_image_id_stmt)
+            select(
+                ImageModel
+            )
+            .filter(
+                ImageModel.id == recipe_image_id_stmt,
+                ImageModel.base64 == data.image)
         )
         image_result = await self.session.execute(image_stmt)
         image_result = image_result.scalars().one_or_none()
@@ -99,8 +105,14 @@ class RecipeRepository(BaseRepository):
             recipe_image_delete_stmt = (
                 delete(ImageModel)
                 .filter_by(id=recipe_image_id_stmt)
+                .returning(ImageModel.name)
             )
-            await self.session.execute(recipe_image_delete_stmt)
+            image_name = await self.session.execute(
+                recipe_image_delete_stmt
+            )
+            image_to_delete = f'{MOUNT_PATH}/{image_name}'
+            if os.path.exists(image_to_delete):
+                os.remove(image_to_delete)
             generated_image_name = ImageManager().create_random_name()
             while await self.check_image_name(generated_image_name):
                 generated_image_name = ImageManager().create_random_name()
@@ -110,11 +122,36 @@ class RecipeRepository(BaseRepository):
                 base64=image_base64
             )
             data.image = image_id
-            obj_update_stmt = (
-                update(self.model)
-                .filter_by(id=data.id)
-                .values(**data.model_dump())
-                .returning(self.model)
+            image_name = ImageManager().base64_to_file(
+                base64_string=image_base64,
+                image_name=generated_image_name)
+        else:
+            data.image = image_result.id
+            image_name = image_result.name
+        obj_update_stmt = (
+            update(self.model)
+            .filter_by(id=data.id)
+            .values(**data.model_dump())
+            .returning(self.model)
+        )
+        updated_recipe_result = await self.session.execute(obj_update_stmt)
+        updated_recipe_result = updated_recipe_result.scalars().one()
+        user_result = await db.users.get_one_or_none(
+            user_id=updated_recipe_result.author,
+            current_user_id=updated_recipe_result.id
+        )
+        if updated_recipe_result:
+
+            return self.schema(
+                author=user_result,
+                name=updated_recipe_result.name,
+                text=updated_recipe_result.text,
+                cooking_time=updated_recipe_result.cooking_time,
+                id=updated_recipe_result.id,
+                image=(
+                    f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
+                    f'/{image_name}'
+                )
             )
 
         # проверка картинки: находим ее в бд

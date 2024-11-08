@@ -23,7 +23,7 @@ class RecipeModel(Base):
     image: Mapped[int] = mapped_column(
         ForeignKey('image.id')
     )
-    recipe: Mapped[int] = relationship('RecipeModel', backref='recipe')
+    # recipe: Mapped[int] = relationship('RecipeModel', backref='recipe')
 
     __table_args__ = (
         CheckConstraint(

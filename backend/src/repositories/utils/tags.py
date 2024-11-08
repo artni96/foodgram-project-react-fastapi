@@ -2,7 +2,7 @@ from backend.src.models.tags import TagModel
 from backend.src.schemas.tags import RecipeTagCreate
 
 
-async def add_recipe_tags(tags_data, db, recipe_id):
+async def create_recipe_tags(tags_data, db, recipe_id):
     recipe_tags_to_create: list[RecipeTagCreate] = list()
     for tag in tags_data:
         recipe_tags_to_create.append(
@@ -12,3 +12,10 @@ async def add_recipe_tags(tags_data, db, recipe_id):
     await db.recipe_tags.bulk_create(recipe_tags_to_create)
     tags_result = await db.tags.get_filtered(TagModel.id.in_(tags_data))
     return tags_result
+
+
+async def update_recipe_tags(tags_data, db, recipe_id):
+    recipe_tags_to_delete = await db.recipe_tags.get_filtered(
+        recipe_id=recipe_id
+    )
+    recipe_tags

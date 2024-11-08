@@ -11,10 +11,10 @@ class BaseRepository:
     def __init__(self, session):
         self.session = session
 
-    async def get_filtered(self, *args, **filter_by):
+    async def get_filtered(self, *filter, **filter_by):
         stmt = (
             select(self.model)
-            .filter(*args)
+            .filter(*filter)
             .filter_by(**filter_by)
         )
         result = await self.session.execute(stmt)

@@ -47,12 +47,13 @@ class RecipeCreate(BaseRecipe):
     image: str
 
 
-class RecipeUpdateRequest(BaseRecipe):
-    image: str
+class RecipeUpdateRequest(RecipeCreateRequest):
+    pass
 
 
-class RecipeUpdate(RecipeCreate):
+class RecipeUpdate(BaseRecipe):
     id: int
+    image: str
 
 
 class RecipeAfterCreateRead(RecipeCreate):
