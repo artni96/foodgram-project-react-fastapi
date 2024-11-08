@@ -47,7 +47,7 @@ class IngredientAmountRepository(BaseRepository):
         for obj in ingredients_data:
             current_ingredient_amount = (
                 await db.ingredients_amount.get_one_or_none(
-                    ingredient_id=obj.id,
+                    ingredient_id=obj.ingredient_id,
                     amount=obj.amount)
             )
             if current_ingredient_amount:
@@ -56,12 +56,12 @@ class IngredientAmountRepository(BaseRepository):
             else:
                 ingredients_amount_list_to_create.append(
                     IngredientAmountCreate(
-                        ingredient_id=obj.id,
+                        ingredient_id=obj.ingredient_id,
                         amount=obj.amount
                     )
                 )
             current_ingredient = await db.ingredients.get_one_or_none(
-                id=obj.id
+                id=obj.ingredient_id
             )
             ingredients_amount_list_response.append(
                 RecipeIngredientAmountRead(
@@ -107,9 +107,6 @@ class IngredientAmountRepository(BaseRepository):
         )
         current_ingredients = current_ingredients.mappings().all()
         current_ingredient_amount_ids = [obj.id for obj in current_ingredients]
-        # current_ingredient_ids = [
-        #     obj.ingredient_id for obj in current_ingredients
-        # ]
         ingredients_to_del_stmt = (
             delete(IngredientAmountModel)
             .filter(IngredientAmountModel.id.in_(current_ingredient_amount_ids))

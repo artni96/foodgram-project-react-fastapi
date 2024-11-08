@@ -1,8 +1,8 @@
+from sqlalchemy import select
+
+from backend.src.models.tags import RecipeTagModel, TagModel
 from backend.src.repositories.base import BaseRepository
-from backend.src.models.tags import TagModel, RecipeTagModel
-from backend.src.schemas.tags import TagRead, RecipeTagCreate
-from pydantic import BaseModel
-from sqlalchemy import insert, select
+from backend.src.schemas.tags import RecipeTagCreate, TagRead
 
 
 class TagRepository(BaseRepository):

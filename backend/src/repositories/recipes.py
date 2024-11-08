@@ -1,12 +1,11 @@
 import os
+import pathlib
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy import delete, insert, select, update
-from sqlalchemy.orm import selectinload, subqueryload
+from sqlalchemy import insert, select, update
+from sqlalchemy.orm import selectinload
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
-from backend.src.db import engine
 from backend.src.models.recipes import ImageModel, RecipeModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.schemas.recipes import (RecipeAfterCreateRead, RecipeCreate,
@@ -47,6 +46,9 @@ class RecipeRepository(BaseRepository):
             while await self.check_image_name(generated_image_name):
                 generated_image_name = ImageManager().create_random_name()
             image_base64 = data.image
+            image_name = ImageManager().base64_to_file(
+                base64_string=image_base64,
+                image_name=generated_image_name)
             image_id = await self.create_image(
                 name=generated_image_name,
                 base64=image_base64
@@ -102,29 +104,27 @@ class RecipeRepository(BaseRepository):
         image_result = await self.session.execute(image_stmt)
         image_result = image_result.scalars().one_or_none()
         if not image_result:
-            recipe_image_delete_stmt = (
-                delete(ImageModel)
+            recipe_image_update_stmt = (
+                update(ImageModel)
                 .filter_by(id=recipe_image_id_stmt)
-                .returning(ImageModel.name)
+                .values(base64=data.image)
+                .returning(ImageModel.name, ImageModel.id)
             )
-            image_name = await self.session.execute(
-                recipe_image_delete_stmt
+            current_image = await self.session.execute(
+                recipe_image_update_stmt
             )
-            image_to_delete = f'{MOUNT_PATH}/{image_name}'
+            current_image = current_image.mappings().one_or_none()
+            media_path = pathlib.Path(__file__).parent.parent.resolve()
+            image_to_delete = f'{media_path}{MOUNT_PATH}/{current_image.name}'
+            print(image_to_delete)
             if os.path.exists(image_to_delete):
                 os.remove(image_to_delete)
-            generated_image_name = ImageManager().create_random_name()
-            while await self.check_image_name(generated_image_name):
-                generated_image_name = ImageManager().create_random_name()
             image_base64 = data.image
-            image_id = await self.create_image(
-                name=generated_image_name,
-                base64=image_base64
-            )
-            data.image = image_id
+            data.image = current_image.id
             image_name = ImageManager().base64_to_file(
                 base64_string=image_base64,
-                image_name=generated_image_name)
+                image_name=current_image.name.split('.')[0])
+
         else:
             data.image = image_result.id
             image_name = image_result.name
@@ -167,3 +167,9 @@ class RecipeRepository(BaseRepository):
         ).returning(ImageModel.id)
         image_result = await self.session.execute(image_stmt)
         return image_result.scalars().one()
+
+    async def check_user_is_author(self, author, id):
+        stmt = select(self.model).filter_by(id=id, author=author)
+        result = await self.session.execute(stmt)
+        result = result.scalars().one_or_none()
+        return result
