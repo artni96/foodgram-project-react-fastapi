@@ -4,7 +4,7 @@ from backend.src.api.dependencies import DBDep
 from backend.src.schemas.tags import TagRead
 
 
-router = APIRouter(prefix='/tags', tags=['Теги',])
+router = APIRouter(prefix='/api/tags', tags=['Теги',])
 
 
 @router.get(

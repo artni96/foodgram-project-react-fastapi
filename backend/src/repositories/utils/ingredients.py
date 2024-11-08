@@ -14,7 +14,7 @@ from backend.src.schemas.ingredients import (IngredientAmountCreate, # noqa
                                              RecipeIngredientAmountRead)
 
 
-def ingredietns_to_add():
+def upload_ingredietns():
     with open('data/ingredients.csv') as f:
         ingredients_file = csv.reader(f)
         ingredients_to_add = []
@@ -34,10 +34,10 @@ def ingredietns_to_add():
 
 
 if __name__ == '__main__':
-    ingredietns_to_add()
+    upload_ingredietns()
 
 
-async def add_ingredients_to_recipe(ingredients_data, recipe_id, db):
+async def add_recipe_ingredients(ingredients_data, recipe_id, db):
     ingredients_amount_list_to_create: list[IngredientAmountCreate] = list()
     existing_ingredients_amount_ids: list[int] = list()
     ingredients_amount_list_response: list[RecipeIngredientAmountRead] = list()
@@ -79,3 +79,4 @@ async def add_ingredients_to_recipe(ingredients_data, recipe_id, db):
         recipe_ingredients_amount_data
     )
     return ingredients_amount_list_response
+

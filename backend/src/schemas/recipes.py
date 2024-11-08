@@ -47,8 +47,8 @@ class RecipeCreate(BaseRecipe):
     image: str
 
 
-class RecipeUpdateRequest(RecipeCreateRequest):
-    pass
+class RecipeUpdateRequest(BaseRecipe):
+    image: str
 
 
 class RecipeUpdate(RecipeCreate):

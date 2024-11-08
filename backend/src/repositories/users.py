@@ -7,13 +7,14 @@ from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.repositories.utils.users import users_url_paginator
-from backend.src.schemas.users import (FollowedUserRead, UserListRead,
+from backend.src.schemas.users import (FollowedUserRead, UserCreateResponse,
+                                       UserListRead,
                                        UserWithHashedPasswordRead)
 
 
 class UserRepository(BaseRepository):
     model = UserModel
-    schema = FollowedUserRead
+    schema = UserCreateResponse
 
     async def get_all(
         self,
@@ -76,7 +77,7 @@ class UserRepository(BaseRepository):
         user_result = user_result.scalars().one_or_none()
 
         if user_result:
-            result = self.schema.model_validate(
+            result = FollowedUserRead.model_validate(
                 user_result,
                 from_attributes=True
             )

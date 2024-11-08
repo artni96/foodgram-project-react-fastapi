@@ -6,7 +6,7 @@ from backend.src.schemas.subscriptions import SubscriptionCreate
 from backend.src.schemas.users import UserRead
 
 
-subscription_router = APIRouter(tags=['Подписки'])
+subscription_router = APIRouter(tags=['Подписки'], prefix='/api/users')
 
 
 @subscription_router.get(

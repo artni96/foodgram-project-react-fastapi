@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, relationship, mapped_column
 from backend.src.constants import PARAMS_MAX_LENGTH
 
 
-class RecipeImageModel(Base):
+class ImageModel(Base):
     name: Mapped[str]
     base64: Mapped[str]
 
@@ -21,9 +21,9 @@ class RecipeModel(Base):
     text: Mapped[str] = mapped_column(Text)
     cooking_time: Mapped[int]
     image: Mapped[int] = mapped_column(
-        ForeignKey('recipeimage.id')
+        ForeignKey('image.id')
     )
-    image_obj = relationship('RecipeImageModel', backref='recipe')
+    recipe: Mapped[int] = relationship('RecipeModel', backref='recipe')
 
     __table_args__ = (
         CheckConstraint(

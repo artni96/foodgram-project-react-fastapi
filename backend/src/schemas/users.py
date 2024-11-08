@@ -55,6 +55,10 @@ class UserPasswordChangeRequest(BaseModel):
     hashed_password: str
 
 
+class UserCreateResponse(UserRead):
+    is_subscribed: bool = False
+
+
 class FollowedUserRead(UserRead):
     is_subscribed: bool = True
 

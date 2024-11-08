@@ -1,10 +1,11 @@
 from fastapi import HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import insert, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import delete, insert, select, update
+from sqlalchemy.orm import selectinload, subqueryload
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
-from backend.src.models.recipes import RecipeImageModel, RecipeModel
+from backend.src.db import engine
+from backend.src.models.recipes import ImageModel, RecipeModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.schemas.recipes import (RecipeAfterCreateRead, RecipeCreate,
                                          RecipeUpdate)
@@ -82,23 +83,50 @@ class RecipeRepository(BaseRepository):
             )
 
     async def update(self, data: RecipeUpdate, db):
+
+        recipe_image_id_stmt = (
+            select(RecipeModel.image)
+            .filter_by(id=data.id)
+            .subquery('recipe_image_id')
+        )
         image_stmt = (
-            select(RecipeImageModel.recipe)
-            .join(self.model, self.model.image == RecipeImageModel.id)
-            .filter(self.model.id == data.id)
+            select(ImageModel.base64)
+            .filter(ImageModel.id == recipe_image_id_stmt)
         )
         image_result = await self.session.execute(image_stmt)
-        print(image_result.scalars().one())
+        image_result = image_result.scalars().one_or_none()
+        if not image_result:
+            recipe_image_delete_stmt = (
+                delete(ImageModel)
+                .filter_by(id=recipe_image_id_stmt)
+            )
+            await self.session.execute(recipe_image_delete_stmt)
+            generated_image_name = ImageManager().create_random_name()
+            while await self.check_image_name(generated_image_name):
+                generated_image_name = ImageManager().create_random_name()
+            image_base64 = data.image
+            image_id = await self.create_image(
+                name=generated_image_name,
+                base64=image_base64
+            )
+            data.image = image_id
+            obj_update_stmt = (
+                update(self.model)
+                .filter_by(id=data.id)
+                .values(**data.model_dump())
+                .returning(self.model)
+            )
+
         # проверка картинки: находим ее в бд
 
     async def check_image_name(self, created_image):
-        image_stmt = select(RecipeImageModel).filter_by(name=created_image)
+        image_stmt = select(ImageModel).filter_by(name=created_image)
         result = await self.session.execute(image_stmt)
         return result.scalars().one_or_none()
 
     async def create_image(self, name, base64):
-        image_stmt = insert(RecipeImageModel).values(
+        image_stmt = insert(ImageModel).values(
             {'name': name, 'base64': base64}
-        ).returning(RecipeImageModel.id)
+        ).returning(ImageModel.id)
         image_result = await self.session.execute(image_stmt)
         return image_result.scalars().one()
