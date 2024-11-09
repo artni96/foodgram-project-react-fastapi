@@ -35,43 +35,13 @@ async def create_recipe(
         openapi_examples=RecipeCreateRequest.Config.schema_extra['examples']
     ),
 ):
-    _recipe_data = RecipeCreate(
-        **recipe_data.model_dump(),
-        author=current_user.id,
-    )
-    recipe = await db.recipes.create(data=_recipe_data, db=db)
-    ingredients_data = recipe_data.ingredient
-    if ingredients_data:
-        _ingredients_data = await check_ingredient_duplicates_for_recipe(
-            ingredients_data=ingredients_data
-        )
-        ingredients_result = (
-            await db.ingredients_amount.add_recipe_ingredients(
-                ingredients_data=_ingredients_data,
-                db=db,
-                recipe_id=recipe.id
-            )
-        )
-    tags_data = recipe_data.tag
-    if tags_data:
-
-        tags_result = await db.recipe_tags.create(
-            tags_data=tags_data,
-            db=db,
-            recipe_id=recipe.id
-        )
-    response = RecipeRead(
-        name=recipe.name,
-        text=recipe.text,
-        cooking_time=recipe.cooking_time,
-        author=recipe.author,
-        id=recipe.id,
-        tag=tags_result,
-        ingredient=ingredients_result,
-        image=recipe.image
+    recipe = await db.recipes.create(
+        recipe_data=recipe_data,
+        current_user=current_user,
+        db=db
     )
     await db.commit()
-    return response
+    return recipe
 
 
 @router.patch('/{id}')

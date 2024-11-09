@@ -8,7 +8,8 @@ from sqlalchemy.orm import selectinload
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
 from backend.src.models.recipes import ImageModel, RecipeModel
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.recipes import (RecipeAfterCreateRead, RecipeCreate,
+from backend.src.repositories.utils.ingredients import check_ingredient_duplicates_for_recipe
+from backend.src.schemas.recipes import (RecipeAfterCreateRead, RecipeCreate, RecipeCreateRequest, RecipeRead,
                                          RecipeUpdate)
 from backend.src.utils.image_manager import ImageManager
 
@@ -40,23 +41,25 @@ class RecipeRepository(BaseRepository):
                 id=recipe_result.id
             )
 
-    async def create(self, data: RecipeCreate, db):
+    async def create(self, recipe_data: RecipeCreateRequest, db, current_user):
+        '''Создание нового рецепта.'''
+        _recipe_data = RecipeCreate(
+            **recipe_data.model_dump(),
+            author=current_user.id,
+        )
         try:
             generated_image_name = ImageManager().create_random_name()
             while await self.check_image_name(generated_image_name):
                 generated_image_name = ImageManager().create_random_name()
-            image_base64 = data.image
-            image_name = ImageManager().base64_to_file(
-                base64_string=image_base64,
-                image_name=generated_image_name)
+            image_base64 = _recipe_data.image
             image_id = await self.create_image(
                 name=generated_image_name,
                 base64=image_base64
             )
-            data.image = image_id
+            _recipe_data.image = image_id
             new_obj_stmt = (
                 insert(self.model)
-                .values(**data.model_dump())
+                .values(**_recipe_data.model_dump())
                 .returning(self.model)
             )
             recipe_result = await self.session.execute(new_obj_stmt)
@@ -65,26 +68,63 @@ class RecipeRepository(BaseRepository):
                 user_id=recipe_result.author,
                 current_user_id=recipe_result.id
             )
-            if recipe_result:
-                image_name = ImageManager().base64_to_file(
-                    base64_string=image_base64,
-                    image_name=generated_image_name)
-                return self.schema(
-                    author=user_result,
-                    name=recipe_result.name,
-                    text=recipe_result.text,
-                    cooking_time=recipe_result.cooking_time,
-                    id=recipe_result.id,
-                    image=(
-                        f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
-                        f'/{image_name}'
-                    )
-                )
+
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail='не удалось создать рецепт с предоставленными данными'
+                detail='Проверьте поля name, text, cooking_time, image'
             )
+        ingredients_data = recipe_data.ingredient
+        if ingredients_data:
+            try:
+                _ingredients_data = (
+                    await check_ingredient_duplicates_for_recipe(
+                        ingredients_data=ingredients_data
+                    )
+                )
+                ingredients_result = (
+                    await db.ingredients_amount.add_recipe_ingredients(
+                        ingredients_data=_ingredients_data,
+                        db=db,
+                        recipe_id=recipe_result.id
+                    )
+                )
+            except Exception:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Указанных ингредиентов нет в БД.'
+                )
+        tags_data = recipe_data.tag
+        if tags_data:
+            try:
+                tags_result = await db.recipe_tags.create(
+                    tags_data=tags_data,
+                    db=db,
+                    recipe_id=recipe_result.id
+                )
+            except Exception:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Указанных тегов нет в БД.'
+                )
+        image_name = ImageManager().base64_to_file(
+            base64_string=image_base64,
+            image_name=generated_image_name)
+        image_url = (
+            f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
+            f'/{image_name}'
+        )
+        response = RecipeRead(
+            name=recipe_result.name,
+            text=recipe_result.text,
+            cooking_time=recipe_result.cooking_time,
+            author=user_result,
+            id=recipe_result.id,
+            tag=tags_result,
+            ingredient=ingredients_result,
+            image=image_url
+        )
+        return response
 
     async def update(self, data: RecipeUpdate, db):
 
@@ -156,12 +196,15 @@ class RecipeRepository(BaseRepository):
 
         # проверка картинки: находим ее в бд
 
-    async def check_image_name(self, created_image):
-        image_stmt = select(ImageModel).filter_by(name=created_image)
+    async def check_image_name(self, new_image_name):
+        '''Проверка уникальности названия картинки.'''
+        image_stmt = select(ImageModel).filter_by(name=new_image_name)
         result = await self.session.execute(image_stmt)
         return result.scalars().one_or_none()
 
     async def create_image(self, name, base64):
+        '''Создание записи в БД с данными (названием и
+         исходных base64) новой картинки.'''
         image_stmt = insert(ImageModel).values(
             {'name': name, 'base64': base64}
         ).returning(ImageModel.id)
