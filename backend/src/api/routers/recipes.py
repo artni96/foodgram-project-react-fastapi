@@ -1,11 +1,7 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from backend.src.api.dependencies import DBDep, UserDep
-from backend.src.repositories.utils.ingredients import \
-    check_ingredient_duplicates_for_recipe
-from backend.src.repositories.utils.tags import create_recipe_tags
-from backend.src.schemas.recipes import (RecipeCreate, RecipeCreateRequest,
-                                         RecipeRead, RecipeUpdate,
+from backend.src.schemas.recipes import (RecipeCreateRequest,
                                          RecipeUpdateRequest)
 from backend.src.services.users import optional_current_user
 
@@ -27,7 +23,12 @@ async def get_recipe(
     return result
 
 
-@router.post('/')
+@router.post(
+    '/',
+    status_code=status.HTTP_201_CREATED,
+    summary='Создание рецепта',
+    description='Доступно только авторизованному пользователю'
+)
 async def create_recipe(
     db: DBDep,
     current_user: UserDep,
@@ -44,7 +45,12 @@ async def create_recipe(
     return recipe
 
 
-@router.patch('/{id}')
+@router.patch(
+    '/{id}',
+    status_code=status.HTTP_200_OK,
+    summary='Обновление рецепта',
+    description='Доступно только автору данного рецепта'
+)
 async def update_recipe(
     db: DBDep,
     current_user: UserDep,
@@ -53,11 +59,52 @@ async def update_recipe(
         openapi_examples=RecipeUpdateRequest.Config.schema_extra['examples']
     ),
 ):
-    if await db.recipes.check_user_is_author(id=id, author=current_user.id):
-        recipe = await db.recipes.update(recipe_data=recipe_data, id=id, db=db)
-        await db.commit()
-        return recipe
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail='Редакция рецепта доступна только его автору.'
+    check_recipe = await db.recipes.check_recipe_exists(id=id)
+    if check_recipe:
+        if check_recipe.author == current_user.id:
+            recipe = await db.recipes.update(
+                recipe_data=recipe_data,
+                id=id,
+                db=db
+            )
+            await db.commit()
+            return recipe
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='Редакция рецепта доступна только его автору.'
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Рецепт с указанным id не найден.'
+        )
+
+
+@router.delete(
+    '/{id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Удаление рецепта',
+    description='Доступно только автору данного рецепта'
     )
+async def delete_recipe(
+    db: DBDep,
+    current_user: UserDep,
+    id: int
+):
+    check_recipe = await db.recipes.check_recipe_exists(id=id)
+    if check_recipe:
+        if check_recipe.author == current_user.id:
+            recipe = await db.recipes.delete(id=id)
+            await db.commit()
+            return recipe
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='Редакция рецепта доступна только его автору.'
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Рецепт с указанным id не найден.'
+        )

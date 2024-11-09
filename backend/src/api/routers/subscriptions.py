@@ -10,7 +10,7 @@ subscription_router = APIRouter(tags=['Подписки'], prefix='/api/users')
 
 
 @subscription_router.get(
-    '/subscriptions',
+    path='/subscriptions',
     status_code=status.HTTP_200_OK,
     summary='Мои подписки',
     description=(

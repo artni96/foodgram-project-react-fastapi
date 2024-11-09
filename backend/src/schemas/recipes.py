@@ -67,3 +67,8 @@ class RecipeRead(RecipeAfterCreateRead):
     ingredient: list[RecipeIngredientAmountRead] = []
     is_favorited: bool = True
     is_in_shopping_cart: bool = True
+
+
+class CheckRecipeRead(BaseModel):
+    author: int
+    id: int

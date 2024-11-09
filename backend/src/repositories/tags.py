@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete
 
 from backend.src.models.tags import RecipeTagModel, TagModel
 from backend.src.repositories.base import BaseRepository
@@ -26,11 +26,11 @@ class RecipeTagRepository(BaseRepository):
 
     async def update(self, tags_data, db, recipe_id):
         recipe_tags_to_delete_stmt = (
-            select(RecipeTagModel.id)
+            delete(RecipeTagModel)
             .filter_by(recipe_id=recipe_id)
         )
         await self.session.execute(recipe_tags_to_delete_stmt)
-        new_tags = self.create_recipe_tags(
+        new_tags = await self.create(
             tags_data=tags_data,
             db=db,
             recipe_id=recipe_id

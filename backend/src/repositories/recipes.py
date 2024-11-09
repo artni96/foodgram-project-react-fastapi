@@ -2,16 +2,18 @@ import os
 import pathlib
 
 from fastapi import HTTPException, status
-from sqlalchemy import insert, select, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import selectinload
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
+from backend.src.models.ingredients import (IngredientAmountModel,
+                                            RecipeIngredientModel)
 from backend.src.models.recipes import ImageModel, RecipeModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.repositories.utils.ingredients import \
     check_ingredient_duplicates_for_recipe
-from backend.src.repositories.utils.tags import create_recipe_tags
-from backend.src.schemas.recipes import (RecipeAfterCreateRead, RecipeCreate,
+from backend.src.schemas.recipes import (CheckRecipeRead,
+                                         RecipeAfterCreateRead, RecipeCreate,
                                          RecipeCreateRequest, RecipeRead,
                                          RecipeUpdate, RecipeUpdateRequest)
 from backend.src.utils.image_manager import ImageManager
@@ -222,7 +224,7 @@ class RecipeRepository(BaseRepository):
         tags_data = recipe_data.tag
         if tags_data:
             try:
-                tags_result = await create_recipe_tags(
+                tags_result = await db.recipe_tags.update(
                     tags_data=tags_data,
                     db=db,
                     recipe_id=id
@@ -244,6 +246,59 @@ class RecipeRepository(BaseRepository):
         )
         return response
 
+    async def delete(self, id):
+        recipe_ingredient_amount_ids_stmt = (
+            select(RecipeIngredientModel.ingredient_amount_id)
+            .filter_by(recipe_id=id)
+        )
+        recipe_ingredient_amount_ids = await self.session.execute(
+            recipe_ingredient_amount_ids_stmt
+        )
+        recipe_ingredient_amount_ids = recipe_ingredient_amount_ids.scalars().all()
+        print(recipe_ingredient_amount_ids)
+        recipe_to_delete_stmt = (
+            delete(self.model)
+            .filter_by(id=id)
+            .returning(self.model.image)
+        )
+        recipe_image_id = await self.session.execute(recipe_to_delete_stmt)
+        recipe_image_id = recipe_image_id.scalars().one()
+        recipe_image_to_delete_stmt = (
+            delete(ImageModel)
+            .filter_by(id=recipe_image_id)
+            .returning(ImageModel.name)
+        )
+        image_name_to_delete = await self.session.execute(
+            recipe_image_to_delete_stmt
+        )
+        image_name_to_delete = image_name_to_delete.scalars().one()
+        media_path = pathlib.Path(__file__).parent.parent.resolve()
+        image_to_delete = (
+            f'{media_path}{MOUNT_PATH}/{image_name_to_delete}'
+        )
+        print(image_to_delete)
+        if os.path.exists(image_to_delete):
+            os.remove(image_to_delete)
+        recipe_ingredient_amount_ids_to_delete = list()
+        for id in recipe_ingredient_amount_ids:
+            current_obj_stmt = (
+                select(RecipeIngredientModel.ingredient_amount_id)
+                .filter_by(ingredient_amount_id=id)
+            )
+            current_obj = await self.session.execute(current_obj_stmt)
+            current_obj = current_obj.scalars().one_or_none()
+            if not current_obj:
+                recipe_ingredient_amount_ids_to_delete.append(id)
+        if recipe_ingredient_amount_ids_to_delete:
+            ids_to_delete = (
+                delete(IngredientAmountModel)
+                .filter(IngredientAmountModel.id.in_(
+                    recipe_ingredient_amount_ids_to_delete
+                )
+                )
+            )
+            await self.session.execute(ids_to_delete)
+
     async def check_image_name(self, new_image_name):
         '''Проверка уникальности названия картинки.'''
         image_stmt = select(ImageModel).filter_by(name=new_image_name)
@@ -259,8 +314,15 @@ class RecipeRepository(BaseRepository):
         image_result = await self.session.execute(image_stmt)
         return image_result.scalars().one()
 
-    async def check_user_is_author(self, author, id):
-        stmt = select(self.model).filter_by(id=id, author=author)
+    async def check_recipe_exists(self, id):
+        stmt = select(self.model.author, self.model.id).filter_by(id=id)
         result = await self.session.execute(stmt)
-        result = result.scalars().one_or_none()
-        return result
+        result = result.mappings().one_or_none()
+        if result:
+            return CheckRecipeRead.model_validate(result, from_attributes=True)
+
+    # async def check_user_is_author(self, author, id):
+    #     stmt = select(self.model).filter_by(id=id, author=author)
+    #     result = await self.session.execute(stmt)
+    #     result = result.scalars().one_or_none()
+    #     return result

@@ -22,7 +22,7 @@ class IngredientAmountModel(Base):
         )
     )
     amount: Mapped[int]
-    recipe_ingredient = relationship("RecipeIngredientModel", back_populates="ingredient_amount")
+    # recipe_ingredient = relationship("RecipeIngredientModel", back_populates="ingredient_amount")
 
 
 class RecipeIngredientModel(Base):
@@ -34,4 +34,4 @@ class RecipeIngredientModel(Base):
         'recipe.id', ondelete='cascade', onupdate='cascade'
         )
     )
-    ingredient_amount = relationship("IngredientAmountModel", back_populates="recipe_ingredient")
+    recipe = relationship("RecipeModel", back_populates="ingredient_amount")

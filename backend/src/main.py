@@ -17,15 +17,15 @@ from backend.src.api.routers.recipes import router as recipe_router  # noqa
 from backend.src.api.routers.subscriptions import subscription_router  # noqa
 from backend.src.api.routers.tags import router as tag_touter  # noqa
 from backend.src.api.routers.users import user_router  # noqa
-from backend.src.constants import MOUNT_PATH
+from backend.src.constants import MOUNT_PATH # noqa
 
 app = FastAPI()
 app.mount(
     MOUNT_PATH,
     StaticFiles(directory='backend/src/media/recipes/images')
 )
-app.include_router(user_router)
 app.include_router(subscription_router)
+app.include_router(user_router)
 app.include_router(ingredient_router)
 app.include_router(admin_router)
 app.include_router(tag_touter)
