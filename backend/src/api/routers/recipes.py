@@ -54,51 +54,9 @@ async def update_recipe(
     ),
 ):
     if await db.recipes.check_user_is_author(id=id, author=current_user.id):
-        try:
-            _recipe_data = RecipeUpdate(
-                **recipe_data.model_dump(),
-                id=id
-            )
-            recipe = await db.recipes.update(data=_recipe_data, db=db)
-            ingredients_data = recipe_data.ingredient
-            if ingredients_data:
-
-                _ingredients_data = (
-                    await check_ingredient_duplicates_for_recipe(
-                        ingredients_data=ingredients_data
-                    )
-                )
-                ingredients_result = (
-                    await db.ingredients_amount.change_recipe_ingredients(
-                        ingredients_data=_ingredients_data,
-                        recipe_id=id,
-                        db=db
-                    )
-                )
-            tags_data = recipe_data.tag
-            if tags_data:
-                tags_result = await create_recipe_tags(
-                    tags_data=tags_data,
-                    db=db,
-                    recipe_id=recipe.id
-                )
-            response = RecipeRead(
-                name=recipe.name,
-                text=recipe.text,
-                cooking_time=recipe.cooking_time,
-                author=recipe.author,
-                id=recipe.id,
-                tag=tags_result,
-                ingredient=ingredients_result,
-                image=recipe.image
-            )
-            await db.commit()
-            return response
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Не удалось создать рецепт'
-                )
+        recipe = await db.recipes.update(recipe_data=recipe_data, id=id, db=db)
+        await db.commit()
+        return recipe
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail='Редакция рецепта доступна только его автору.'
