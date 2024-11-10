@@ -1,15 +1,17 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 
 from backend.src.api.dependencies import DBDep, UserDep
-from backend.src.schemas.recipes import (RecipeCreateRequest,
-                                         RecipeUpdateRequest)
+from backend.src.schemas.recipes import (FavoriteRecipeCreate,
+                                         RecipeCreateRequest,
+                                         RecipeUpdateRequest,
+                                         ShoppingCartRecipeCreate)
 from backend.src.services.users import optional_current_user
-from backend.src.schemas.recipes import FavoriteRecipeCreate
 
-router = APIRouter(prefix='/api/recipes', tags=['Рецепты',])
+recipe_router = APIRouter(prefix='/api/recipes', tags=['Рецепты',])
 
 
-@router.get('/{id}')
+@recipe_router.get('/{id}')
 async def get_recipe(
     db: DBDep,
     id: int,
@@ -23,7 +25,7 @@ async def get_recipe(
     return result
 
 
-@router.post(
+@recipe_router.post(
     '/',
     status_code=status.HTTP_201_CREATED,
     summary='Создание рецепта',
@@ -45,24 +47,7 @@ async def create_recipe(
     return recipe
 
 
-@router.post(
-    '/{id}/favorite',
-)
-async def make_recipe_favorite(
-    id: int,
-    db: DBDep,
-    current_user: UserDep,
-):
-    favorite_recipe_data = FavoriteRecipeCreate(
-        recipe_id=id,
-        user_id=current_user.id
-    )
-    result = await db.favorite_recipes.create(data=favorite_recipe_data)
-    await db.commit()
-    return result
-
-
-@router.patch(
+@recipe_router.patch(
     '/{id}',
     status_code=status.HTTP_200_OK,
     summary='Обновление рецепта',
@@ -98,7 +83,7 @@ async def update_recipe(
         )
 
 
-@router.delete(
+@recipe_router.delete(
     '/{id}',
     status_code=status.HTTP_204_NO_CONTENT,
     summary='Удаление рецепта',
@@ -124,4 +109,112 @@ async def delete_recipe(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Рецепт с указанным id не найден.'
+        )
+
+
+favorite_recipe_router = APIRouter(
+    prefix='/api/recipes',
+    tags=['Избранное',]
+)
+
+
+@favorite_recipe_router.post(
+    '/{id}/favorite',
+    summary='Добавить рецепт в избранное',
+    description='Доступно только авторизованному пользователю',
+    status_code=status.HTTP_201_CREATED
+)
+async def make_recipe_favorite(
+    id: int,
+    db: DBDep,
+    current_user: UserDep,
+):
+    favorite_recipe_data = FavoriteRecipeCreate(
+        recipe_id=id,
+        user_id=current_user.id
+    )
+    try:
+        result = await db.favorite_recipes.create(data=favorite_recipe_data)
+        await db.commit()
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Рецепт уже в избранном.'
+        )
+    return result
+
+
+@favorite_recipe_router.delete(
+    '/{id}/favorite',
+    summary='Удалить рецепт из избранного',
+    description='Доступно только авторизованным пользователям',
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def cancel_favorite_recipe(
+    id: int,
+    db: DBDep,
+    current_user: UserDep,
+):
+    try:
+        await db.favorite_recipes.delete(recipe_id=id, user_id=current_user.id)
+        await db.commit()
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Рецепт в избранном не найден.'
+        )
+
+
+shopping_cart_router = APIRouter(
+    prefix='/api/recipes',
+    tags=['Список покупок',]
+)
+
+
+@shopping_cart_router.post(
+    '/{id}/shopping_cart',
+    summary='Добавить рецепт в список покупок',
+    description='Доступно только авторизованным пользователям',
+    status_code=status.HTTP_201_CREATED
+)
+async def add_recipe_to_shopping_cart(
+    id: int,
+    db: DBDep,
+    current_user: UserDep,
+):
+    favorite_recipe_data = ShoppingCartRecipeCreate(
+        recipe_id=id,
+        user_id=current_user.id
+    )
+    try:
+        result = await db.shopping_cart.create(data=favorite_recipe_data)
+        await db.commit()
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Рецепт уже в списке покупок.'
+        )
+    return result
+
+
+@shopping_cart_router.delete(
+    '/{id}/shopping_cart',
+    summary='Удалить рецепт из списка покупок',
+    description='Доступно только авторизованным пользователям',
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def remove_recipe_from_shopping_cart(
+    id: int,
+    db: DBDep,
+    current_user: UserDep,
+):
+    try:
+        await db.shopping_cart.delete(recipe_id=id, user_id=current_user.id)
+        await db.commit()
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Рецепт в списке покупок не найден.'
         )

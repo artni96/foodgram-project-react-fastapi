@@ -1,7 +1,9 @@
-from backend.src.db import Base
-from sqlalchemy import String, Text, CheckConstraint, ForeignKey
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy import (CheckConstraint, ForeignKey, String, Text,
+                        UniqueConstraint)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.src.constants import PARAMS_MAX_LENGTH
+from backend.src.db import Base
 
 
 class ImageModel(Base):
@@ -36,10 +38,32 @@ class RecipeModel(Base):
     )
 
 
-class FavoriteRecipeModel(Base):
+class UserRecipeBaseModel(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey('user.id', ondelete='cascade')
     )
     recipe_id: Mapped[int] = mapped_column(
         ForeignKey('recipe.id', ondelete='cascade')
+    )
+
+    __abstract__ = True
+
+
+class FavoriteRecipeModel(UserRecipeBaseModel):
+    __table_args__ = (
+        UniqueConstraint(
+            'user_id',
+            'recipe_id',
+            name='unique favorite recipe'
+        ),
+    )
+
+
+class ShoppingCartModel(UserRecipeBaseModel):
+    __table_args__ = (
+        UniqueConstraint(
+            'user_id',
+            'recipe_id',
+            name='unique recipe in shopping cart'
+        ),
     )

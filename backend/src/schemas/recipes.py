@@ -90,3 +90,11 @@ class FavoriteRecipeRead(BaseModel):
     name: str
     image: AnyHttpUrl
     cooking_time: int
+
+
+class ShoppingCartRecipeCreate(FavoriteRecipeCreate):
+    pass
+
+
+class ShoppingCartRecipeRead(FavoriteRecipeRead):
+    pass

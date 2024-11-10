@@ -6,6 +6,7 @@ from backend.src.repositories.subscriptions import SubscriptionRepository
 from backend.src.repositories.tags import RecipeTagRepository, TagRepository
 from backend.src.repositories.users import UserRepository
 from backend.src.repositories.favorite_recipes import FavoriteRecipeRepository
+from backend.src.repositories.shopping_cart import ShoppingCartRepository
 
 
 class DBManager:
@@ -26,6 +27,7 @@ class DBManager:
         )
         self.images = ImageRepository(self.session)
         self.favorite_recipes = FavoriteRecipeRepository(self.session)
+        self.shopping_cart = ShoppingCartRepository(self.session)
         return self
 
     async def __aexit__(self, *args):

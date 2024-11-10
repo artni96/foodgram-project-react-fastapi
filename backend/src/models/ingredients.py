@@ -22,7 +22,6 @@ class IngredientAmountModel(Base):
         )
     )
     amount: Mapped[int]
-    # recipe_ingredient = relationship("RecipeIngredientModel", back_populates="ingredient_amount")
 
 
 class RecipeIngredientModel(Base):

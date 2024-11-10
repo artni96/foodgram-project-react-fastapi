@@ -12,7 +12,7 @@ class FavoriteRecipeRepository(BaseRepository):
     model = FavoriteRecipeModel
     schema = FavoriteRecipeRead
 
-    async def create(self, data: FavoriteRecipeCreate):
+    async def create(self, data):
         favorite_recipe_info_stmt = (
             select(
                 RecipeModel.id,
