@@ -1,11 +1,11 @@
 import sys
 from pathlib import Path
-from starlette.middleware import Middleware
-from starlette.middleware.authentication import AuthenticationMiddleware
-from fastapi.staticfiles import StaticFiles
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
@@ -17,9 +17,23 @@ from backend.src.api.routers.recipes import router as recipe_router  # noqa
 from backend.src.api.routers.subscriptions import subscription_router  # noqa
 from backend.src.api.routers.tags import router as tag_touter  # noqa
 from backend.src.api.routers.users import user_router  # noqa
-from backend.src.constants import MOUNT_PATH # noqa
+from backend.src.constants import MOUNT_PATH  # noqa
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.mount(
     MOUNT_PATH,
     StaticFiles(directory='backend/src/media/recipes/images')

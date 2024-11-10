@@ -3,48 +3,125 @@ import pathlib
 
 from fastapi import HTTPException, status
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.orm import selectinload
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
 from backend.src.models.ingredients import (IngredientAmountModel,
+                                            IngredientModel,
                                             RecipeIngredientModel)
 from backend.src.models.recipes import ImageModel, RecipeModel
+from backend.src.models.tags import RecipeTagModel, TagModel
+from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.repositories.utils.ingredients import \
     check_ingredient_duplicates_for_recipe
-from backend.src.schemas.recipes import (CheckRecipeRead,
-                                         RecipeAfterCreateRead, RecipeCreate,
-                                         RecipeCreateRequest, RecipeRead,
-                                         RecipeUpdate, RecipeUpdateRequest)
+from backend.src.schemas.recipes import (CheckRecipeRead, ImageRead,
+                                         RecipeCreate, RecipeCreateRequest,
+                                         RecipeRead, RecipeUpdate,
+                                         RecipeUpdateRequest)
+from backend.src.schemas.users import FollowedUserRead
 from backend.src.utils.image_manager import ImageManager
+
+
+class ImageRepository(BaseRepository):
+    model = ImageModel
+    schema = ImageRead
 
 
 class RecipeRepository(BaseRepository):
     model = RecipeModel
-    schema = RecipeAfterCreateRead
+    schema = RecipeRead
 
-    async def get_one_or_none(self, recipe_id, current_user_id, db):
-        recipe_stmt = (
-            select(self.model)
-            .filter_by(id=recipe_id)
-            .options(selectinload(self.model.tag))
-        )
-
-        recipe_result = await self.session.execute(recipe_stmt)
-        recipe_result = recipe_result.scalars().one_or_none()
-        user_result = await db.users.get_one_or_none(
-            user_id=recipe_result.author,
-            current_user_id=current_user_id
-        )
-        if recipe_result:
-            return self.schema(
-                author=user_result,
-                name=recipe_result.name,
-                text=recipe_result.text,
-                cooking_time=recipe_result.cooking_time,
-                tag=recipe_result.tag,
-                id=recipe_result.id
+    async def get_one_or_none(self, id, current_user, db):
+        ingredient_list_stmt = (
+            select(
+                IngredientAmountModel.amount,
+                IngredientModel.id,
+                IngredientModel.measurement_unit,
+                IngredientModel.name
             )
+            .filter(RecipeIngredientModel.recipe_id == id)
+        ).outerjoin(
+            RecipeIngredientModel,
+            IngredientAmountModel.id == (
+                RecipeIngredientModel.ingredient_amount_id
+            )
+        ).outerjoin(
+            IngredientModel,
+            IngredientModel.id == IngredientAmountModel.ingredient_id
+        )
+
+        ingredient_list_result = await self.session.execute(
+            ingredient_list_stmt
+        )
+        ingredient_list_result = (
+            ingredient_list_result.unique().mappings().all()
+        )
+        tag_list_stmt = (
+            select(TagModel.id, TagModel.name, TagModel.slug, TagModel.color)
+            .join(RecipeTagModel, RecipeTagModel.tag_id == TagModel.id)
+            .filter(RecipeTagModel.recipe_id == id)
+        )
+        tag_list_result = await self.session.execute(
+            tag_list_stmt
+        )
+        tag_list_result = (
+            tag_list_result.unique().mappings().all()
+        )
+        recipe_body_stmt = (
+            select(RecipeModel)
+            .filter_by(id=id)
+        )
+        recipe_body_result = await self.session.execute(recipe_body_stmt)
+        recipe_body_result = recipe_body_result.scalars().one()
+        recipe_image = await db.images.get_one_or_none(
+            id=recipe_body_result.image
+        )
+        recipe_image_url = (
+                f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
+                f'/{recipe_image.name}'
+            )
+        author_stmt = (
+            select(
+                UserModel.email,
+                UserModel.id,
+                UserModel.username,
+                UserModel.first_name,
+                UserModel.last_name
+            )
+            .filter_by(id=recipe_body_result.author)
+        )
+        author_result = await self.session.execute(author_stmt)
+        author_result = author_result.mappings().one()
+        author_schema_response = FollowedUserRead(
+            email=author_result.email,
+            username=author_result.username,
+            first_name=author_result.first_name,
+            last_name=author_result.last_name,
+            id=author_result.id
+        )
+        if current_user:
+            if current_user.id == author_result.id:
+                author_schema_response.is_subscribed = False
+            else:
+                subs = await db.subscriptions.get_one_or_none(
+                    author_id=author_result.id,
+                    subscriber_id=current_user.id
+                )
+                if not subs:
+                    author_schema_response.is_subscribed = False
+        else:
+            author_schema_response.is_subscribed = False
+        response = self.schema(
+            id=recipe_body_result.id,
+            tags=tag_list_result,
+            author=author_schema_response,
+            ingredients=ingredient_list_result,
+            name=recipe_body_result.name,
+            image=recipe_image_url,
+            text=recipe_body_result.text,
+            cooking_time=recipe_body_result.cooking_time
+        )
+        return response
 
     async def create(self, recipe_data: RecipeCreateRequest, db, current_user):
         '''Создание нового рецепта.'''
@@ -119,7 +196,7 @@ class RecipeRepository(BaseRepository):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Указанных тегов нет в БД.'
                 )
-        response = RecipeRead(
+        response = self.schema(
             name=recipe_result.name,
             text=recipe_result.text,
             cooking_time=recipe_result.cooking_time,
@@ -234,7 +311,7 @@ class RecipeRepository(BaseRepository):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Указанных тегов нет в БД.'
                 )
-        response = RecipeRead(
+        response = self.schema(
             name=updated_recipe_result.name,
             text=updated_recipe_result.text,
             cooking_time=updated_recipe_result.cooking_time,
@@ -254,7 +331,9 @@ class RecipeRepository(BaseRepository):
         recipe_ingredient_amount_ids = await self.session.execute(
             recipe_ingredient_amount_ids_stmt
         )
-        recipe_ingredient_amount_ids = recipe_ingredient_amount_ids.scalars().all()
+        recipe_ingredient_amount_ids = (
+            recipe_ingredient_amount_ids.scalars().all()
+        )
         print(recipe_ingredient_amount_ids)
         recipe_to_delete_stmt = (
             delete(self.model)
@@ -320,9 +399,3 @@ class RecipeRepository(BaseRepository):
         result = result.mappings().one_or_none()
         if result:
             return CheckRecipeRead.model_validate(result, from_attributes=True)
-
-    # async def check_user_is_author(self, author, id):
-    #     stmt = select(self.model).filter_by(id=id, author=author)
-    #     result = await self.session.execute(stmt)
-    #     result = result.scalars().one_or_none()
-    #     return result

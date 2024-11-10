@@ -34,3 +34,12 @@ class RecipeModel(Base):
             name='check_cooking_time_non_negative'
         ),
     )
+
+
+class FavoriteRecipeModel(Base):
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('user.id', ondelete='cascade')
+    )
+    recipe_id: Mapped[int] = mapped_column(
+        ForeignKey('recipe.id', ondelete='cascade')
+    )

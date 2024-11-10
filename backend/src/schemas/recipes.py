@@ -63,12 +63,30 @@ class RecipeAfterCreateRead(RecipeCreate):
 
 
 class RecipeRead(RecipeAfterCreateRead):
-    tag: list[TagRead] = []
-    ingredient: list[RecipeIngredientAmountRead] = []
-    is_favorited: bool = True
-    is_in_shopping_cart: bool = True
+    tags: list[TagRead] = []
+    ingredients: list[RecipeIngredientAmountRead] = []
+    is_favorited: bool = False
+    is_in_shopping_cart: bool = False
 
 
 class CheckRecipeRead(BaseModel):
     author: int
     id: int
+
+
+class ImageRead(BaseModel):
+    id: int
+    name: str
+    base64: str
+
+
+class FavoriteRecipeCreate(BaseModel):
+    recipe_id: int
+    user_id: int
+
+
+class FavoriteRecipeRead(BaseModel):
+    id: int
+    name: str
+    image: AnyHttpUrl
+    cooking_time: int

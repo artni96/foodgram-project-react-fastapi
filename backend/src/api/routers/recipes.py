@@ -4,6 +4,7 @@ from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.schemas.recipes import (RecipeCreateRequest,
                                          RecipeUpdateRequest)
 from backend.src.services.users import optional_current_user
+from backend.src.schemas.recipes import FavoriteRecipeCreate
 
 router = APIRouter(prefix='/api/recipes', tags=['Рецепты',])
 
@@ -14,10 +15,9 @@ async def get_recipe(
     id: int,
     current_user=Depends(optional_current_user)
 ):
-    print('Its working')
     result = await db.recipes.get_one_or_none(
-        recipe_id=id,
-        current_user_id=current_user.id,
+        id=id,
+        current_user=current_user,
         db=db
     )
     return result
@@ -43,6 +43,23 @@ async def create_recipe(
     )
     await db.commit()
     return recipe
+
+
+@router.post(
+    '/{id}/favorite',
+)
+async def make_recipe_favorite(
+    id: int,
+    db: DBDep,
+    current_user: UserDep,
+):
+    favorite_recipe_data = FavoriteRecipeCreate(
+        recipe_id=id,
+        user_id=current_user.id
+    )
+    result = await db.favorite_recipes.create(data=favorite_recipe_data)
+    await db.commit()
+    return result
 
 
 @router.patch(
