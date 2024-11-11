@@ -2,23 +2,25 @@ import sys
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
+from sqlalchemy import create_engine  # noqa
+
 from backend.src.api.routers.ingredients import \
     router as ingredient_router  # noqa
 from backend.src.api.routers.only_for_admins import \
     router as admin_router  # noqa
-from backend.src.api.routers.recipes import (favorite_recipe_router, # noqa
-                                             recipe_router,
-                                             shopping_cart_router)
+from backend.src.api.routers.recipes import favorite_recipe_router  # noqa
+from backend.src.api.routers.recipes import recipe_router, shopping_cart_router
 from backend.src.api.routers.subscriptions import subscription_router  # noqa
 from backend.src.api.routers.tags import router as tag_touter  # noqa
 from backend.src.api.routers.users import user_router  # noqa
 from backend.src.constants import MOUNT_PATH  # noqa
+
 
 origins = [
     "http://localhost",

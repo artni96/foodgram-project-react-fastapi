@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status, Query
 from sqlalchemy.exc import IntegrityError
 
 from backend.src.api.dependencies import DBDep, UserDep
@@ -9,6 +9,21 @@ from backend.src.schemas.recipes import (FavoriteRecipeCreate,
 from backend.src.services.users import optional_current_user
 
 recipe_router = APIRouter(prefix='/api/recipes', tags=['Рецепты',])
+
+
+@recipe_router.get('/')
+async def get_recipe_list(
+    db: DBDep,
+    is_favorite: int = Query(default=0),
+    is_in_shopping_cart: int = Query(default=0),
+    current_user=Depends(optional_current_user)
+):
+    result = await db.recipes.test_list(
+        current_user=current_user,
+        is_favorite=is_favorite,
+        is_in_shopping_cart=is_in_shopping_cart
+    )
+    return result
 
 
 @recipe_router.get('/{id}')

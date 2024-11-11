@@ -2,13 +2,14 @@ import os
 import pathlib
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, insert, select, update, func, and_
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
 from backend.src.models.ingredients import (IngredientAmountModel,
                                             IngredientModel,
                                             RecipeIngredientModel)
-from backend.src.models.recipes import ImageModel, RecipeModel
+from backend.src.models.recipes import (FavoriteRecipeModel, ImageModel,
+                                        RecipeModel, ShoppingCartModel)
 from backend.src.models.tags import RecipeTagModel, TagModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
@@ -20,6 +21,7 @@ from backend.src.schemas.recipes import (CheckRecipeRead, ImageRead,
                                          RecipeUpdateRequest)
 from backend.src.schemas.users import FollowedUserRead
 from backend.src.utils.image_manager import ImageManager
+from backend.src.models.subscriptions import SubscriptionModel
 
 
 class ImageRepository(BaseRepository):
@@ -30,6 +32,61 @@ class ImageRepository(BaseRepository):
 class RecipeRepository(BaseRepository):
     model = RecipeModel
     schema = RecipeRead
+
+    async def test_list(
+            self,
+            current_user,
+            is_favorite,
+            is_in_shopping_cart
+    ):
+        base_recipe_list_stmt = (
+            select(
+                self.model.text,
+                self.model.id,
+                UserModel.username,
+                UserModel.email,
+                UserModel.id,
+                UserModel.first_name,
+                UserModel.last_name,
+                SubscriptionModel.id.label('is_subscribed'),
+                TagModel.id,
+                TagModel.name,
+                TagModel.color,
+                TagModel.slug
+            )
+            .join(
+                UserModel,
+                UserModel.id == self.model.author
+            )
+            .outerjoin(
+                SubscriptionModel,
+                and_(
+                    UserModel.id == SubscriptionModel.subscriber_id,
+                    self.model.author == SubscriptionModel.author_id
+                )
+            )
+            .outerjoin(
+                RecipeTagModel,
+                RecipeTagModel.recipe_id == self.model.id
+            )
+            .outerjoin(
+                TagModel,
+                TagModel.id == RecipeTagModel.tag_id
+            )
+        )
+        if is_favorite:
+            base_recipe_list_stmt = base_recipe_list_stmt.join(
+                FavoriteRecipeModel,
+                FavoriteRecipeModel.recipe_id == self.model.id
+            )
+        if is_in_shopping_cart:
+            base_recipe_list_stmt = base_recipe_list_stmt.join(
+                ShoppingCartModel,
+                ShoppingCartModel.recipe_id == self.model.id
+            )
+        recipe_list = await self.session.execute(base_recipe_list_stmt)
+        result = recipe_list.mappings().all()
+        return result
 
     async def get_one_or_none(self, id, current_user, db):
         ingredient_list_stmt = (
