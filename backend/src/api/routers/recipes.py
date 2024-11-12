@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 
+from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.schemas.recipes import (FavoriteRecipeCreate,
                                          RecipeCreateRequest,
@@ -18,15 +19,28 @@ async def get_recipe_list(
     tags: list[str] | None = Query(default=None),
     is_favorite: int = Query(default=0),
     is_in_shopping_cart: int = Query(default=0),
+    page: int | None = Query(default=None, title='Номер страницы'),
+    limit: int | None = Query(
+        default=None,
+        title='Количество объектов на странице'
+    ),
     current_user=Depends(optional_current_user)
 ):
+    if not limit:
+        limit = constants.PAGINATION_LIMIT
+    if page:
+        offset = (page - 1) * limit
+    else:
+        offset = None
     result = await db.recipes.get_filtered(
         current_user=current_user,
         is_favorite=is_favorite,
         is_in_shopping_cart=is_in_shopping_cart,
         tags=tags,
         author=author,
-        db=db
+        db=db,
+        offset=offset,
+        limit=limit
     )
     return result
 

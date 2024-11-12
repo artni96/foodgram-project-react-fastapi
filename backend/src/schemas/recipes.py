@@ -30,7 +30,7 @@ class RecipeCreateRequest(BaseRecipe):
                         "name": "string",
                         "text": "string",
                         "cooking_time": 1,
-                        "tag": [4, 5],
+                        "tag": [1, 2],
                         "ingredient": [
                             {'id': 1, 'amount': 100},
                             {'id': 2, 'amount': 200},

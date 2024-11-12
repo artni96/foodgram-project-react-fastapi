@@ -40,7 +40,9 @@ class RecipeRepository(BaseRepository):
             is_in_shopping_cart,
             tags,
             author,
-            db
+            db,
+            limit,
+            offset
     ):
         filtered_recipe_id_list_stmt = (
             select(
@@ -89,11 +91,19 @@ class RecipeRepository(BaseRepository):
             filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.filter(
                 self.model.author == author
             )
+        if offset:
+            filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.offset(
+                offset=offset
+            )
+        filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.limit(
+            limit=limit
+        )
         recipe_id_list = await self.session.execute(
             filtered_recipe_id_list_stmt
         )
         recipe_id_list_result = recipe_id_list.scalars().all()
         filtered_recipe_list = list()
+        recipe_id_list_result = sorted(list(set(recipe_id_list_result)))
         for recipe_id in recipe_id_list_result:
             filtered_recipe_list.append(
                 await self.get_one_or_none(
@@ -102,6 +112,7 @@ class RecipeRepository(BaseRepository):
                     db=db
                 )
             )
+        # return unique_recipe_id_list_result
         return filtered_recipe_list
 
     async def get_one_or_none(self, id, current_user, db):
@@ -275,7 +286,7 @@ class RecipeRepository(BaseRepository):
             cooking_time=recipe_result.cooking_time,
             author=user_result,
             id=recipe_result.id,
-            tag=tags_result,
+            tags=tags_result,
             ingredient=ingredients_result,
             image=image_url
         )
