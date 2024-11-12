@@ -12,7 +12,15 @@ from backend.src.services.users import optional_current_user
 recipe_router = APIRouter(prefix='/api/recipes', tags=['Рецепты',])
 
 
-@recipe_router.get('/')
+@recipe_router.get(
+    '/',
+    status_code=status.HTTP_200_OK,
+    summary='Список рецептов',
+    description=(
+        'Страница доступна всем пользователям. Доступна фильтрация по '
+        'избранному, автору, списку покупок и тегам.'
+    )
+)
 async def get_recipe_list(
     db: DBDep,
     author: int | None = Query(default=None),
@@ -45,7 +53,11 @@ async def get_recipe_list(
     return result
 
 
-@recipe_router.get('/{id}')
+@recipe_router.get(
+    '/{id}',
+    status_code=status.HTTP_200_OK,
+    summary='Получение рецепта'
+)
 async def get_recipe(
     db: DBDep,
     id: int,

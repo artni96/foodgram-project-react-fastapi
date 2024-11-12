@@ -44,6 +44,7 @@ class RecipeRepository(BaseRepository):
             limit,
             offset
     ):
+        '''Получение отфильтрованного списка рецептов.'''
         filtered_recipe_id_list_stmt = (
             select(
                 self.model.id
@@ -112,10 +113,10 @@ class RecipeRepository(BaseRepository):
                     db=db
                 )
             )
-        # return unique_recipe_id_list_result
         return filtered_recipe_list
 
     async def get_one_or_none(self, id, current_user, db):
+        '''Получение репепта по id если он существует.'''
         ingredient_list_stmt = (
             select(
                 IngredientAmountModel.amount,
