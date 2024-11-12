@@ -1,8 +1,8 @@
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, UniqueConstraint, ForeignKey
-from backend.src.constants import PARAMS_MAX_LENGTH
 
 from backend.src.base import Base
+from backend.src.constants import PARAMS_MAX_LENGTH
 
 
 class IngredientModel(Base):
@@ -22,6 +22,9 @@ class IngredientAmountModel(Base):
         )
     )
     amount: Mapped[int]
+    recipe: Mapped[list['RecipeModel']] = relationship(
+        secondary="recipeingredient", back_populates="ingredient_amount"
+    )
 
 
 class RecipeIngredientModel(Base):
@@ -33,4 +36,4 @@ class RecipeIngredientModel(Base):
         'recipe.id', ondelete='cascade', onupdate='cascade'
         )
     )
-    recipe = relationship("RecipeModel", back_populates="ingredient_amount")
+    

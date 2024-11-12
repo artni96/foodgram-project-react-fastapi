@@ -14,10 +14,9 @@ class TagModel(Base):
         String(PARAMS_MAX_LENGTH),
         unique=True
     )
-
     recipe: Mapped[list["RecipeModel"]] = relationship(
-        back_populates='tag',
-        secondary='recipetag'
+        secondary='recipetag',
+        back_populates='tags',
     )
 
     @validates('slug')
@@ -41,3 +40,5 @@ class RecipeTagModel(Base):
         onupdate='cascade'
         )
     )
+
+

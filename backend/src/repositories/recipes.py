@@ -2,7 +2,7 @@ import os
 import pathlib
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, insert, select, update, func, and_
+from sqlalchemy import and_, delete, insert, select, update
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
 from backend.src.models.ingredients import (IngredientAmountModel,
@@ -10,6 +10,7 @@ from backend.src.models.ingredients import (IngredientAmountModel,
                                             RecipeIngredientModel)
 from backend.src.models.recipes import (FavoriteRecipeModel, ImageModel,
                                         RecipeModel, ShoppingCartModel)
+from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.tags import RecipeTagModel, TagModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
@@ -21,7 +22,6 @@ from backend.src.schemas.recipes import (CheckRecipeRead, ImageRead,
                                          RecipeUpdateRequest)
 from backend.src.schemas.users import FollowedUserRead
 from backend.src.utils.image_manager import ImageManager
-from backend.src.models.subscriptions import SubscriptionModel
 
 
 class ImageRepository(BaseRepository):
@@ -33,26 +33,18 @@ class RecipeRepository(BaseRepository):
     model = RecipeModel
     schema = RecipeRead
 
-    async def test_list(
+    async def get_filtered(
             self,
             current_user,
             is_favorite,
-            is_in_shopping_cart
+            is_in_shopping_cart,
+            tags,
+            author,
+            db
     ):
-        base_recipe_list_stmt = (
+        filtered_recipe_id_list_stmt = (
             select(
-                self.model.text,
-                self.model.id,
-                UserModel.username,
-                UserModel.email,
-                UserModel.id,
-                UserModel.first_name,
-                UserModel.last_name,
-                SubscriptionModel.id.label('is_subscribed'),
-                TagModel.id,
-                TagModel.name,
-                TagModel.color,
-                TagModel.slug
+                self.model.id
             )
             .join(
                 UserModel,
@@ -74,19 +66,43 @@ class RecipeRepository(BaseRepository):
                 TagModel.id == RecipeTagModel.tag_id
             )
         )
-        if is_favorite:
-            base_recipe_list_stmt = base_recipe_list_stmt.join(
-                FavoriteRecipeModel,
-                FavoriteRecipeModel.recipe_id == self.model.id
+        if current_user:
+            if is_favorite:
+                filtered_recipe_id_list_stmt = (
+                    filtered_recipe_id_list_stmt.join(
+                        FavoriteRecipeModel,
+                        FavoriteRecipeModel.recipe_id == self.model.id
+                    )
+                )
+            if is_in_shopping_cart:
+                filtered_recipe_id_list_stmt = (
+                    filtered_recipe_id_list_stmt.join(
+                        ShoppingCartModel,
+                        ShoppingCartModel.recipe_id == self.model.id
+                    )
+                )
+        if tags:
+            filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.filter(
+                TagModel.slug.in_(tags)
             )
-        if is_in_shopping_cart:
-            base_recipe_list_stmt = base_recipe_list_stmt.join(
-                ShoppingCartModel,
-                ShoppingCartModel.recipe_id == self.model.id
+        if author:
+            filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.filter(
+                self.model.author == author
             )
-        recipe_list = await self.session.execute(base_recipe_list_stmt)
-        result = recipe_list.mappings().all()
-        return result
+        recipe_id_list = await self.session.execute(
+            filtered_recipe_id_list_stmt
+        )
+        recipe_id_list_result = recipe_id_list.scalars().all()
+        filtered_recipe_list = list()
+        for recipe_id in recipe_id_list_result:
+            filtered_recipe_list.append(
+                await self.get_one_or_none(
+                    current_user=current_user,
+                    id=recipe_id,
+                    db=db
+                )
+            )
+        return filtered_recipe_list
 
     async def get_one_or_none(self, id, current_user, db):
         ingredient_list_stmt = (

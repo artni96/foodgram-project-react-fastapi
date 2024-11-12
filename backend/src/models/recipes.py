@@ -15,9 +15,9 @@ class RecipeModel(Base):
     author: Mapped[int] = mapped_column(
         ForeignKey('user.id', ondelete='cascade')
     )
-    tag: Mapped[list["TagModel"]] = relationship(
+    tags: Mapped[list["TagModel"]] = relationship(
+        secondary='recipetag',
         back_populates='recipe',
-        secondary='recipetag'
     )
     name: Mapped[str] = mapped_column(String(PARAMS_MAX_LENGTH))
     text: Mapped[str] = mapped_column(Text)
@@ -25,10 +25,11 @@ class RecipeModel(Base):
     image: Mapped[int] = mapped_column(
         ForeignKey('image.id')
     )
-    ingredient_amount = relationship(
-        "RecipeIngredientModel",
+    ingredient_amount: Mapped[list['IngredientAmountModel']] = relationship(
+        secondary="recipeingredient",
         back_populates="recipe"
     )
+    author_info: Mapped['UserModel'] = relationship(back_populates='recipe')
 
     __table_args__ = (
         CheckConstraint(

@@ -14,14 +14,19 @@ recipe_router = APIRouter(prefix='/api/recipes', tags=['Рецепты',])
 @recipe_router.get('/')
 async def get_recipe_list(
     db: DBDep,
+    author: int | None = Query(default=None),
+    tags: list[str] | None = Query(default=None),
     is_favorite: int = Query(default=0),
     is_in_shopping_cart: int = Query(default=0),
     current_user=Depends(optional_current_user)
 ):
-    result = await db.recipes.test_list(
+    result = await db.recipes.get_filtered(
         current_user=current_user,
         is_favorite=is_favorite,
-        is_in_shopping_cart=is_in_shopping_cart
+        is_in_shopping_cart=is_in_shopping_cart,
+        tags=tags,
+        author=author,
+        db=db
     )
     return result
 
