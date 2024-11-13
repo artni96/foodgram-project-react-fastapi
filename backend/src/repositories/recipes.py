@@ -3,6 +3,7 @@ import pathlib
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, delete, insert, select, update
+from sqlalchemy.orm import selectinload
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
 from backend.src.models.ingredients import (IngredientAmountModel,
@@ -16,10 +17,11 @@ from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.repositories.utils.ingredients import \
     check_ingredient_duplicates_for_recipe
+from backend.src.repositories.utils.paginator import url_paginator
 from backend.src.schemas.recipes import (CheckRecipeRead, ImageRead,
                                          RecipeCreate, RecipeCreateRequest,
-                                         RecipeRead, RecipeUpdate,
-                                         RecipeUpdateRequest)
+                                         RecipeListRead, RecipeRead,
+                                         RecipeUpdate, RecipeUpdateRequest)
 from backend.src.schemas.users import FollowedUserRead
 from backend.src.utils.image_manager import ImageManager
 
@@ -42,7 +44,8 @@ class RecipeRepository(BaseRepository):
             author,
             db,
             limit,
-            offset
+            page,
+            router_prefix
     ):
         '''Получение отфильтрованного списка рецептов.'''
         filtered_recipe_id_list_stmt = (
@@ -60,15 +63,22 @@ class RecipeRepository(BaseRepository):
                     self.model.author == SubscriptionModel.author_id
                 )
             )
-            .outerjoin(
+            .join(
                 RecipeTagModel,
                 RecipeTagModel.recipe_id == self.model.id
             )
-            .outerjoin(
+            .join(
                 TagModel,
                 TagModel.id == RecipeTagModel.tag_id
             )
         )
+        filtered_recipe_id_list = await self.session.execute(
+            filtered_recipe_id_list_stmt
+        )
+        filtered_recipe_id_list = (
+            filtered_recipe_id_list.unique().scalars().all()
+        )
+        recipe_count = len(filtered_recipe_id_list)
         if current_user:
             if is_favorite:
                 filtered_recipe_id_list_stmt = (
@@ -92,20 +102,14 @@ class RecipeRepository(BaseRepository):
             filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.filter(
                 self.model.author == author
             )
-        if offset:
-            filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.offset(
-                offset=offset
-            )
-        filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.limit(
-            limit=limit
-        )
         recipe_id_list = await self.session.execute(
             filtered_recipe_id_list_stmt
         )
-        recipe_id_list_result = recipe_id_list.scalars().all()
+        recipe_id_list_result = recipe_id_list.unique().scalars().all()
+        _from, _to = (page-1)*limit, (page-1)*limit+limit
+        filtered_recipe_id_list = recipe_id_list_result[_from:_to]
         filtered_recipe_list = list()
-        recipe_id_list_result = sorted(list(set(recipe_id_list_result)))
-        for recipe_id in recipe_id_list_result:
+        for recipe_id in filtered_recipe_id_list:
             filtered_recipe_list.append(
                 await self.get_one_or_none(
                     current_user=current_user,
@@ -113,7 +117,19 @@ class RecipeRepository(BaseRepository):
                     db=db
                 )
             )
-        return filtered_recipe_list
+        paginator_values = url_paginator(
+            limit=limit,
+            page=page,
+            count=recipe_count,
+            router_prefix=router_prefix
+        )
+        result = RecipeListRead(
+            count=recipe_count,
+            next=paginator_values['next'],
+            previous=paginator_values['previous'],
+            result=filtered_recipe_list
+        )
+        return result
 
     async def get_one_or_none(self, id, current_user, db):
         '''Получение репепта по id если он существует.'''
@@ -141,20 +157,22 @@ class RecipeRepository(BaseRepository):
         ingredient_list_result = (
             ingredient_list_result.unique().mappings().all()
         )
-        tag_list_stmt = (
-            select(TagModel.id, TagModel.name, TagModel.slug, TagModel.color)
-            .join(RecipeTagModel, RecipeTagModel.tag_id == TagModel.id)
-            .filter(RecipeTagModel.recipe_id == id)
-        )
-        tag_list_result = await self.session.execute(
-            tag_list_stmt
-        )
-        tag_list_result = (
-            tag_list_result.unique().mappings().all()
-        )
         recipe_body_stmt = (
-            select(RecipeModel)
+            select(self.model)
             .filter_by(id=id)
+            .options(
+                selectinload(self.model.tags),
+                selectinload(self.model.author_info)
+                .load_only(
+                    UserModel.email,
+                    UserModel.username,
+                    UserModel.id,
+                    UserModel.first_name,
+                    UserModel.last_name
+                ),
+                selectinload(self.model.is_favorite),
+                selectinload(self.model.is_in_shopping_cart)
+            )
         )
         recipe_body_result = await self.session.execute(recipe_body_stmt)
         recipe_body_result = recipe_body_result.scalars().one()
@@ -165,31 +183,15 @@ class RecipeRepository(BaseRepository):
                 f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
                 f'/{recipe_image.name}'
             )
-        author_stmt = (
-            select(
-                UserModel.email,
-                UserModel.id,
-                UserModel.username,
-                UserModel.first_name,
-                UserModel.last_name
-            )
-            .filter_by(id=recipe_body_result.author)
-        )
-        author_result = await self.session.execute(author_stmt)
-        author_result = author_result.mappings().one()
-        author_schema_response = FollowedUserRead(
-            email=author_result.email,
-            username=author_result.username,
-            first_name=author_result.first_name,
-            last_name=author_result.last_name,
-            id=author_result.id
+        author_schema_response = FollowedUserRead.model_validate(
+            recipe_body_result.author_info, from_attributes=True
         )
         if current_user:
-            if current_user.id == author_result.id:
+            if current_user.id == recipe_body_result.author_info.id:
                 author_schema_response.is_subscribed = False
             else:
                 subs = await db.subscriptions.get_one_or_none(
-                    author_id=author_result.id,
+                    author_id=recipe_body_result.author_info.id,
                     subscriber_id=current_user.id
                 )
                 if not subs:
@@ -198,7 +200,7 @@ class RecipeRepository(BaseRepository):
             author_schema_response.is_subscribed = False
         response = self.schema(
             id=recipe_body_result.id,
-            tags=tag_list_result,
+            tags=recipe_body_result.tags,
             author=author_schema_response,
             ingredients=ingredient_list_result,
             name=recipe_body_result.name,
@@ -206,6 +208,10 @@ class RecipeRepository(BaseRepository):
             text=recipe_body_result.text,
             cooking_time=recipe_body_result.cooking_time
         )
+        if recipe_body_result.is_favorite:
+            response.is_favorited = True
+        if recipe_body_result.is_in_shopping_cart:
+            response.is_in_shopping_cart = True
         return response
 
     async def create(self, recipe_data: RecipeCreateRequest, db, current_user):
@@ -440,7 +446,7 @@ class RecipeRepository(BaseRepository):
         image_to_delete = (
             f'{media_path}{MOUNT_PATH}/{image_name_to_delete}'
         )
-        print(image_to_delete)
+        # print(image_to_delete)
         if os.path.exists(image_to_delete):
             os.remove(image_to_delete)
         recipe_ingredient_amount_ids_to_delete = list()

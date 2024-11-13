@@ -6,7 +6,8 @@ from backend.src.schemas.subscriptions import SubscriptionCreate
 from backend.src.schemas.users import UserRead
 
 
-subscription_router = APIRouter(tags=['Подписки'], prefix='/api/users')
+ROUTER_PREFIX = '/api/users'
+subscription_router = APIRouter(tags=['Подписки'], prefix=ROUTER_PREFIX)
 
 
 @subscription_router.get(
@@ -40,7 +41,8 @@ async def get_my_subscriptions(
         user_id=current_user.id,
         limit=limit,
         offset=offset,
-        page=page
+        page=page,
+        router_prefix=f'{ROUTER_PREFIX}/subscriptions'
     )
     return user_subs
 

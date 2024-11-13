@@ -9,8 +9,8 @@ from backend.src.schemas.users import (UserCreate, UserCreateRequest,
 from backend.src.services.users import auth_backend, fastapi_users
 
 
-user_router = APIRouter(prefix='/api/users', tags=['Пользователи',])
-
+ROUTER_PREFIX = '/api/users'
+user_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Пользователи',])
 
 user_router.include_router(
     fastapi_users.get_auth_router(auth_backend),
@@ -42,7 +42,8 @@ async def get_user_list(
         user_id=current_user.id,
         limit=limit,
         offset=offset,
-        page=page
+        page=page,
+        router_prefix=ROUTER_PREFIX
     )
     return result
 

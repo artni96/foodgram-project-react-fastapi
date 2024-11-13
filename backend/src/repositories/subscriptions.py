@@ -3,14 +3,19 @@ from http import HTTPStatus
 from fastapi import HTTPException, status
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.orm import selectinload, load_only
 
+from backend.src.models.recipes import RecipeModel
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
+from backend.src.repositories.utils.paginator import url_paginator
 from backend.src.repositories.utils.subscriptions import subs_url_paginator
 from backend.src.schemas.subscriptions import (SubscriptionCreate,
                                                SubscriptionListRead)
-from backend.src.schemas.users import FollowedUserRead
+from backend.src.schemas.users import FollowedUserRead, FollowedUserWithRecipiesRead
+from backend.src.schemas.base import ShortRecipeRead
+from backend.src.constants import MAIN_URL, MOUNT_PATH
 
 
 class SubscriptionRepository(BaseRepository):
@@ -23,7 +28,8 @@ class SubscriptionRepository(BaseRepository):
         user_id: int,
         offset: int,
         limit: int,
-        page: int
+        page: int,
+        router_prefix: str
     ):
         author_ids = (
             select(self.model.author_id)
@@ -43,30 +49,71 @@ class SubscriptionRepository(BaseRepository):
             user_subs_count = 0
         user_subs_stmt = (
             select(
-                UserModel.id,
-                UserModel.email,
-                UserModel.username,
-                UserModel.first_name,
-                UserModel.last_name,
+                UserModel
             )
             .filter(UserModel.id.in_(author_ids))
             .limit(limit)
+            .join(RecipeModel, RecipeModel.author == UserModel.id)
+            .options(
+                load_only(
+                    UserModel.id,
+                    UserModel.email,
+                    UserModel.username,
+                    UserModel.first_name,
+                    UserModel.last_name,
+                )
+                .selectinload(UserModel.recipe).load_only(
+                    RecipeModel.id,
+                    RecipeModel.name,
+                    RecipeModel.image,
+                    RecipeModel.cooking_time
+                )
+                .selectinload(RecipeModel.image_info)
             )
+        )
         if offset:
             user_subs_stmt = user_subs_stmt.offset(offset)
         user_subs_result = await self.session.execute(user_subs_stmt)
-        user_subs_result = user_subs_result.mappings().all()
-        paginator_values = await subs_url_paginator(
+        user_subs_result = user_subs_result.scalars().all()
+        paginator_values = url_paginator(
             limit=limit,
             page=page,
-            count=user_subs_count
+            count=user_subs_count,
+            router_prefix=router_prefix
         )
+        result_list = list()
+        for obj in user_subs_result:
+            # return obj.recipe
+            recipe_list = list()
+            for recipe in obj.recipe:
+                # return recipe.image_info.name
+                recipe_list.append(
+                    ShortRecipeRead(
+                        image=(
+                            f'{MAIN_URL}{MOUNT_PATH}/{recipe.image_info.name}'
+                        ),
+                        id=recipe.id,
+                        name=recipe.name,
+                        cooking_time=recipe.cooking_time
+                    )
+                )
+            result_list.append(
+                FollowedUserWithRecipiesRead(
+                    email=obj.email,
+                    id=obj.id,
+                    username=obj.username,
+                    first_name=obj.first_name,
+                    last_name=obj.last_name,
+                    recipe=recipe_list
+                )
+            )
         response = SubscriptionListRead(
             count=user_subs_count,
             next=paginator_values['next'],
             previous=paginator_values['previous'],
-            result=user_subs_result
+            result=result_list
         )
+        # return result_list
         return response
 
     async def create(self, data: SubscriptionCreate):

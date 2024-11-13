@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
+from backend.src.repositories.utils.paginator import url_paginator
 from backend.src.repositories.utils.users import users_url_paginator
 from backend.src.schemas.users import (FollowedUserRead, UserCreateResponse,
                                        UserListRead,
@@ -21,7 +22,8 @@ class UserRepository(BaseRepository):
         user_id: int,
         offset: int | None,
         limit: int,
-        page: int
+        page: int,
+        router_prefix: str
 
     ):
         user_list_stmt = (
@@ -57,10 +59,11 @@ class UserRepository(BaseRepository):
             if obj.id not in sub_ids:
                 current_obj.is_subscribed = False
             user_list_result.append(current_obj)
-        paginator_values = await users_url_paginator(
+        paginator_values = url_paginator(
             limit=limit,
             page=page,
-            count=users_count
+            count=users_count,
+            router_prefix=router_prefix
         )
         response = UserListRead(
             count=users_count,

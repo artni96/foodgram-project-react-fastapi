@@ -17,4 +17,6 @@ class UserModel(SQLAlchemyBaseUserTable[int], Base):
     last_name: Mapped[str | None] = mapped_column(
         String(USER_PARAMS_MAX_LENGTH)
     )
-    recipe: Mapped[list['RecipeModel']] = relationship(back_populates='author_info')
+    recipe: Mapped[list['RecipeModel']] = relationship(
+        back_populates='author_info'
+    )

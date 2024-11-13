@@ -40,5 +40,3 @@ class RecipeTagModel(Base):
         onupdate='cascade'
         )
     )
-
-

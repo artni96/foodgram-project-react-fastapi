@@ -9,6 +9,9 @@ from backend.src.db import Base
 class ImageModel(Base):
     name: Mapped[str]
     base64: Mapped[str]
+    recipe: Mapped[list['RecipeModel']] = relationship(
+        back_populates='image_info'
+    )
 
 
 class RecipeModel(Base):
@@ -30,6 +33,15 @@ class RecipeModel(Base):
         back_populates="recipe"
     )
     author_info: Mapped['UserModel'] = relationship(back_populates='recipe')
+    is_favorite: Mapped[list['FavoriteRecipeModel']] = relationship(
+        back_populates='recipe'
+    )
+    is_in_shopping_cart: Mapped[list['ShoppingCartModel']] = relationship(
+        back_populates='recipe'
+    )
+    image_info: Mapped['ImageModel'] = relationship(
+        back_populates='recipe'
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -51,6 +63,9 @@ class UserRecipeBaseModel(Base):
 
 
 class FavoriteRecipeModel(UserRecipeBaseModel):
+    recipe: Mapped['RecipeModel'] = relationship(
+        back_populates='is_favorite'
+    )
     __table_args__ = (
         UniqueConstraint(
             'user_id',
@@ -61,6 +76,9 @@ class FavoriteRecipeModel(UserRecipeBaseModel):
 
 
 class ShoppingCartModel(UserRecipeBaseModel):
+    recipe: Mapped['RecipeModel'] = relationship(
+        back_populates='is_in_shopping_cart'
+    )
     __table_args__ = (
         UniqueConstraint(
             'user_id',

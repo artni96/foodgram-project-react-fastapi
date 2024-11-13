@@ -9,7 +9,8 @@ from backend.src.schemas.recipes import (FavoriteRecipeCreate,
                                          ShoppingCartRecipeCreate)
 from backend.src.services.users import optional_current_user
 
-recipe_router = APIRouter(prefix='/api/recipes', tags=['Рецепты',])
+ROUTER_PREFIX = '/api/recipes'
+recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты',])
 
 
 @recipe_router.get(
@@ -32,14 +33,13 @@ async def get_recipe_list(
         default=None,
         title='Количество объектов на странице'
     ),
-    current_user=Depends(optional_current_user)
+    current_user=Depends(optional_current_user),
+
 ):
     if not limit:
         limit = constants.PAGINATION_LIMIT
-    if page:
-        offset = (page - 1) * limit
-    else:
-        offset = None
+    if not page:
+        page = 1
     result = await db.recipes.get_filtered(
         current_user=current_user,
         is_favorite=is_favorite,
@@ -47,8 +47,9 @@ async def get_recipe_list(
         tags=tags,
         author=author,
         db=db,
-        offset=offset,
-        limit=limit
+        limit=limit,
+        page=page,
+        router_prefix=ROUTER_PREFIX
     )
     return result
 

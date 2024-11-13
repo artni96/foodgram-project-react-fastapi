@@ -31,10 +31,6 @@ class BaseRepository:
     async def get_one_or_none(self, **filter_by):
         stmt = select(self.model)
         stmt = stmt.filter_by(**filter_by)
-        print(stmt.compile(
-            engine,
-            compile_kwargs={"literal_binds": True})
-        )
 
         result = await self.session.execute(stmt)
         result = result.scalars().one_or_none()

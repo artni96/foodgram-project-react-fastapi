@@ -13,7 +13,7 @@ class PasswordManager:
 
 
 async def users_url_paginator(page, limit, count):
-    url = f'{MAIN_URL}/users'
+    url = f'{MAIN_URL}/api/users'
     next, previous = None, None
     if not page:
         page = 1

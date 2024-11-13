@@ -98,3 +98,11 @@ class ShoppingCartRecipeCreate(FavoriteRecipeCreate):
 
 class ShoppingCartRecipeRead(FavoriteRecipeRead):
     pass
+
+
+class RecipeListRead(BaseModel):
+    count: int
+    next: str | None = None
+    previous: str | None = None
+    result: list[RecipeRead] = []
+
