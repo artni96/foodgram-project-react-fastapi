@@ -3,19 +3,19 @@ from http import HTTPStatus
 from fastapi import HTTPException, status
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlalchemy.orm import selectinload, load_only
+from sqlalchemy.orm import load_only
 
+from backend.src.constants import MAIN_URL, MOUNT_PATH
 from backend.src.models.recipes import RecipeModel
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.repositories.utils.paginator import url_paginator
-from backend.src.repositories.utils.subscriptions import subs_url_paginator
+from backend.src.schemas.base import ShortRecipeRead
 from backend.src.schemas.subscriptions import (SubscriptionCreate,
                                                SubscriptionListRead)
-from backend.src.schemas.users import FollowedUserRead, FollowedUserWithRecipiesRead
-from backend.src.schemas.base import ShortRecipeRead
-from backend.src.constants import MAIN_URL, MOUNT_PATH
+from backend.src.schemas.users import (FollowedUserRead,
+                                       FollowedUserWithRecipiesRead)
 
 
 class SubscriptionRepository(BaseRepository):
@@ -29,6 +29,7 @@ class SubscriptionRepository(BaseRepository):
         offset: int,
         limit: int,
         page: int,
+        recipes_limit: int,
         router_prefix: str
     ):
         author_ids = (
@@ -83,10 +84,8 @@ class SubscriptionRepository(BaseRepository):
         )
         result_list = list()
         for obj in user_subs_result:
-            # return obj.recipe
             recipe_list = list()
             for recipe in obj.recipe:
-                # return recipe.image_info.name
                 recipe_list.append(
                     ShortRecipeRead(
                         image=(
@@ -97,23 +96,23 @@ class SubscriptionRepository(BaseRepository):
                         cooking_time=recipe.cooking_time
                     )
                 )
-            result_list.append(
-                FollowedUserWithRecipiesRead(
-                    email=obj.email,
-                    id=obj.id,
-                    username=obj.username,
-                    first_name=obj.first_name,
-                    last_name=obj.last_name,
-                    recipe=recipe_list
-                )
+        result_list.append(
+            FollowedUserWithRecipiesRead(
+                email=obj.email,
+                id=obj.id,
+                username=obj.username,
+                first_name=obj.first_name,
+                last_name=obj.last_name,
+                recipes=recipe_list[:recipes_limit],
+                recipes_count=len(recipe_list)
             )
+        )
         response = SubscriptionListRead(
             count=user_subs_count,
             next=paginator_values['next'],
             previous=paginator_values['previous'],
             result=result_list
         )
-        # return result_list
         return response
 
     async def create(self, data: SubscriptionCreate):

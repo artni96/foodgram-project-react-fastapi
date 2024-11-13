@@ -66,7 +66,8 @@ class FollowedUserRead(UserRead):
 
 
 class FollowedUserWithRecipiesRead(FollowedUserRead):
-    recipe: list[ShortRecipeRead] = []
+    recipes: list[ShortRecipeRead] = []
+    recipes_count: int = 0
 
 
 class UserListRead(BaseModel):

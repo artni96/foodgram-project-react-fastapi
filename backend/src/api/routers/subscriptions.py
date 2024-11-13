@@ -29,7 +29,11 @@ async def get_my_subscriptions(
     limit: int | None = Query(
         default=None,
         title='Количество объектов на странице'
-    )
+    ),
+    recipes_limit: int | None = Query(
+        default=None,
+        title='Количество объектов внутри поля recipes.'
+    ),
 ):
     if not limit:
         limit = constants.PAGINATION_LIMIT
@@ -42,7 +46,8 @@ async def get_my_subscriptions(
         limit=limit,
         offset=offset,
         page=page,
-        router_prefix=f'{ROUTER_PREFIX}/subscriptions'
+        router_prefix=f'{ROUTER_PREFIX}/subscriptions',
+        recipes_limit=recipes_limit
     )
     return user_subs
 

@@ -31,7 +31,7 @@ async def get_recipe_list(
     page: int | None = Query(default=None, title='Номер страницы'),
     limit: int | None = Query(
         default=None,
-        title='Количество объектов на странице'
+        title='Количество объектов на странице.'
     ),
     current_user=Depends(optional_current_user),
 
@@ -49,7 +49,7 @@ async def get_recipe_list(
         db=db,
         limit=limit,
         page=page,
-        router_prefix=ROUTER_PREFIX
+        router_prefix=ROUTER_PREFIX,
     )
     return result
 
