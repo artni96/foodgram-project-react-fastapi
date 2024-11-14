@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from backend.src.models.ingredients import (IngredientAmountModel, IngredientModel,
@@ -15,24 +15,28 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
     async def get_shopping_cart(self, user_id):
         user_product_list_stmt = (
             select(
-                self.model.id,
-                RecipeIngredientModel.recipe_id,
+                # RecipeIngredientModel.recipe_id,
+                func.count(IngredientModel.name),
                 IngredientModel.name,
                 IngredientAmountModel.amount,
             )
-            .filter_by(user_id=user_id)
-            .outerjoin(
-                RecipeIngredientModel,
+            .select_from(RecipeIngredientModel)
+            .group_by(IngredientModel.id, IngredientAmountModel.amount)
+            .filter(self.model.user_id == user_id)
+
+            .join(
+                self.model,
                 RecipeIngredientModel.recipe_id == self.model.recipe_id
             )
-            .outerjoin(
+            .join(
                 IngredientAmountModel,
                 IngredientAmountModel.id == RecipeIngredientModel.ingredient_amount_id
             )
-            .outerjoin(
+            .join(
                 IngredientModel,
                 IngredientModel.id == IngredientAmountModel.ingredient_id
             )
+
         )
         product_list = await self.session.execute(
             user_product_list_stmt
