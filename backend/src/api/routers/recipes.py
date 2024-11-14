@@ -160,7 +160,7 @@ async def delete_recipe(
 
 
 favorite_recipe_router = APIRouter(
-    prefix='/api/recipes',
+    prefix=ROUTER_PREFIX,
     tags=['Избранное',]
 )
 
@@ -214,9 +214,25 @@ async def cancel_favorite_recipe(
 
 
 shopping_cart_router = APIRouter(
-    prefix='/api/recipes',
+    prefix=ROUTER_PREFIX,
     tags=['Список покупок',]
 )
+
+
+@shopping_cart_router.get(
+    '/download_shopping_cart',
+    status_code=status.HTTP_200_OK,
+    summary='Скачать список покупок',
+    description='Скачать файл со списком покупок.'
+)
+async def download_shopping_cart(
+    db: DBDep,
+    current_user: UserDep
+):
+    get_shopping_cart = await db.shopping_cart.get_shopping_cart(
+        user_id=current_user.id
+    )
+    return get_shopping_cart
 
 
 @shopping_cart_router.post(

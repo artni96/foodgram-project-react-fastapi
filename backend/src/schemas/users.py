@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 from pydantic import BaseModel, EmailStr, Field, model_validator
-from backend.src.schemas.base import ShortRecipeRead
 
 from backend.src.constants import USER_PARAMS_MAX_LENGTH
+from backend.src.schemas.base import ShortRecipeRead
 
 
 class BaseUser(BaseModel):
@@ -61,8 +61,7 @@ class UserCreateResponse(UserRead):
 
 
 class FollowedUserRead(UserRead):
-    is_subscribed: bool = True
-    # pass
+    is_subscribed: bool = False
 
 
 class FollowedUserWithRecipiesRead(FollowedUserRead):

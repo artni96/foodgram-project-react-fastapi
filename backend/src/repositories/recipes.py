@@ -4,6 +4,7 @@ import pathlib
 from fastapi import HTTPException, status
 from sqlalchemy import and_, delete, insert, select, update
 from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import NoResultFound
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
 from backend.src.models.ingredients import (IngredientAmountModel,
@@ -133,86 +134,92 @@ class RecipeRepository(BaseRepository):
 
     async def get_one_or_none(self, id, current_user, db):
         '''Получение репепта по id если он существует.'''
-        ingredient_list_stmt = (
-            select(
-                IngredientAmountModel.amount,
-                IngredientModel.id,
-                IngredientModel.measurement_unit,
-                IngredientModel.name
-            )
-            .filter(RecipeIngredientModel.recipe_id == id)
-        ).outerjoin(
-            RecipeIngredientModel,
-            IngredientAmountModel.id == (
-                RecipeIngredientModel.ingredient_amount_id
-            )
-        ).outerjoin(
-            IngredientModel,
-            IngredientModel.id == IngredientAmountModel.ingredient_id
-        )
-
-        ingredient_list_result = await self.session.execute(
-            ingredient_list_stmt
-        )
-        ingredient_list_result = (
-            ingredient_list_result.unique().mappings().all()
-        )
-        recipe_body_stmt = (
-            select(self.model)
-            .filter_by(id=id)
-            .options(
-                selectinload(self.model.tags),
-                selectinload(self.model.author_info)
-                .load_only(
-                    UserModel.email,
-                    UserModel.username,
-                    UserModel.id,
-                    UserModel.first_name,
-                    UserModel.last_name
-                ),
-                selectinload(self.model.is_favorite),
-                selectinload(self.model.is_in_shopping_cart)
-            )
-        )
-        recipe_body_result = await self.session.execute(recipe_body_stmt)
-        recipe_body_result = recipe_body_result.scalars().one()
-        recipe_image = await db.images.get_one_or_none(
-            id=recipe_body_result.image
-        )
-        recipe_image_url = (
-                f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
-                f'/{recipe_image.name}'
-            )
-        author_schema_response = FollowedUserRead.model_validate(
-            recipe_body_result.author_info, from_attributes=True
-        )
-        if current_user:
-            if current_user.id == recipe_body_result.author_info.id:
-                author_schema_response.is_subscribed = False
-            else:
-                subs = await db.subscriptions.get_one_or_none(
-                    author_id=recipe_body_result.author_info.id,
-                    subscriber_id=current_user.id
+        try:
+            ingredient_list_stmt = (
+                select(
+                    IngredientAmountModel.amount,
+                    IngredientModel.id,
+                    IngredientModel.measurement_unit,
+                    IngredientModel.name
                 )
-                if not subs:
+                .filter(RecipeIngredientModel.recipe_id == id)
+            ).outerjoin(
+                RecipeIngredientModel,
+                IngredientAmountModel.id == (
+                    RecipeIngredientModel.ingredient_amount_id
+                )
+            ).outerjoin(
+                IngredientModel,
+                IngredientModel.id == IngredientAmountModel.ingredient_id
+            )
+
+            ingredient_list_result = await self.session.execute(
+                ingredient_list_stmt
+            )
+            ingredient_list_result = (
+                ingredient_list_result.unique().mappings().all()
+            )
+            recipe_body_stmt = (
+                select(self.model)
+                .filter_by(id=id)
+                .options(
+                    selectinload(self.model.tags),
+                    selectinload(self.model.author_info)
+                    .load_only(
+                        UserModel.email,
+                        UserModel.username,
+                        UserModel.id,
+                        UserModel.first_name,
+                        UserModel.last_name
+                    ),
+                    selectinload(self.model.is_favorite),
+                    selectinload(self.model.is_in_shopping_cart)
+                )
+            )
+            recipe_body_result = await self.session.execute(recipe_body_stmt)
+            recipe_body_result = recipe_body_result.scalars().one()
+            recipe_image = await db.images.get_one_or_none(
+                id=recipe_body_result.image
+            )
+            recipe_image_url = (
+                    f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
+                    f'/{recipe_image.name}'
+                )
+            author_schema_response = FollowedUserRead.model_validate(
+                recipe_body_result.author_info, from_attributes=True
+            )
+            if current_user:
+                if current_user.id == recipe_body_result.author_info.id:
                     author_schema_response.is_subscribed = False
-        else:
-            author_schema_response.is_subscribed = False
-        response = self.schema(
-            id=recipe_body_result.id,
-            tags=recipe_body_result.tags,
-            author=author_schema_response,
-            ingredients=ingredient_list_result,
-            name=recipe_body_result.name,
-            image=recipe_image_url,
-            text=recipe_body_result.text,
-            cooking_time=recipe_body_result.cooking_time
-        )
-        if recipe_body_result.is_favorite:
-            response.is_favorited = True
-        if recipe_body_result.is_in_shopping_cart:
-            response.is_in_shopping_cart = True
-        return response
+                else:
+                    subs = await db.subscriptions.get_one_or_none(
+                        author_id=recipe_body_result.author_info.id,
+                        subscriber_id=current_user.id
+                    )
+                    if not subs:
+                        author_schema_response.is_subscribed = False
+            else:
+                author_schema_response.is_subscribed = False
+            response = self.schema(
+                id=recipe_body_result.id,
+                tags=recipe_body_result.tags,
+                author=author_schema_response,
+                ingredients=ingredient_list_result,
+                name=recipe_body_result.name,
+                image=recipe_image_url,
+                text=recipe_body_result.text,
+                cooking_time=recipe_body_result.cooking_time
+            )
+            if recipe_body_result.is_favorite:
+                response.is_favorited = True
+            if recipe_body_result.is_in_shopping_cart:
+                response.is_in_shopping_cart = True
+            return response
+        except NoResultFound:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Рецепт не найден.'
+            )
 
     async def create(self, recipe_data: RecipeCreateRequest, db, current_user):
         '''Создание нового рецепта.'''

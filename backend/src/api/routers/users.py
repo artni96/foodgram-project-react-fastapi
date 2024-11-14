@@ -8,7 +8,6 @@ from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordUpdate)
 from backend.src.services.users import auth_backend, fastapi_users
 
-
 ROUTER_PREFIX = '/api/users'
 user_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Пользователи',])
 

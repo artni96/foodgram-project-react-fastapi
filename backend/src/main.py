@@ -46,9 +46,9 @@ app.include_router(user_router)
 app.include_router(ingredient_router)
 app.include_router(admin_router)
 app.include_router(tag_touter)
-app.include_router(recipe_router)
 app.include_router(favorite_recipe_router)
 app.include_router(shopping_cart_router)
+app.include_router(recipe_router)
 
 if __name__ == '__main__':
     uvicorn.run('main:app', reload=True)

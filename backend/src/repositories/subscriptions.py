@@ -11,11 +11,11 @@ from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.repositories.utils.paginator import url_paginator
-from backend.src.schemas.base import ShortRecipeRead
 from backend.src.schemas.subscriptions import (SubscriptionCreate,
                                                SubscriptionListRead)
 from backend.src.schemas.users import (FollowedUserRead,
-                                       FollowedUserWithRecipiesRead)
+                                       FollowedUserWithRecipiesRead,
+                                       ShortRecipeRead)
 
 
 class SubscriptionRepository(BaseRepository):

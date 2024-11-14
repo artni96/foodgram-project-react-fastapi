@@ -7,7 +7,6 @@ from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
 from backend.src.repositories.utils.paginator import url_paginator
-from backend.src.repositories.utils.users import users_url_paginator
 from backend.src.schemas.users import (FollowedUserRead, UserCreateResponse,
                                        UserListRead,
                                        UserWithHashedPasswordRead)

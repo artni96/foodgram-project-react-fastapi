@@ -1,11 +1,10 @@
 from sqlalchemy import insert, select
 
+from backend.src.constants import MAIN_URL, MOUNT_PATH
 from backend.src.models.recipes import (FavoriteRecipeModel, ImageModel,
                                         RecipeModel)
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.recipes import (FavoriteRecipeCreate,
-                                         FavoriteRecipeRead)
-from backend.src.constants import MAIN_URL, MOUNT_PATH
+from backend.src.schemas.recipes import FavoriteRecipeRead
 
 
 class FavoriteRecipeRepository(BaseRepository):

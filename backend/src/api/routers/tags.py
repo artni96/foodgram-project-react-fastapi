@@ -3,7 +3,6 @@ from fastapi import APIRouter, status
 from backend.src.api.dependencies import DBDep
 from backend.src.schemas.tags import TagRead
 
-
 router = APIRouter(prefix='/api/tags', tags=['Теги',])
 
 

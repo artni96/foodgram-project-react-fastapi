@@ -2,8 +2,8 @@ from fastapi import APIRouter, Path, Query, status
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
-from backend.src.schemas.subscriptions import SubscriptionCreate
 from backend.src.schemas.users import UserRead
+from backend.src.schemas.subscriptions import SubscriptionCreate
 
 
 ROUTER_PREFIX = '/api/users'

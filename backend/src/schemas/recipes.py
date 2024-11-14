@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, AnyHttpUrl
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field
 
 from backend.src.constants import PARAMS_MAX_LENGTH
 from backend.src.schemas.ingredients import (IngredientAmountCreateRequest,
@@ -105,4 +105,3 @@ class RecipeListRead(BaseModel):
     next: str | None = None
     previous: str | None = None
     result: list[RecipeRead] = []
-
