@@ -1,7 +1,7 @@
-from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
+from sqlalchemy import func, select
 
-from backend.src.models.ingredients import (IngredientAmountModel, IngredientModel,
+from backend.src.models.ingredients import (IngredientAmountModel,
+                                            IngredientModel,
                                             RecipeIngredientModel)
 from backend.src.models.recipes import ShoppingCartModel
 from backend.src.repositories.favorite_recipes import FavoriteRecipeRepository
@@ -15,10 +15,12 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
     async def get_shopping_cart(self, user_id):
         user_product_list_stmt = (
             select(
-                # RecipeIngredientModel.recipe_id,
-                func.count(IngredientModel.name),
+
                 IngredientModel.name,
-                IngredientAmountModel.amount,
+                (
+                    func.count(IngredientModel.name) *
+                    IngredientAmountModel.amount
+                ).label('total_amount')
             )
             .select_from(RecipeIngredientModel)
             .group_by(IngredientModel.id, IngredientAmountModel.amount)
@@ -30,7 +32,9 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
             )
             .join(
                 IngredientAmountModel,
-                IngredientAmountModel.id == RecipeIngredientModel.ingredient_amount_id
+                IngredientAmountModel.id == (
+                    RecipeIngredientModel.ingredient_amount_id
+                )
             )
             .join(
                 IngredientModel,

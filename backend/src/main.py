@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -39,7 +39,7 @@ app.add_middleware(
 
 app.mount(
     MOUNT_PATH,
-    StaticFiles(directory='backend/src/media/recipes/images')
+    StaticFiles(directory='src/media/recipes/images')
 )
 app.include_router(subscription_router)
 app.include_router(user_router)
