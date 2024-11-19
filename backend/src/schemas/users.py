@@ -1,15 +1,16 @@
 from fastapi import HTTPException
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
-from backend.src.constants import USER_PARAMS_MAX_LENGTH
+from backend.src.constants import USER_PARAMS_MAX_LENGTH, MAX_EMAIL_LENGTH
 from backend.src.schemas.base import ShortRecipeRead
 
 
 class BaseUser(BaseModel):
-    email: EmailStr = Field(default='artni@ya.ru', max_length=254)
+    email: EmailStr = Field(default='artni@ya.ru', max_length=MAX_EMAIL_LENGTH)
     username: str = Field(
         default='artni',
-        max_length=USER_PARAMS_MAX_LENGTH
+        max_length=USER_PARAMS_MAX_LENGTH,
+        pattern=r'^[\w.@+-]+\z'
     )
     first_name: str | None = Field(
         default=None,

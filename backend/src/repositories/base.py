@@ -1,7 +1,7 @@
+from fastapi import HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
-
-from backend.src.db import engine
+from sqlalchemy.exc import IntegrityError
 
 
 class BaseRepository:
@@ -38,15 +38,21 @@ class BaseRepository:
             return self.schema.model_validate(result, from_attributes=True)
 
     async def create(self, data: BaseModel):
-        new_obj_stmt = (
-            insert(self.model)
-            .values(**data.model_dump())
-            .returning(self.model)
-        )
-        result = await self.session.execute(new_obj_stmt)
-        result = result.scalars().one()
-        return self.schema.model_validate(
-            result, from_attributes=True)
+        try:
+            new_obj_stmt = (
+                insert(self.model)
+                .values(**data.model_dump())
+                .returning(self.model)
+            )
+            result = await self.session.execute(new_obj_stmt)
+            result = result.scalars().one()
+            return self.schema.model_validate(
+                result, from_attributes=True)
+        except IntegrityError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Пользователь с указанными данными уже существует.'
+            )
 
     async def bulk_create(self, data: list[BaseModel]):
         stmt = (

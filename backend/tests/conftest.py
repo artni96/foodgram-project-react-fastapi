@@ -33,14 +33,14 @@ async def setup_database():
 
 
 @pytest.fixture(scope='session')
-async def ac():
+async def ac(setup_database):
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def add_new_user(ac, setup_database):
+async def add_new_user(ac):
     new_user = await ac.post(
         "/api/users",
         json = {
