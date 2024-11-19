@@ -1,16 +1,11 @@
 import sys
-from http.client import responses
 from pathlib import Path
-from pyexpat.errors import messages
 
 import uvicorn
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
-
-from sqlalchemy import create_engine  # noqa
 
 from backend.src.api.routers.ingredients import \
     router as ingredient_router  # noqa
@@ -37,16 +32,16 @@ origins = [
 app = FastAPI()
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    print(exc.errors())
     exc_dict = dict()
     for err in exc.errors():
         if 'String should have at most 150 characters' in err['msg']:
-            print(True)
-            message = f'Максимальная длина поля {err["loc"][1]} составляет {err["ctx"]["max_length"]} символов.'
-            exc_dict[err['loc'][1]] = message
+            exc_dict[err['loc'][1]] = (
+                f'Максимальная длина поля {err["loc"][1]} составляет {err["ctx"]["max_length"]} символов.'
+            )
         if 'value is not a valid email address: The email address is too long before the @-sign' in err['msg']:
-            message = f'Максимальная длина поля {err["loc"][1]} составляет {MAX_EMAIL_LENGTH} символов.'
-            exc_dict[err['loc'][1]] = message
+            exc_dict[err['loc'][1]] = (
+                f'Максимальная длина поля {err["loc"][1]} составляет {MAX_EMAIL_LENGTH} символов.'
+            )
     content_dict = {}
     if exc_dict:
         content_dict['content'] = jsonable_encoder({"detail": exc_dict})
