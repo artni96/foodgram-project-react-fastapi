@@ -42,6 +42,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             exc_dict[err['loc'][1]] = (
                 f'Максимальная длина поля {err["loc"][1]} составляет {MAX_EMAIL_LENGTH} символов.'
             )
+        if 'String should match pattern' in err['msg']:
+            exc_dict[err['loc'][1]] = (
+                f'Поле {err["loc"][1]} не соответствует паттерну {err["ctx"]["pattern"]}.'
+            )
     content_dict = {}
     if exc_dict:
         content_dict['content'] = jsonable_encoder({"detail": exc_dict})
