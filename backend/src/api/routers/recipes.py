@@ -82,7 +82,7 @@ async def create_recipe(
     db: DBDep,
     current_user: UserDep,
     recipe_data: RecipeCreateRequest = Body(
-        openapi_examples=RecipeCreateRequest.Config.schema_extra['examples']
+        openapi_examples=RecipeCreateRequest.model_config['json_schema_extra']
     ),
 ):
     recipe = await db.recipes.create(
@@ -105,7 +105,7 @@ async def update_recipe(
     current_user: UserDep,
     id: int,
     recipe_data: RecipeUpdateRequest = Body(
-        openapi_examples=RecipeUpdateRequest.Config.schema_extra['examples']
+        openapi_examples=RecipeUpdateRequest.model_config['json_schema_extra']
     ),
 ):
     check_recipe = await db.recipes.check_recipe_exists(id=id)

@@ -21,9 +21,8 @@ class RecipeCreateRequest(BaseRecipe):
     ingredient: list[IngredientAmountCreateRequest] = []
     image: str
 
-    class Config:
-        schema_extra = {
-            'examples': {
+    model_config = {
+        'json_schema_extra': {
                 'Тестовый рецепт': {
                     'summary': 'Тестовый рецепт',
                     'value': {

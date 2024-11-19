@@ -18,7 +18,7 @@ user_router.include_router(
 
 
 @user_router.get(
-    '/',
+    '',
     status_code=status.HTTP_200_OK,
     summary='Список пользователей',
 )
@@ -79,7 +79,7 @@ async def get_user_by_id(
 
 
 @user_router.post(
-    '/',
+    '',
     status_code=status.HTTP_201_CREATED,
     summary='Регистрация пользователя'
 )

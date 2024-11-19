@@ -20,7 +20,7 @@ router = APIRouter(
 async def create_tag(
     db: DBDep,
     data: TagCreate = Body(
-        openapi_examples=TagCreate.Config.schema_extra['examples']
+        openapi_examples=TagCreate.model_config['json_schema_extra']
     )
 ):
     result = await db.tags.create(data=data)

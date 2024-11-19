@@ -16,35 +16,34 @@ class BaseTag(BaseModel):
 
 class TagCreate(BaseTag):
 
-    class Config:
-        schema_extra = {
-            'examples': {
-                'Breakfast': {
-                    'summary': 'Завтрак',
-                    'value': {
-                        'name': 'Завтрак',
-                        'color': '#f5945c',
-                        'slug': 'breakfast'
-                    }
-                },
-                'Lunch': {
-                    'summary': 'Обед',
-                    'value': {
-                        'name': 'Обед',
-                        'color': '#75ba75',
-                        'slug': 'lunch'
-                    }
-                },
-                'Dinner': {
-                    'summary': 'Ужин',
-                    'value': {
-                        'name': 'Ужин',
-                        'color': '#be95be',
-                        'slug': 'dinner'
-                    }
+    model_config = {
+        'json_schema_extra': {
+            'Breakfast': {
+                'summary': 'Завтрак',
+                'value': {
+                    'name': 'Завтрак',
+                    'color': '#f5945c',
+                    'slug': 'breakfast'
+                }
+            },
+            'Lunch': {
+                'summary': 'Обед',
+                'value': {
+                    'name': 'Обед',
+                    'color': '#75ba75',
+                    'slug': 'lunch'
+                }
+            },
+            'Dinner': {
+                'summary': 'Ужин',
+                'value': {
+                    'name': 'Ужин',
+                    'color': '#be95be',
+                    'slug': 'dinner'
                 }
             }
         }
+    }
 
     @field_validator('slug')
     def validate_slug(cls, value):

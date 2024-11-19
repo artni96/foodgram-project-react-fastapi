@@ -21,7 +21,7 @@ async def get_ingredient_by_id(
 
 
 @router.get(
-    '/',
+    '',
     summary='Список ингредиентов',
     description='Список ингредиентов с возможностью поиска по имени.',
     status_code=status.HTTP_200_OK
