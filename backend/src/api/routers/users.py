@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, status, Depends, HTTPException
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
@@ -6,7 +6,7 @@ from backend.src.repositories.utils.users import PasswordManager
 from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
                                        UserPasswordUpdate)
-from backend.src.services.users import auth_backend, fastapi_users
+from backend.src.services.users import auth_backend, fastapi_users, optional_current_user
 
 ROUTER_PREFIX = '/api/users'
 user_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Пользователи',])
@@ -70,11 +70,15 @@ async def get_current_user(
 async def get_user_by_id(
     db: DBDep,
     id: int,
-    current_user: UserDep
+    current_user=Depends(optional_current_user)
 ):
+    options = {}
+    if current_user:
+        options['current_user_id'] = current_user.id
     user_to_get = await db.users.get_one_or_none(
         user_id=id,
-        current_user_id=current_user.id)
+        **options
+    )
     return user_to_get
 
 
@@ -112,22 +116,29 @@ async def change_password(
     current_user: UserDep
 ):
     user = await db.users.get_user_hashed_password(current_user.id)
-    if PasswordManager().verify_password(
-        user.hashed_password,
-        password_data.current_password
-    ):
-        new_hashed_password = PasswordManager().hash_password(
-            password_data.new_password
+    try:
+        PasswordManager().verify_password(
+            user.hashed_password,
+            password_data.current_password
         )
-        password_updated_data = UserPasswordChangeRequest(
-            hashed_password=new_hashed_password
-        )
-        await db.users.update(
-            id=current_user.id,
-            data=password_updated_data,
-            exclude_unset=True
-        )
-        await db.commit()
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Неверный пароль'
+    )
+    new_hashed_password = PasswordManager().hash_password(
+        password_data.new_password
+    )
+    password_updated_data = UserPasswordChangeRequest(
+        hashed_password=new_hashed_password
+    )
+    await db.users.update(
+        id=current_user.id,
+        data=password_updated_data,
+        exclude_unset=True
+    )
+    await db.commit()
+
 
 route_desired_content = [
     [

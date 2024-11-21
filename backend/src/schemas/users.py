@@ -1,12 +1,16 @@
 from fastapi import HTTPException
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from backend.src.constants import USER_PARAMS_MAX_LENGTH, MAX_EMAIL_LENGTH
 from backend.src.schemas.base import ShortRecipeRead
 
 
 class BaseUser(BaseModel):
-    email: EmailStr = Field(default='artni@ya.ru', max_length=MAX_EMAIL_LENGTH)
+    email: str = Field(
+        default='artni@ya.ru',
+        max_length=MAX_EMAIL_LENGTH,
+        pattern='^[\w-]+@([\w-]+\.)+[\w-]{2,4}$'
+    )
     username: str = Field(
         default='artni',
         max_length=USER_PARAMS_MAX_LENGTH,
@@ -47,6 +51,7 @@ class UserPasswordUpdate(BaseModel):
             raise HTTPException(
                 status_code=400,
                 detail='Новый пароль должен отличаться от текущего!')
+        return self
 
 
 class UserWithHashedPasswordRead(UserRead):

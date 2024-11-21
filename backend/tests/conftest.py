@@ -2,6 +2,7 @@ import json
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import True_
 
 from backend.src.base import *
 from backend.src.config import settings
@@ -31,6 +32,11 @@ async def setup_database():
         await _db.ingredients.bulk_create(ingredients_data)
         await _db.commit()
 
+
+@pytest.fixture(autouse=True)
+async def db():
+    async with DBManager(session_factory=async_session_maker) as db:
+        yield db
 
 @pytest.fixture(scope='session')
 async def ac(setup_database):

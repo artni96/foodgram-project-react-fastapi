@@ -1,4 +1,6 @@
 import re
 
-test_1 = 'rewrSDr.ext'
-print(re.match('rewrSDr', 'rewrSDr.ext'))
+if not re.match(r'^[\w-]+@([\w-]+\.)+[\w-]{2,4}$', '12-34@aw.ru'):
+    print(False)
+else:
+    print(True)
