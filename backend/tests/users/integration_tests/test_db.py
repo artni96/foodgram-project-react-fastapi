@@ -1,4 +1,5 @@
 import pytest
+from fastapi import HTTPException
 
 
 @pytest.mark.order(4)
@@ -26,6 +27,9 @@ async def test_user_repository(db):
     assert get_one_user_or_none.first_name or not get_one_user_or_none.first_name
     assert get_one_user_or_none.last_name or not get_one_user_or_none.last_name
     assert get_one_user_or_none.is_subscribed or not get_one_user_or_none.is_subscribed
+
+    get_one_user_or_none = await db.users.get_one_or_none(user_id=user_list.result[-1].id + 1)
+    assert not get_one_user_or_none
 
     get_user_hashed_password = await db.users.get_user_hashed_password(
         user_id=user_list.result[-1].id

@@ -37,19 +37,12 @@ async def get_user_list(
         offset = (page - 1) * limit
     else:
         offset = None
-    filter_params = {
-        'limit': limit,
-        'offset': offset,
-        'page': page,
-        'router_prefix': ROUTER_PREFIX,
-        'user_id': None
-    }
+
     if current_user:
         current_user_id = current_user.id
     else:
         current_user_id = None
     result = await db.users.get_all(
-        # **filter_params
         user_id=current_user_id,
         limit=limit,
         offset=offset,
@@ -91,6 +84,11 @@ async def get_user_by_id(
         user_id=id,
         **options
     )
+    if not user_to_get:
+        raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Пользователь не найден.'
+            )
     return user_to_get
 
 

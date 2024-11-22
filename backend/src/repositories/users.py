@@ -107,10 +107,6 @@ class UserRepository(BaseRepository):
                 return result
             result.is_subscribed = False
             return result
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='Пользователь не найден.'
-        )
 
     async def get_user_hashed_password(self, user_id):
         hashed_password_stmt = (
