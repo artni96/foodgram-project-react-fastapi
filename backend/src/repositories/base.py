@@ -25,6 +25,7 @@ class BaseRepository:
                 for obj in result
             ]
 
+
     async def get_all(self, *args, **kwargs):
         return await self.get_filtered()
 

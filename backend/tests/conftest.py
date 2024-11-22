@@ -12,6 +12,8 @@ from backend.src.schemas.ingredients import IngredientCreate
 from backend.src.main import app
 from fastapi import status
 
+from backend.src.schemas.tags import TagCreate
+
 
 @pytest.fixture(scope='session', autouse=True)
 async def check_test_mode():
@@ -73,3 +75,26 @@ async def auth_ac(ac):
             base_url="http://test",
             headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}) as ac:
         yield ac
+
+@pytest.fixture()
+async def tags_fixture(db):
+    tags_data = [
+        {
+            "name": "Завтрак",
+            "color": "#f5945c",
+            "slug": "breakfast"
+        },
+        {
+            "name": "Обед",
+            "color": "#75ba75",
+            "slug": "lunch"
+        },
+        {
+            "name": "Ужин",
+            "color": "#be95be",
+            "slug": "dinner"
+        }
+    ]
+    tags_schemas = [TagCreate.model_validate(obj) for obj in tags_data]
+    await db.tags.bulk_create(tags_schemas)
+    await db.commit()

@@ -20,12 +20,12 @@ async def get_tag(
 
 
 @router.get(
-    '/',
+    '',
     status_code=status.HTTP_200_OK,
     summary='Cписок тегов'
 )
 async def get_tags(
     db: DBDep
-) -> list[TagRead]:
+) -> list[TagRead] | None:
     result = await db.tags.get_all()
     return result

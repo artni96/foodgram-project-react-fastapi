@@ -11,14 +11,11 @@ class BaseTag(BaseModel):
     color: str = Field(max_length=7)
     slug: str = Field(max_length=PARAMS_MAX_LENGTH)
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class TagCreate(BaseTag):
-
     model_config = {
         'json_schema_extra': {
-            'Breakfast': {
+            'Завтрак': {
                 'summary': 'Завтрак',
                 'value': {
                     'name': 'Завтрак',
@@ -26,7 +23,7 @@ class TagCreate(BaseTag):
                     'slug': 'breakfast'
                 }
             },
-            'Lunch': {
+            'Обед': {
                 'summary': 'Обед',
                 'value': {
                     'name': 'Обед',
@@ -34,7 +31,7 @@ class TagCreate(BaseTag):
                     'slug': 'lunch'
                 }
             },
-            'Dinner': {
+            'Ужин': {
                 'summary': 'Ужин',
                 'value': {
                     'name': 'Ужин',
@@ -74,6 +71,8 @@ class TagCreate(BaseTag):
 
 class TagRead(BaseTag):
     id: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RecipeTagCreate(BaseModel):
