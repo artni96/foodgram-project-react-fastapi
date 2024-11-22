@@ -2,7 +2,7 @@ from backend.src.models.users import UserModel
 from backend.src.db_manager import DBManager
 
 from typing import Annotated
-from backend.src.services.users import current_user
+from backend.src.services.users import current_user, current_superuser
 from fastapi import Depends
 from backend.src.db import async_session_maker
 

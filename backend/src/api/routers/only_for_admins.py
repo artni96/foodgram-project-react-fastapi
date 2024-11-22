@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, status
+from fastapi import APIRouter, Body, Depends, status, HTTPException
 
 from backend.src.api.dependencies import DBDep
 from backend.src.schemas.ingredients import IngredientCreate, IngredientRead

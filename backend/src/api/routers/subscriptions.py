@@ -1,5 +1,7 @@
+from http import HTTPStatus
+
 from fastapi import APIRouter, Path, Query, status, HTTPException
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
@@ -62,12 +64,26 @@ async def get_my_subscriptions(
 async def subsrtibe(
     db: DBDep,
     current_user: UserDep,
-    user_id: int = Path()
-) -> UserRead:
+    user_id: int = Path(),
+    recipes_limit: int = Query()
+):
     data = SubscriptionCreate(author_id=user_id, subscriber_id=current_user.id)
-    subscription = await db.subscriptions.create(data)
-    await db.commit()
-    return subscription
+    try:
+        subscription = await db.subscriptions.create(data, recipes_limit)
+        await db.commit()
+        return subscription
+
+    except IntegrityError as e:
+        if 'ForeignKeyViolationError' in str(e.__cause__):
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail='Пользователь не найден!'
+            )
+        elif 'UniqueViolationError' in str(e.__cause__):
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='Вы уже подписанны на данного пользователя!'
+            )
 
 
 @subscription_router.delete(

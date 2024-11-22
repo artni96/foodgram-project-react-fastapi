@@ -8,11 +8,12 @@ from sqlalchemy import insert
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 
 from backend.src.base import IngredientModel # noqa
-from backend.src.db import session # noqa
+from backend.src.db_manager import DBManager
+from backend.src.db import session, async_session_maker  # noqa
 
 
 def ingredietns_to_add():
-    with open('data/ingredients.csv') as f:
+    with open('../data/ingredients.csv') as f:
         ingredients_file = csv.reader(f)
         ingredients_to_add = []
         for row in ingredients_file:
@@ -24,9 +25,9 @@ def ingredietns_to_add():
 
     async def implement_query():
         ingredients_stmt = insert(IngredientModel).values(ingredients_to_add)
-        await session.execute(ingredients_stmt)
-        await session.commit()
-        await session.close()
+        async with DBManager(session_factory=async_session_maker) as db:
+            await db.session.execute(ingredients_stmt)
+            await db.commit()
     run(implement_query())
 
 

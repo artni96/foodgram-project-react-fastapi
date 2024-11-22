@@ -3,10 +3,10 @@ from http import HTTPStatus
 from fastapi import HTTPException, status
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlalchemy.orm import load_only
+from sqlalchemy.orm import load_only, selectinload
 
 from backend.src.constants import MAIN_URL, MOUNT_PATH
-from backend.src.models.recipes import RecipeModel
+from backend.src.models.recipes import RecipeModel, ImageModel
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
@@ -116,43 +116,82 @@ class SubscriptionRepository(BaseRepository):
         )
         return response
 
-    async def create(self, data: SubscriptionCreate):
-        try:
-            subscription_stmt = (
-                insert(self.model)
-                .values(**data.model_dump())
-                .returning(self.model.author_id)
+    async def create(self, data: SubscriptionCreate, recipes_limit: int):
+        # try:
+        subscription_stmt = (
+            insert(self.model)
+            .values(**data.model_dump())
+            .returning(self.model.author_id)
+        )
+        new_sub_result = await self.session.execute(subscription_stmt)
+        new_sub_result = new_sub_result.scalars().one()
+        user_info_stmt = (
+            select(
+                UserModel
             )
-            new_sub_result = await self.session.execute(subscription_stmt)
-            new_sub_result = new_sub_result.scalars().one()
-            user_info_stmt = (
-                select(
+            .filter(UserModel.id == new_sub_result)
+            .outerjoin(RecipeModel, RecipeModel.author == UserModel.id)
+            .options(
+                load_only(
                     UserModel.id,
                     UserModel.email,
                     UserModel.username,
                     UserModel.first_name,
-                    UserModel.last_name
+                    UserModel.last_name,
                 )
-                .select_from(UserModel)
-                .filter_by(id=new_sub_result)
+                .selectinload(UserModel.recipe).load_only(
+                    RecipeModel.id,
+                    RecipeModel.name,
+                    RecipeModel.image,
+                    RecipeModel.cooking_time
+                )
+                .selectinload(RecipeModel.image_info)
             )
-            user_info_response = await self.session.execute(user_info_stmt)
-            return self.schema.model_validate(
-                user_info_response.mappings().one(),
-                from_attributes=True
-            )
+        )
 
-        except IntegrityError as e:
-            if 'ForeignKeyViolationError' in str(e.__cause__):
-                raise HTTPException(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    detail='Пользователь не найден!'
+
+        user_info = await self.session.execute(user_info_stmt)
+        user_info = user_info.scalars().one()
+        recipe_list = list()
+        if user_info.recipe:
+            for recipe in user_info.recipe:
+                recipe_list.append(
+                    ShortRecipeRead(
+                        image=(
+                            f'{MAIN_URL}{MOUNT_PATH}/{recipe.image_info.name}'
+                        ),
+                        id=recipe.id,
+                        name=recipe.name,
+                        cooking_time=recipe.cooking_time
+                    )
                 )
-            elif 'UniqueViolationError' in str(e.__cause__):
-                raise HTTPException(
-                    status_code=HTTPStatus.BAD_REQUEST,
-                    detail='Вы уже подписанны на данного пользователя!'
-                )
+        sub_response = FollowedUserWithRecipiesRead(
+            email=user_info.email,
+            id=user_info.id,
+            username=user_info.username,
+            first_name=user_info.first_name,
+            last_name=user_info.last_name,
+            is_subscribed=True,
+            recipes=recipe_list[:recipes_limit],
+            recipes_count=len(recipe_list)
+        )
+        return sub_response
+        # return self.schema.model_validate(
+        #     user_info_response.mappings().one(),
+        #     from_attributes=True
+        # )
+
+        # except IntegrityError as e:
+        #     if 'ForeignKeyViolationError' in str(e.__cause__):
+        #         raise HTTPException(
+        #             status_code=HTTPStatus.NOT_FOUND,
+        #             detail='Пользователь не найден!'
+        #         )
+        #     elif 'UniqueViolationError' in str(e.__cause__):
+        #         raise HTTPException(
+        #             status_code=HTTPStatus.BAD_REQUEST,
+        #             detail='Вы уже подписанны на данного пользователя!'
+        #         )
 
     async def delete(self, **filter_by):
         stmt = delete(self.model).filter_by(**filter_by).returning(self.model)
