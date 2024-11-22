@@ -176,22 +176,6 @@ class SubscriptionRepository(BaseRepository):
             recipes_count=len(recipe_list)
         )
         return sub_response
-        # return self.schema.model_validate(
-        #     user_info_response.mappings().one(),
-        #     from_attributes=True
-        # )
-
-        # except IntegrityError as e:
-        #     if 'ForeignKeyViolationError' in str(e.__cause__):
-        #         raise HTTPException(
-        #             status_code=HTTPStatus.NOT_FOUND,
-        #             detail='Пользователь не найден!'
-        #         )
-        #     elif 'UniqueViolationError' in str(e.__cause__):
-        #         raise HTTPException(
-        #             status_code=HTTPStatus.BAD_REQUEST,
-        #             detail='Вы уже подписанны на данного пользователя!'
-        #         )
 
     async def delete(self, **filter_by):
         stmt = delete(self.model).filter_by(**filter_by).returning(self.model)

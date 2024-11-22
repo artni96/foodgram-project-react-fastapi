@@ -8,7 +8,7 @@ async def test_subscription_crud(db):
     users = await db.users.get_all(limit=2, page=1, router_prefix='/api/users')
     author, subscriber = users.result[0], users.result[1]
     sub_data = SubscriptionCreate(author_id = author.id, subscriber_id=subscriber.id)
-    await db.subscriptions.create(sub_data)
+    await db.subscriptions.create(data=sub_data, recipes_limit=3)
     await db.commit()
 
     user_subs = await db.subscriptions.get_user_subs(
@@ -17,7 +17,7 @@ async def test_subscription_crud(db):
         page=1,
         recipes_limit=3,
         offset=0,
-        router_prefix='/api/subscriptions'
+        router_prefix='/api/subscriptions',
     )
     assert len(user_subs.result) == 1
     assert user_subs.result[-1].id == author.id
