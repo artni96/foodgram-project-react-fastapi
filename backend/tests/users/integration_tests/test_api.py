@@ -1,11 +1,14 @@
 import pytest
 from fastapi import status
+from sqlalchemy import select
 
+from backend.src.models.users import UserModel
 from backend.src.services.users import current_user
 
 MAX_EMAIL_LENGTH = 254
 USER_PARAMS_MAX_LENGTH = 150
 
+@pytest.mark.order(3)
 @pytest.mark.parametrize(
     'username, email, password, first_name, last_name, status_code, detail',
     [
@@ -64,12 +67,15 @@ async def test_user_regestration(
         json={
             'username': username,
             'email': email,
-            'password': password
+            'password': password,
+            'first_name': first_name,
+            'last_name': last_name
         }
     )
     assert new_user.status_code == status_code, detail
 
 
+@pytest.mark.order(1)
 @pytest.mark.parametrize(
     'username, email, password, first_name, last_name, status_code',
     [
@@ -83,7 +89,8 @@ async def test_auth_flow(
         password,
         first_name,
         last_name,
-        status_code
+        status_code,
+        db
 ):
     new_user = await ac.post(
         '/api/users',
@@ -125,6 +132,19 @@ async def test_auth_flow(
     assert 'id' in user_info
     assert user_info['is_subscribed'] == False
 
+    current_user_info = await ac.get(
+        f'/api/users/{user_info["id"]}',
+        headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}
+    )
+    assert current_user_info.status_code == status.HTTP_200_OK
+
+    user_list = await ac.get(
+        f'/api/users',
+        headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}
+    )
+    assert user_list.status_code == status.HTTP_200_OK
+    assert len(user_list.json()['result']) == 2
+
     new_password = 'string123'
     password_chaning = await ac.post(
         '/api/users/set_password',
@@ -141,3 +161,38 @@ async def test_auth_flow(
         headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}
     )
     assert logout.status_code == status.HTTP_204_NO_CONTENT
+    await db.users.delete(id=user_info['id'])
+    user_list_stmt = select(
+        UserModel
+    )
+    user_list = await db.session.execute(user_list_stmt)
+    user_list = user_list.scalars().all()
+    await db.commit()
+    assert len(user_list) == 1
+
+
+@pytest.mark.order(2)
+async def test_not_auth_flow(ac):
+    user_list = await ac.get(
+        '/api/users'
+    )
+    assert user_list.status_code == status.HTTP_200_OK
+
+    user_list = await ac.get(
+        f'/api/users',
+    )
+    assert user_list.status_code == status.HTTP_200_OK
+    current_user_info = await ac.get(
+        f'/api/users/{user_list.json()["result"][-1]["id"]}',
+    )
+    assert current_user_info.status_code == status.HTTP_200_OK
+    user_id_to_check = user_list.json()["result"][-1]["id"]
+    current_user_info = await ac.get(
+        f'/api/users/{user_id_to_check}',
+    )
+    assert current_user_info.status_code == status.HTTP_200_OK
+    non_existent_user_id = user_id_to_check + 1
+    current_user_info = await ac.get(
+        f'/api/users/{non_existent_user_id}',
+    )
+    assert current_user_info.status_code == status.HTTP_404_NOT_FOUND

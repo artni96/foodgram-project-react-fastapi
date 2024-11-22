@@ -18,12 +18,11 @@ class UserRepository(BaseRepository):
 
     async def get_all(
         self,
-        user_id: int,
-        offset: int | None,
         limit: int,
         page: int,
-        router_prefix: str
-
+        router_prefix: str,
+        user_id: int | None = None,
+        offset: int | None = None,
     ):
         user_list_stmt = (
             select(self.model)
@@ -36,18 +35,20 @@ class UserRepository(BaseRepository):
             select(func.count('*').label('user_count'))
             .select_from(self.model)
         )
-        sub_ids_stmt = (
-            select(SubscriptionModel.author_id)
-            .filter_by(subscriber_id=user_id)
-            )
-        sub_ids = await self.session.execute(sub_ids_stmt)
-        sub_ids = sub_ids.scalars().all()
+        if user_id:
+            sub_ids_stmt = (
+                select(SubscriptionModel.author_id)
+                .filter_by(subscriber_id=user_id)
+                )
+            sub_ids = await self.session.execute(sub_ids_stmt)
+            sub_ids = sub_ids.scalars().all()
         user_list = await self.session.execute(user_list_stmt)
         user_list = user_list.scalars().all()
         users_count = await self.session.execute(users_count_stmt)
         users_count = users_count.scalars().one()
         user_list_result = list()
         for obj in user_list:
+
             current_obj = FollowedUserRead(
                 username=obj.username,
                 email=obj.email,
@@ -55,7 +56,10 @@ class UserRepository(BaseRepository):
                 first_name=obj.first_name,
                 last_name=obj.last_name
             )
-            if obj.id not in sub_ids:
+            if user_id:
+                if obj.id not in sub_ids:
+                    current_obj.is_subscribed = False
+            else:
                 current_obj.is_subscribed = False
             user_list_result.append(current_obj)
         paginator_values = url_paginator(

@@ -24,7 +24,7 @@ user_router.include_router(
 )
 async def get_user_list(
     db: DBDep,
-    current_user: UserDep,
+    current_user=Depends(optional_current_user),
     page: int | None = Query(default=None, title='Номер страницы'),
     limit: int | None = Query(
         default=None,
@@ -37,8 +37,20 @@ async def get_user_list(
         offset = (page - 1) * limit
     else:
         offset = None
+    filter_params = {
+        'limit': limit,
+        'offset': offset,
+        'page': page,
+        'router_prefix': ROUTER_PREFIX,
+        'user_id': None
+    }
+    if current_user:
+        current_user_id = current_user.id
+    else:
+        current_user_id = None
     result = await db.users.get_all(
-        user_id=current_user.id,
+        # **filter_params
+        user_id=current_user_id,
         limit=limit,
         offset=offset,
         page=page,
