@@ -18,7 +18,7 @@ class ImageManager:
             image_bytes = base64.b64decode(imgstr)
 
             with open(
-                f'backend/src/media/recipes/images/{image_name}.{ext}',
+                f'src/media/recipes/images/{image_name}.{ext}',
                 'wb'
             ) as f:
                 f.write(image_bytes)
@@ -30,7 +30,7 @@ class ImageManager:
             )
 
     def delete_file(self, file_name_with_ext):
-        file_path = f'backend/src/media/recipes/images/{file_name_with_ext}'
+        file_path = f'src/media/recipes/images/{file_name_with_ext}'
         if os.path.exists(file_path):
             os.remove(file_path)
         else:

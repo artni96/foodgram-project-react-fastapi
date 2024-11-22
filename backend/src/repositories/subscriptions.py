@@ -151,7 +151,7 @@ class SubscriptionRepository(BaseRepository):
 
 
         user_info = await self.session.execute(user_info_stmt)
-        user_info = user_info.scalars().one()
+        user_info = user_info.unique().scalars().one()
         recipe_list = list()
         if user_info.recipe:
             for recipe in user_info.recipe:

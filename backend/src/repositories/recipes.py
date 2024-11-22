@@ -262,6 +262,7 @@ class RecipeRepository(BaseRepository):
                 detail='Проверьте поля name, text, cooking_time, image'
             )
         ingredients_data = recipe_data.ingredient
+        ingredients_result = list()
         if ingredients_data:
             try:
                 _ingredients_data = (
@@ -282,6 +283,7 @@ class RecipeRepository(BaseRepository):
                     detail='Указанных ингредиентов нет в БД.'
                 )
         tags_data = recipe_data.tag
+        tags_result = list()
         if tags_data:
             try:
                 tags_result = await db.recipe_tags.create(
@@ -301,7 +303,7 @@ class RecipeRepository(BaseRepository):
             author=user_result,
             id=recipe_result.id,
             tags=tags_result,
-            ingredient=ingredients_result,
+            ingredients=ingredients_result,
             image=image_url
         )
         return response
