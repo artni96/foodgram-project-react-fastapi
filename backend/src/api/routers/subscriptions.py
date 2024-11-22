@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Path, Query, status
+from fastapi import APIRouter, Path, Query, status, HTTPException
+from sqlalchemy.exc import NoResultFound
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
@@ -80,8 +81,20 @@ async def unsubscribe(
     db: DBDep,
     current_user: UserDep
 ) -> None:
-    await db.subscriptions.delete(
-        author_id=user_id,
-        subscriber_id=current_user.id
-    )
-    await db.commit()
+    try:
+        await db.subscriptions.delete(
+            author_id=user_id,
+            subscriber_id=current_user.id
+        )
+        await db.commit()
+
+    except NoResultFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Подписка не найдена.'
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Не удалось отменить подписку.'
+        )

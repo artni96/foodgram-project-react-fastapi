@@ -54,7 +54,7 @@ class SubscriptionRepository(BaseRepository):
             )
             .filter(UserModel.id.in_(author_ids))
             .limit(limit)
-            .join(RecipeModel, RecipeModel.author == UserModel.id)
+            .outerjoin(RecipeModel, RecipeModel.author == UserModel.id)
             .options(
                 load_only(
                     UserModel.id,
@@ -96,17 +96,18 @@ class SubscriptionRepository(BaseRepository):
                         cooking_time=recipe.cooking_time
                     )
                 )
-        result_list.append(
-            FollowedUserWithRecipiesRead(
-                email=obj.email,
-                id=obj.id,
-                username=obj.username,
-                first_name=obj.first_name,
-                last_name=obj.last_name,
-                recipes=recipe_list[:recipes_limit],
-                recipes_count=len(recipe_list)
+            result_list.append(
+                FollowedUserWithRecipiesRead(
+                    email=obj.email,
+                    id=obj.id,
+                    username=obj.username,
+                    first_name=obj.first_name,
+                    last_name=obj.last_name,
+                    is_subscribed=True,
+                    recipes=recipe_list[:recipes_limit],
+                    recipes_count=len(recipe_list)
+                )
             )
-        )
         response = SubscriptionListRead(
             count=user_subs_count,
             next=paginator_values['next'],
@@ -154,17 +155,6 @@ class SubscriptionRepository(BaseRepository):
                 )
 
     async def delete(self, **filter_by):
-        try:
-            stmt = delete(self.model).filter_by().returning(self.model)
-            result = await self.session.execute(stmt)
-            result = result.scalars().one()
-        except NoResultFound:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Пользователь не найден.'
-            )
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Не удалось отписаться от пользователя'
-            )
+        stmt = delete(self.model).filter_by(**filter_by).returning(self.model)
+        sub_to_delete = await self.session.execute(stmt)
+        return sub_to_delete.scalars().one()
