@@ -3,10 +3,9 @@ from fastapi import status
 from sqlalchemy import select
 
 from backend.src.models.users import UserModel
-from backend.src.services.users import current_user
+from backend.tests.conftest import MAX_EMAIL_LENGTH, USER_PARAMS_MAX_LENGTH
 
-MAX_EMAIL_LENGTH = 254
-USER_PARAMS_MAX_LENGTH = 150
+
 
 @pytest.mark.order(3)
 @pytest.mark.parametrize(

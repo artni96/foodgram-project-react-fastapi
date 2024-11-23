@@ -278,10 +278,10 @@ class RecipeRepository(BaseRepository):
                 )
             except Exception:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Указанных ингредиентов нет в БД.'
                 )
-        tags_data = recipe_data.tags
+        tags_data = set(recipe_data.tags)
         tags_result = list()
         if tags_data:
             try:
@@ -292,7 +292,7 @@ class RecipeRepository(BaseRepository):
                 )
             except Exception:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Указанных тегов нет в БД.'
                 )
         print(generated_image_name)
@@ -401,7 +401,7 @@ class RecipeRepository(BaseRepository):
                     detail='Указанных ингредиентов нет в БД.'
                 )
 
-        tags_data = recipe_data.tags
+        tags_data = set(recipe_data.tags)
         tags_result = list()
         if tags_data:
             try:

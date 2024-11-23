@@ -20,6 +20,11 @@ from backend.src.schemas.tags import TagCreate
 import os
 
 
+MAX_EMAIL_LENGTH = 254
+USER_PARAMS_MAX_LENGTH = 150
+PARAMS_MAX_LENGTH = 200
+
+
 @pytest.fixture(scope='session', autouse=True)
 async def check_test_mode():
     assert settings.MODE == 'TEST'
