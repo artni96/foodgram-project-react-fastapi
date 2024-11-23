@@ -14,7 +14,7 @@ recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты',])
 
 
 @recipe_router.get(
-    '/',
+    '',
     status_code=status.HTTP_200_OK,
     summary='Список рецептов',
     description=(
@@ -73,7 +73,7 @@ async def get_recipe(
 
 
 @recipe_router.post(
-    '/',
+    '',
     status_code=status.HTTP_201_CREATED,
     summary='Создание рецепта',
     description='Доступно только авторизованному пользователю'

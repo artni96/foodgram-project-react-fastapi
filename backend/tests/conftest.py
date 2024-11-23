@@ -32,10 +32,12 @@ async def setup_database():
         images_to_del_stmt = select(ImageModel.name)
         image_list = await conn.execute(images_to_del_stmt)
         image_list = image_list.scalars().all()
+        print(image_list)
         for image in image_list:
             image_to_delete = (
                 f'{media_path}/src{MOUNT_PATH}/{image}'
             )
+            print(image_to_delete)
             if os.path.exists(image_to_delete):
                 os.remove(image_to_delete)
     async with engine.begin() as conn:
@@ -115,7 +117,7 @@ async def tags_fixture(db):
     await db.tags.bulk_create(tags_objs)
     await db.commit()
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 async def recipe_creation_fixture(
 ):
     initial_data = {

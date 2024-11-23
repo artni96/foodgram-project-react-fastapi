@@ -48,7 +48,7 @@ class RecipeRepository(BaseRepository):
             page,
             router_prefix
     ):
-        '''Получение отфильтрованного списка рецептов.'''
+        """Получение отфильтрованного списка рецептов."""
         filtered_recipe_id_list_stmt = (
             select(
                 self.model.id
@@ -133,7 +133,7 @@ class RecipeRepository(BaseRepository):
         return result
 
     async def get_one_or_none(self, id, current_user, db):
-        '''Получение репепта по id если он существует.'''
+        """Получение репепта по id если он существует."""
         try:
             ingredient_list_stmt = (
                 select(
@@ -222,25 +222,24 @@ class RecipeRepository(BaseRepository):
             )
 
     async def create(self, recipe_data: RecipeCreateRequest, db, current_user_id: int):
-        '''Создание нового рецепта.'''
+        """Создание нового рецепта."""
         _recipe_data = RecipeCreate(
             **recipe_data.model_dump(),
             author=current_user_id,
         )
         try:
-            generated_image_name = ImageManager().create_random_name()
-            while await self.check_image_name(generated_image_name):
-                generated_image_name = ImageManager().create_random_name()
             image_base64 = _recipe_data.image
-            image_name = ImageManager().base64_to_file(
-                base64_string=image_base64,
-                image_name=generated_image_name)
+            generated_image_name = ImageManager().create_random_name(image_base64)
+            # print(generated_image_name)
+            while await self.check_image_name(generated_image_name):
+                generated_image_name = ImageManager().create_random_name(image_base64)
+
             image_url = (
                 f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
-                f'/{image_name}'
+                f'/{generated_image_name}'
             )
             image_id = await self.create_image(
-                name=image_name,
+                name=generated_image_name,
                 base64=image_base64
             )
             _recipe_data.image = image_id
@@ -279,7 +278,7 @@ class RecipeRepository(BaseRepository):
                 )
             except Exception:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_404_NOT_FOUND,
                     detail='Указанных ингредиентов нет в БД.'
                 )
         tags_data = recipe_data.tags
@@ -293,9 +292,13 @@ class RecipeRepository(BaseRepository):
                 )
             except Exception:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_404_NOT_FOUND,
                     detail='Указанных тегов нет в БД.'
                 )
+        print(generated_image_name)
+        ImageManager().base64_to_file(
+            base64_string=image_base64,
+            image_name=generated_image_name)
         response = self.schema(
             name=recipe_result.name,
             text=recipe_result.text,
@@ -344,14 +347,13 @@ class RecipeRepository(BaseRepository):
                 image_to_delete = (
                     f'{media_path}{MOUNT_PATH}/{current_image.name}'
                 )
-                # print(image_to_delete)
                 if os.path.exists(image_to_delete):
                     os.remove(image_to_delete)
                 image_base64 = _recipe_data.image
                 _recipe_data.image = current_image.id
                 image_name = ImageManager().base64_to_file(
                     base64_string=image_base64,
-                    image_name=current_image.name.split('.')[0])
+                    image_name=current_image.name)
 
             else:
                 _recipe_data.image = image_result.id
@@ -481,14 +483,14 @@ class RecipeRepository(BaseRepository):
             await self.session.execute(ids_to_delete)
 
     async def check_image_name(self, new_image_name: str):
-        '''Проверка уникальности названия картинки.'''
+        """Проверка уникальности названия картинки."""
         image_stmt = select(ImageModel).filter_by(name=new_image_name)
         result = await self.session.execute(image_stmt)
         return result.scalars().one_or_none()
 
     async def create_image(self, name, base64):
-        '''Создание записи в БД с данными (названием и
-         исходных base64) новой картинки.'''
+        """Создание записи в БД с данными (названием и
+         исходных base64) новой картинки."""
         image_stmt = insert(ImageModel).values(
             {'name': name, 'base64': base64}
         ).returning(ImageModel.id)
@@ -496,7 +498,7 @@ class RecipeRepository(BaseRepository):
         return image_result.scalars().one()
 
     async def check_recipe_exists(self, id: int):
-        '''Проверка на наличие рецепта в бд с указанным id.'''
+        """Проверка на наличие рецепта в бд с указанным id."""
         stmt = select(self.model.author, self.model.id).filter_by(id=id)
         result = await self.session.execute(stmt)
         result = result.mappings().one_or_none()

@@ -14,15 +14,15 @@ class ImageManager:
             base64_string.startswith('data:image')
         ):
             format, imgstr = base64_string.split(';base64,')
-            ext = format.split('/')[-1]
+            # ext = format.split('/')[-1]
             image_bytes = base64.b64decode(imgstr)
 
             with open(
-                f'src/media/recipes/images/{image_name}.{ext}',
+                f'src/media/recipes/images/{image_name}',
                 'wb'
             ) as f:
                 f.write(image_bytes)
-            return f'{image_name}.{ext}'
+            # return f'{image_name}.{ext}'
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -41,8 +41,10 @@ class ImageManager:
             encoded_string = base64.b64encode(image_file.read())
             return encoded_string
 
-    def create_random_name(self):
+    def create_random_name(self, base64_string):
         random_name = ''
         while len(random_name) < 10:
             random_name += random.choice(string.ascii_letters)
-        return random_name
+        format = base64_string.split(';base64,')[0]
+        ext = format.split('/')[-1]
+        return f'{random_name}.{ext}'
