@@ -1,18 +1,23 @@
 import json
+import pathlib
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import True_
+from sqlalchemy import True_, select
 
 from backend.src.base import *
 from backend.src.config import settings
+from backend.src.constants import MOUNT_PATH
 from backend.src.db import engine, async_session_maker
 from backend.src.db_manager import DBManager
-from backend.src.schemas.ingredients import IngredientCreate
+from backend.src.models.recipes import ImageModel
+from backend.src.schemas.ingredients import IngredientCreate, IngredientAmountCreate
 from backend.src.main import app
 from fastapi import status
 
+from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest
 from backend.src.schemas.tags import TagCreate
+import os
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -22,6 +27,17 @@ async def check_test_mode():
 
 @pytest.fixture(scope='session', autouse=True)
 async def setup_database():
+    async with engine.connect() as conn:
+        media_path = pathlib.Path(__file__).parent.parent.resolve()
+        images_to_del_stmt = select(ImageModel.name)
+        image_list = await conn.execute(images_to_del_stmt)
+        image_list = image_list.scalars().all()
+        for image in image_list:
+            image_to_delete = (
+                f'{media_path}/src{MOUNT_PATH}/{image}'
+            )
+            if os.path.exists(image_to_delete):
+                os.remove(image_to_delete)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
@@ -95,6 +111,71 @@ async def tags_fixture(db):
             "slug": "dinner"
         }
     ]
-    tags_schemas = [TagCreate.model_validate(obj) for obj in tags_data]
-    await db.tags.bulk_create(tags_schemas)
+    tags_objs = [TagCreate.model_validate(obj) for obj in tags_data]
+    await db.tags.bulk_create(tags_objs)
     await db.commit()
+
+@pytest.fixture()
+async def recipe_creation_fixture(
+):
+    initial_data = {
+        "name": "name",
+        "text": "text",
+        "cooking_time": 10,
+        "tags": [
+            2,
+            3
+        ],
+        "ingredients": [
+            {
+                "id": 1,
+                "amount": 100
+            },
+            {
+                "id": 2,
+                "amount": 200
+            }
+        ],
+        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg=="
+    }
+    recipe_data = RecipeCreateRequest(
+        name=initial_data['name'],
+        text=initial_data['text'],
+        cooking_time=initial_data['cooking_time'],
+        tags=initial_data['tags'],
+        ingredients=initial_data['ingredients'],
+        image=initial_data['image']
+    )
+    return recipe_data
+
+@pytest.fixture()
+async def recipe_updating_fixture(
+):
+    initial_data = {
+        "name": "updated name",
+        "text": "updated text",
+        "cooking_time": 20,
+        "tags": [
+            4,
+        ],
+        "ingredients": [
+            {
+                "id": 3,
+                "amount": 300
+            },
+            {
+                "id": 3,
+                "amount": 400
+            }
+        ],
+        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEBAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg=="
+    }
+    recipe_data = RecipeUpdateRequest(
+        name=initial_data['name'],
+        text=initial_data['text'],
+        cooking_time=initial_data['cooking_time'],
+        tags=initial_data['tags'],
+        ingredients=initial_data['ingredients'],
+        image=initial_data['image']
+    )
+    return recipe_data

@@ -221,11 +221,11 @@ class RecipeRepository(BaseRepository):
                 detail='Рецепт не найден.'
             )
 
-    async def create(self, recipe_data: RecipeCreateRequest, db, current_user):
+    async def create(self, recipe_data: RecipeCreateRequest, db, current_user_id: int):
         '''Создание нового рецепта.'''
         _recipe_data = RecipeCreate(
             **recipe_data.model_dump(),
-            author=current_user.id,
+            author=current_user_id,
         )
         try:
             generated_image_name = ImageManager().create_random_name()
@@ -261,7 +261,7 @@ class RecipeRepository(BaseRepository):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Проверьте поля name, text, cooking_time, image'
             )
-        ingredients_data = recipe_data.ingredient
+        ingredients_data = recipe_data.ingredients
         ingredients_result = list()
         if ingredients_data:
             try:
@@ -282,7 +282,7 @@ class RecipeRepository(BaseRepository):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Указанных ингредиентов нет в БД.'
                 )
-        tags_data = recipe_data.tag
+        tags_data = recipe_data.tags
         tags_result = list()
         if tags_data:
             try:
@@ -308,7 +308,7 @@ class RecipeRepository(BaseRepository):
         )
         return response
 
-    async def update(self, recipe_data: RecipeUpdateRequest, db, id):
+    async def update(self, recipe_data: RecipeUpdateRequest, db, id: int):
         _recipe_data = RecipeUpdate(
             **recipe_data.model_dump(),
             id=id
@@ -344,7 +344,7 @@ class RecipeRepository(BaseRepository):
                 image_to_delete = (
                     f'{media_path}{MOUNT_PATH}/{current_image.name}'
                 )
-                print(image_to_delete)
+                # print(image_to_delete)
                 if os.path.exists(image_to_delete):
                     os.remove(image_to_delete)
                 image_base64 = _recipe_data.image
@@ -377,7 +377,8 @@ class RecipeRepository(BaseRepository):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Проверьте поля name, text, cooking_time, image'
             )
-        ingredients_data = recipe_data.ingredient
+        ingredients_data = recipe_data.ingredients
+        ingredients_result = list()
         if ingredients_data:
             try:
                 _ingredients_data = (
@@ -398,7 +399,8 @@ class RecipeRepository(BaseRepository):
                     detail='Указанных ингредиентов нет в БД.'
                 )
 
-        tags_data = recipe_data.tag
+        tags_data = recipe_data.tags
+        tags_result = list()
         if tags_data:
             try:
                 tags_result = await db.recipe_tags.update(
@@ -417,8 +419,8 @@ class RecipeRepository(BaseRepository):
             cooking_time=updated_recipe_result.cooking_time,
             author=user_result,
             id=updated_recipe_result.id,
-            tag=tags_result,
-            ingredient=ingredients_result,
+            tags=tags_result,
+            ingredients=ingredients_result,
             image=image_url
         )
         return response
@@ -434,7 +436,7 @@ class RecipeRepository(BaseRepository):
         recipe_ingredient_amount_ids = (
             recipe_ingredient_amount_ids.scalars().all()
         )
-        print(recipe_ingredient_amount_ids)
+        # print(recipe_ingredient_amount_ids)
         recipe_to_delete_stmt = (
             delete(self.model)
             .filter_by(id=id)
@@ -478,7 +480,7 @@ class RecipeRepository(BaseRepository):
             )
             await self.session.execute(ids_to_delete)
 
-    async def check_image_name(self, new_image_name):
+    async def check_image_name(self, new_image_name: str):
         '''Проверка уникальности названия картинки.'''
         image_stmt = select(ImageModel).filter_by(name=new_image_name)
         result = await self.session.execute(image_stmt)
@@ -493,7 +495,8 @@ class RecipeRepository(BaseRepository):
         image_result = await self.session.execute(image_stmt)
         return image_result.scalars().one()
 
-    async def check_recipe_exists(self, id):
+    async def check_recipe_exists(self, id: int):
+        '''Проверка на наличие рецепта в бд с указанным id.'''
         stmt = select(self.model.author, self.model.id).filter_by(id=id)
         result = await self.session.execute(stmt)
         result = result.mappings().one_or_none()

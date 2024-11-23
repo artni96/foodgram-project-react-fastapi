@@ -87,7 +87,7 @@ async def create_recipe(
 ):
     recipe = await db.recipes.create(
         recipe_data=recipe_data,
-        current_user=current_user,
+        current_user_id=current_user.id,
         db=db
     )
     await db.commit()

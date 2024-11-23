@@ -1,4 +1,4 @@
-from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from backend.src.constants import PARAMS_MAX_LENGTH
 from backend.src.schemas.ingredients import (IngredientAmountCreateRequest,
@@ -17,8 +17,8 @@ class BaseRecipe(BaseModel):
 
 class RecipeCreateRequest(BaseRecipe):
 
-    tag: list[int] = []
-    ingredient: list[IngredientAmountCreateRequest] = []
+    tags: list[int] = []
+    ingredients: list[IngredientAmountCreateRequest] = []
     image: str
 
     model_config = {
@@ -29,8 +29,8 @@ class RecipeCreateRequest(BaseRecipe):
                         "name": "string",
                         "text": "string",
                         "cooking_time": 1,
-                        "tag": [1, 2],
-                        "ingredient": [
+                        "tags": [1, 2],
+                        "ingredients": [
                             {'id': 1, 'amount': 100},
                             {'id': 2, 'amount': 200},
                         ],
@@ -58,7 +58,7 @@ class RecipeUpdate(BaseRecipe):
 class RecipeAfterCreateRead(RecipeCreate):
     id: int
     author: FollowedUserRead
-    image: AnyHttpUrl
+    image: str
 
 
 class RecipeRead(RecipeAfterCreateRead):
@@ -87,7 +87,7 @@ class FavoriteRecipeCreate(BaseModel):
 class FavoriteRecipeRead(BaseModel):
     id: int
     name: str
-    image: AnyHttpUrl
+    image: str
     cooking_time: int
 
 
