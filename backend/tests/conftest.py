@@ -37,7 +37,6 @@ async def setup_database():
         images_to_del_stmt = select(ImageModel.name)
         image_list = await conn.execute(images_to_del_stmt)
         image_list = image_list.scalars().all()
-        print(image_list)
         for image in image_list:
             image_to_delete = (
                 f'{media_path}/src{MOUNT_PATH}/{image}'

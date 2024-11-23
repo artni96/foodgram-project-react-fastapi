@@ -195,3 +195,18 @@ async def test_recipe_updating(
         }
     )
     assert updated_recipe.status_code == status_code
+    if updated_recipe.status_code == status.HTTP_200_OK:
+        assert updated_recipe.json()['name'] == name
+        assert updated_recipe.json()['text'] == text
+        assert updated_recipe.json()['cooking_time'] == cooking_time
+
+
+async def test_recipe_removing(auth_ac):
+    recipes = await auth_ac.get(
+        '/api/recipes'
+    )
+    recipe_to_delete = recipes.json()['result'][0]['id']
+    removed_recipe = await auth_ac.delete(
+        f'/api/recipes/{recipe_to_delete}'
+    )
+    assert removed_recipe.status_code == status.HTTP_204_NO_CONTENT

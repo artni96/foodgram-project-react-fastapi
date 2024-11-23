@@ -121,7 +121,7 @@ async def update_recipe(
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail='Редакция рецепта доступна только его автору.'
+                detail='Редактирование рецепта доступна только его автору.'
             )
     else:
         raise HTTPException(
@@ -150,7 +150,7 @@ async def delete_recipe(
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail='Редакция рецепта доступна только его автору.'
+                detail='Редактирование рецепта доступна только его автору.'
             )
     else:
         raise HTTPException(

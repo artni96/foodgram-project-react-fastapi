@@ -295,7 +295,7 @@ class RecipeRepository(BaseRepository):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Указанных тегов нет в БД.'
                 )
-        print(generated_image_name)
+        # print(generated_image_name)
         ImageManager().base64_to_file(
             base64_string=image_base64,
             image_name=generated_image_name)

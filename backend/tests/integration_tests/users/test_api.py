@@ -60,7 +60,6 @@ async def test_user_regestration(
     status_code,
     detail
 ):
-    print(email)
     new_user = await ac.post(
         '/api/users',
         json={
