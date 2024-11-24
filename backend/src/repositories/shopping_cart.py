@@ -1,5 +1,5 @@
+from fastapi.responses import FileResponse
 from sqlalchemy import func, select
-from fastapi import Response
 
 from backend.src.models.ingredients import (IngredientAmountModel,
                                             IngredientModel,
@@ -57,4 +57,10 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
             for elem in product_list.mappings().all()
         ]
         pdf_file = give_shopping_list(data=result_list, username=username)
-        return result_list
+        return FileResponse(
+            path=pdf_file,
+            media_type='multipart/form-data',
+            headers={
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': f'attachment; filename={pdf_file.split("/")[-1]}'}
+        )

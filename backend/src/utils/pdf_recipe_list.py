@@ -19,5 +19,6 @@ def give_shopping_list(data, username):
     output_text = template.render(context)
 
     config = pdfkit.configuration(wkhtmltopdf='/usr/bin/wkhtmltopdf')
-    output_pdf = f'{datetime.now().strftime("%d.%m.%Y_%H:%M")}_shopping_list.pdf'
+    output_pdf = f'src/utils/shopping_lists/{datetime.now().strftime("%d.%m.%Y_%H:%M:%S")}_{username}_shopping_list.pdf'
     pdfkit.from_string(output_text, output_pdf, configuration=config)
+    return output_pdf
