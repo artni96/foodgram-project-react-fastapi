@@ -5,7 +5,7 @@ import pathlib
 import pytest
 from fastapi import status
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from backend.src.base import *
 from backend.src.config import settings
@@ -51,8 +51,30 @@ async def setup_database():
         ingredients = json.load(file)
     ingredients_data = [IngredientCreate.model_validate(obj_data) for obj_data in ingredients]
 
+    tags_data = [
+        {
+            "name": "Завтрак",
+            "color": "#f5945c",
+            "slug": "breakfast"
+        },
+        {
+            "name": "Обед",
+            "color": "#75ba75",
+            "slug": "lunch"
+        },
+        {
+            "name": "Ужин",
+            "color": "#be95be",
+            "slug": "dinner"
+        }
+    ]
+    tags_objs = [TagCreate.model_validate(obj) for obj in tags_data]
+
     async with DBManager(session_factory=async_session_maker) as _db:
         await _db.ingredients.bulk_create(ingredients_data)
+        await _db.commit()
+
+        await _db.tags.bulk_create(tags_objs)
         await _db.commit()
 
 
@@ -79,7 +101,14 @@ async def add_new_user(ac):
             "username": "test_user_1",
         })
     assert new_user.status_code == status.HTTP_201_CREATED
-
+    another_new_user = await ac.post(
+        "/api/users",
+        json={
+            "email": "test_user_2@ya.net",
+            "password": "string",
+            "username": "test_user_2",
+        })
+    assert another_new_user.status_code == status.HTTP_201_CREATED
 
 @pytest.fixture(scope='session')
 async def auth_ac(ac):
@@ -99,33 +128,26 @@ async def auth_ac(ac):
         yield ac
 
 
-@pytest.fixture()
-async def tags_fixture(db):
-    tags_data = [
-        {
-            "name": "Завтрак",
-            "color": "#f5945c",
-            "slug": "breakfast"
-        },
-        {
-            "name": "Обед",
-            "color": "#75ba75",
-            "slug": "lunch"
-        },
-        {
-            "name": "Ужин",
-            "color": "#be95be",
-            "slug": "dinner"
+@pytest.fixture(scope='session')
+async def another_auth_ac(ac):
+    jwt_token = await ac.post(
+        'api/users/token/login',
+        data={
+            "username": "test_user_1@ya.net",
+            "password": "string"
         }
-    ]
-    tags_objs = [TagCreate.model_validate(obj) for obj in tags_data]
-    await db.tags.bulk_create(tags_objs)
-    await db.commit()
+    )
+    assert jwt_token.status_code == status.HTTP_200_OK
+    assert isinstance(jwt_token.json()['access_token'], str)
+    async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test",
+            headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}) as ac:
+        yield ac
 
 
-@pytest.fixture(autouse=True)
-async def recipe_creation_fixture(
-):
+@pytest.fixture()
+async def recipe_creation_fixture():
     initial_data = {
         "name": "name",
         "text": "text",
@@ -158,14 +180,13 @@ async def recipe_creation_fixture(
 
 
 @pytest.fixture()
-async def recipe_updating_fixture(
-):
+async def recipe_updating_fixture():
     initial_data = {
         "name": "updated name",
         "text": "updated text",
         "cooking_time": 20,
         "tags": [
-            4,
+            1,
         ],
         "ingredients": [
             {
@@ -188,3 +209,39 @@ async def recipe_updating_fixture(
         image=initial_data['image']
     )
     return recipe_data
+
+
+@pytest.fixture()
+async def recipe_bulk_creating_fixture(db, recipe_creation_fixture):
+    tags_combinations = (1, 2, 3, (1, 2), (1, 3), (2, 3), (1, 2, 3))
+    recipe_author_ids = (1, 1, 1, 2, 2, 2, 2)
+    for _ in range(len(tags_combinations)):
+        current_recipe = recipe_creation_fixture
+        current_recipe.tags == tags_combinations[_]
+        await db.recipes.create(recipe_data=current_recipe, db=db, current_user_id=recipe_author_ids[_])
+    recipes_data = {
+        'author':
+            {
+                1: 3,
+                2: 4
+            },
+        'tags':
+            {
+                1: 4,
+                2: 4,
+                3: 4
+            },
+        'recipes_count': len(tags_combinations)
+    }
+    await db.commit()
+    return {'result': recipes_data}
+
+
+@pytest.fixture()
+async def removing_recipes_after_tests(db):
+    stmt = delete(RecipeModel)
+    await db.session.execute(stmt)
+    await db.commit()
+    existing_recipes_stmt = select(RecipeModel)
+    existing_recipes = await db.session.execute(existing_recipes_stmt)
+    return existing_recipes.scalars().all()

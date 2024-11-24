@@ -1,14 +1,4 @@
-from fileinput import filename
+tags_combinations = (1, 2, 3, (1, 2), (1, 3), (2, 3), (1, 2, 3))
+recipe_author_ids = (1, 1, 1, 2, 2, 2, 2)
 
-from pypdf import PdfWriter
-
-def create_items_list():
-    writer = PdfWriter()
-    page = writer.add_blank_page(210, 297)
-
-
-    with open('test_123.pdf', 'wb') as f:
-        writer.write(f)
-
-if __name__ == '__main__':
-    create_items_list()
+print(set(tags_combinations))

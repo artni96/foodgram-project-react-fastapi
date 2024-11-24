@@ -5,9 +5,9 @@ from backend.src.schemas.tags import TagCreate
 @pytest.mark.order(5)
 async def test_tags_crud(db):
     tag_data = {
-        "name": "Завтрак",
+        "name": "ЗОЖ",
         "color": "#f5945c",
-        "slug": "breakfast"
+        "slug": "healthy-life-style"
     }
     tag_data = TagCreate.model_validate(tag_data)
     new_tag = await db.tags.create(tag_data) # only for admins
@@ -22,8 +22,8 @@ async def test_tags_crud(db):
     assert get_tag_by_id.color == tag_data.color
 
     get_tag_list = await db.tags.get_all()
-    assert len(get_tag_list) == 1
+    assert len(get_tag_list) == 4
 
     await db.tags.delete(id=new_tag.id) # only for admins
     get_tag_list = await db.tags.get_all()
-    assert not get_tag_list
+    assert len(get_tag_list) == 3

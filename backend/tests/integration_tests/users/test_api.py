@@ -6,7 +6,7 @@ from backend.src.models.users import UserModel
 from backend.tests.conftest import MAX_EMAIL_LENGTH, USER_PARAMS_MAX_LENGTH
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(4)
 @pytest.mark.parametrize(
     'username, email, password, first_name, last_name, status_code, detail',
     [
@@ -140,7 +140,7 @@ async def test_auth_flow(
         headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}
     )
     assert user_list.status_code == status.HTTP_200_OK
-    assert len(user_list.json()['result']) == 2
+    assert len(user_list.json()['result']) == 3
 
     new_password = 'string123'
     password_chaning = await ac.post(
@@ -165,7 +165,7 @@ async def test_auth_flow(
     user_list = await db.session.execute(user_list_stmt)
     user_list = user_list.scalars().all()
     await db.commit()
-    assert len(user_list) == 1
+    assert len(user_list) == 2
 
 
 @pytest.mark.order(2)

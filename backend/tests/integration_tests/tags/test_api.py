@@ -3,7 +3,7 @@ from fastapi import status
 
 
 @pytest.mark.order(6)
-async def test_get_tag(ac, tags_fixture):
+async def test_get_tag(ac):
     tags_result = await ac.get('/api/tags')
     assert tags_result.status_code == status.HTTP_200_OK
 

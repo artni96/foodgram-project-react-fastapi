@@ -1,3 +1,5 @@
+import pytest
+
 from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest
 
 
