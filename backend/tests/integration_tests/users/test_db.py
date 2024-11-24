@@ -1,5 +1,4 @@
 import pytest
-from fastapi import HTTPException
 
 
 @pytest.mark.order(4)

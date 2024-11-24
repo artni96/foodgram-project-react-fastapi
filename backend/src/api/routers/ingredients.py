@@ -13,8 +13,8 @@ router = APIRouter(prefix='/api/ingredients', tags=['Ингредиенты'])
     status_code=status.HTTP_200_OK
 )
 async def get_ingredient_by_id(
-    db: DBDep,
-    id: int
+        db: DBDep,
+        id: int
 ):
     result = await db.ingredients.get_one_or_none(id=id)
     return result
@@ -27,8 +27,8 @@ async def get_ingredient_by_id(
     status_code=status.HTTP_200_OK
 )
 async def get_filtered_ingredients_by_name(
-    db: DBDep,
-    name: str | None = None
+        db: DBDep,
+        name: str | None = None
 ):
     result = await db.ingredients.get_filtered(name=name)
     return result

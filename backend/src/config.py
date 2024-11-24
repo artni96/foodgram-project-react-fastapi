@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     def DB_URL(self) -> str:
         url = (
             f'postgresql+asyncpg://{self.DB_USER}:'
-            f'{self.DB_USER_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/'
-            f'{self.DB_NAME}'
+           f'{self.DB_USER_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/'
+           f'{self.DB_NAME}'
         )
         return url
 

@@ -10,7 +10,7 @@ from backend.src.schemas.recipes import (FavoriteRecipeCreate,
 from backend.src.services.users import optional_current_user
 
 ROUTER_PREFIX = '/api/recipes'
-recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты',])
+recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
 
 
 @recipe_router.get(
@@ -18,8 +18,8 @@ recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты',])
     status_code=status.HTTP_200_OK,
     summary='Список рецептов',
     description=(
-        'Страница доступна всем пользователям. Доступна фильтрация по '
-        'избранному, автору, списку покупок и тегам.'
+            'Страница доступна всем пользователям. Доступна фильтрация по '
+            'избранному, автору, списку покупок и тегам.'
     )
 )
 async def get_recipe_list(
@@ -135,11 +135,11 @@ async def update_recipe(
     status_code=status.HTTP_204_NO_CONTENT,
     summary='Удаление рецепта',
     description='Доступно только автору данного рецепта'
-    )
+)
 async def delete_recipe(
-    db: DBDep,
-    current_user: UserDep,
-    id: int
+        db: DBDep,
+        current_user: UserDep,
+        id: int
 ):
     check_recipe = await db.recipes.check_recipe_exists(id=id)
     if check_recipe:
@@ -161,7 +161,7 @@ async def delete_recipe(
 
 favorite_recipe_router = APIRouter(
     prefix=ROUTER_PREFIX,
-    tags=['Избранное',]
+    tags=['Избранное', ]
 )
 
 
@@ -215,7 +215,7 @@ async def cancel_favorite_recipe(
 
 shopping_cart_router = APIRouter(
     prefix=ROUTER_PREFIX,
-    tags=['Список покупок',]
+    tags=['Список покупок', ]
 )
 
 
@@ -253,7 +253,12 @@ async def add_recipe_to_shopping_cart(
     try:
         result = await db.shopping_cart.create(data=favorite_recipe_data)
         await db.commit()
-    except IntegrityError:
+    except IntegrityError as e:
+        if 'отсутствует в таблице "recipe"' in str(e.__cause__):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Рецепт не найден.'
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Рецепт уже в списке покупок.'

@@ -1,0 +1,12 @@
+<head>
+  <meta charset="UTF-8">
+</head>
+<hr />
+<p style="text-align: center;"><strong>Список покупок пользователя {{username}}</strong></p>
+<hr />
+<ul>
+    {% for elem in item_dict %}
+        <li style="text-align: left; margin: 10px 0">{{ elem }}</li>
+    {% endfor %}
+</ul>
+<p style="text-align: left;">Дата и время создания списка покупок: {{today_date}}</p>

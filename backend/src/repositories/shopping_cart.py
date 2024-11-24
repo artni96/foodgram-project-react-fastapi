@@ -1,11 +1,14 @@
 from sqlalchemy import func, select
+from fastapi import Response
 
 from backend.src.models.ingredients import (IngredientAmountModel,
                                             IngredientModel,
                                             RecipeIngredientModel)
 from backend.src.models.recipes import ShoppingCartModel
+from backend.src.models.users import UserModel
 from backend.src.repositories.favorite_recipes import FavoriteRecipeRepository
 from backend.src.schemas.recipes import ShoppingCartRecipeRead
+from backend.src.utils.pdf_recipe_list import give_shopping_list
 
 
 class ShoppingCartRepository(FavoriteRecipeRepository):
@@ -20,7 +23,8 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
                 (
                     func.count(IngredientModel.name) *
                     IngredientAmountModel.amount
-                ).label('total_amount')
+                ).label('total_amount'),
+                IngredientModel.measurement_unit
             )
             .select_from(RecipeIngredientModel)
             .group_by(IngredientModel.id, IngredientAmountModel.amount)
@@ -42,7 +46,15 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
             )
 
         )
+        username_stmt = select(UserModel.username).filter_by(id=user_id)
+        username = await self.session.execute(username_stmt)
+        username = username.scalars().one()
         product_list = await self.session.execute(
             user_product_list_stmt
         )
-        return product_list.mappings().all()
+        result_list = [
+            f'{elem["name"].capitalize()} - {elem["total_amount"]} {elem["measurement_unit"]}'
+            for elem in product_list.mappings().all()
+        ]
+        pdf_file = give_shopping_list(data=result_list, username=username)
+        return result_list

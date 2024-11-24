@@ -1,23 +1,22 @@
 import json
+import os
 import pathlib
 
 import pytest
+from fastapi import status
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import True_, select
+from sqlalchemy import select
 
 from backend.src.base import *
 from backend.src.config import settings
 from backend.src.constants import MOUNT_PATH
 from backend.src.db import engine, async_session_maker
 from backend.src.db_manager import DBManager
-from backend.src.models.recipes import ImageModel
-from backend.src.schemas.ingredients import IngredientCreate, IngredientAmountCreate
 from backend.src.main import app
-from fastapi import status
-
+from backend.src.models.recipes import ImageModel
+from backend.src.schemas.ingredients import IngredientCreate
 from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest
 from backend.src.schemas.tags import TagCreate
-import os
 
 
 MAX_EMAIL_LENGTH = 254
@@ -62,10 +61,11 @@ async def db():
     async with DBManager(session_factory=async_session_maker) as db:
         yield db
 
+
 @pytest.fixture(scope='session')
 async def ac(setup_database):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test") as ac:
+            transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
 
@@ -73,7 +73,7 @@ async def ac(setup_database):
 async def add_new_user(ac):
     new_user = await ac.post(
         "/api/users",
-        json = {
+        json={
             "email": "test_user_1@ya.net",
             "password": "string",
             "username": "test_user_1",
@@ -85,7 +85,7 @@ async def add_new_user(ac):
 async def auth_ac(ac):
     jwt_token = await ac.post(
         'api/users/token/login',
-        data = {
+        data={
             "username": "test_user_1@ya.net",
             "password": "string"
         }
@@ -93,10 +93,11 @@ async def auth_ac(ac):
     assert jwt_token.status_code == status.HTTP_200_OK
     assert isinstance(jwt_token.json()['access_token'], str)
     async with AsyncClient(
-        transport=ASGITransport(app=app),
+            transport=ASGITransport(app=app),
             base_url="http://test",
             headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}) as ac:
         yield ac
+
 
 @pytest.fixture()
 async def tags_fixture(db):
@@ -120,6 +121,7 @@ async def tags_fixture(db):
     tags_objs = [TagCreate.model_validate(obj) for obj in tags_data]
     await db.tags.bulk_create(tags_objs)
     await db.commit()
+
 
 @pytest.fixture(autouse=True)
 async def recipe_creation_fixture(
@@ -153,6 +155,7 @@ async def recipe_creation_fixture(
         image=initial_data['image']
     )
     return recipe_data
+
 
 @pytest.fixture()
 async def recipe_updating_fixture(

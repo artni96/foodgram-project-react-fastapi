@@ -32,7 +32,7 @@ app = FastAPI()
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> object:
     exc_dict = dict()
     for err in exc.errors():
         if 'String should have at most 150 characters' in err['msg']:

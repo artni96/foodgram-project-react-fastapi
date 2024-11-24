@@ -1,12 +1,8 @@
-from http import HTTPStatus
-
-from fastapi import HTTPException, status
 from sqlalchemy import delete, func, insert, select
-from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlalchemy.orm import load_only, selectinload
+from sqlalchemy.orm import load_only
 
 from backend.src.constants import MAIN_URL, MOUNT_PATH
-from backend.src.models.recipes import RecipeModel, ImageModel
+from backend.src.models.recipes import RecipeModel
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
