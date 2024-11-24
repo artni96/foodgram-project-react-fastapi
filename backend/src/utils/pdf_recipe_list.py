@@ -14,7 +14,7 @@ def give_shopping_list(data, username):
     template_loader = jinja2.FileSystemLoader('src/utils')
     template_env = jinja2.Environment(loader=template_loader)
 
-    html_template = './basic_template.html'
+    html_template = './base_shopping_list_template.html'
     template = template_env.get_template(html_template)
     output_text = template.render(context)
 

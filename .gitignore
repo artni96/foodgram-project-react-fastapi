@@ -133,3 +133,4 @@ dmypy.json
 
 .media/
 backend/src/media/recipes/images/
+backend/src/utils/shopping_lists/
