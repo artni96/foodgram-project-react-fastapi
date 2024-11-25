@@ -213,11 +213,11 @@ async def recipe_updating_fixture():
 
 @pytest.fixture()
 async def recipe_bulk_creating_fixture(db, recipe_creation_fixture):
-    tags_combinations = (1, 2, 3, (1, 2), (1, 3), (2, 3), (1, 2, 3))
+    tags_combinations = ([1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3])
     recipe_author_ids = (1, 1, 1, 2, 2, 2, 2)
     for _ in range(len(tags_combinations)):
         current_recipe = recipe_creation_fixture
-        current_recipe.tags == tags_combinations[_]
+        current_recipe.tags = tags_combinations[_]
         await db.recipes.create(recipe_data=current_recipe, db=db, current_user_id=recipe_author_ids[_])
     recipes_data = {
         'author':

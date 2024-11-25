@@ -10,7 +10,7 @@ from backend.src.schemas.users import FollowedUserRead
 class BaseRecipe(BaseModel):
     name: str = Field(max_length=PARAMS_MAX_LENGTH)
     text: str
-    cooking_time: int = Field()
+    cooking_time: int
 
     model_config = ConfigDict(from_attributes=True)
 

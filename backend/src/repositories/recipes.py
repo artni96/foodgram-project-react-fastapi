@@ -79,7 +79,7 @@ class RecipeRepository(BaseRepository):
         filtered_recipe_id_list = (
             filtered_recipe_id_list.unique().scalars().all()
         )
-        recipe_count = len(filtered_recipe_id_list)
+        # recipe_count = len(filtered_recipe_id_list)
         if current_user:
             if is_favorite:
                 filtered_recipe_id_list_stmt = (
@@ -118,14 +118,15 @@ class RecipeRepository(BaseRepository):
                     db=db
                 )
             )
+        recipes_count = len(recipe_id_list_result)
         paginator_values = url_paginator(
             limit=limit,
             page=page,
-            count=recipe_count,
+            count=recipes_count,
             router_prefix=router_prefix
         )
         result = RecipeListRead(
-            count=recipe_count,
+            count= recipes_count,
             next=paginator_values['next'],
             previous=paginator_values['previous'],
             result=filtered_recipe_list

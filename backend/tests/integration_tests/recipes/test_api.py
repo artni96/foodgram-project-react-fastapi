@@ -228,11 +228,8 @@ class TestFilteredRecipe:
             },
         'recipes_count': 7
     }
-    @pytest.mark.usefixtures('recipe_bulk_creating_fixture')
-    async def test_initial_data(self, recipe_bulk_creating_fixture):
-        pass
 
-    async def test_filtered_recipe_list(self, ac):
+    async def test_filtered_recipe_list(self, ac, recipe_bulk_creating_fixture):
         recipes_to_test = await ac.get(
             '/api/recipes'
         )
@@ -273,13 +270,59 @@ class TestFilteredRecipe:
         assert recipes_to_test.json()['count'] == self.recipes_data['recipes_count']
 
     async def test_filter_recipes_by_author(self, ac):
-        recipes_to_test = await ac.get(
-            '/api/recipes?page=2&limit=2&author=1'
+        filtered_recipes_by_author_1 = await ac.get(
+            '/api/recipes?author=1&limit=2'
         )
-        assert recipes_to_test.status_code == status.HTTP_200_OK
-        assert len(recipes_to_test.json()['result']) == 1
-        assert recipes_to_test.json()['count'] == 3
+        assert filtered_recipes_by_author_1.status_code == status.HTTP_200_OK
+        assert len(filtered_recipes_by_author_1.json()['result']) == 2
+        assert filtered_recipes_by_author_1.json()['count'] == 3
+
+        filtered_recipes_by_author_2 = await ac.get(
+            '/api/recipes?author=2&page=2&limit=1'
+        )
+        assert filtered_recipes_by_author_2.status_code == status.HTTP_200_OK
+        assert 'limit=1' in filtered_recipes_by_author_2.json()['previous']
+        assert (
+                'page=3' in filtered_recipes_by_author_2.json()['next'] and
+                'limit=1' in filtered_recipes_by_author_2.json()['next']
+        )
+        assert len(filtered_recipes_by_author_2.json()['result']) == 1
+        assert filtered_recipes_by_author_2.json()['count'] == 4
+
+    async def test_filter_recipes_by_tags(self, ac):
+        filtered_rec_by_breakfast = await ac.get(
+            '/api/recipes?tags=breakfast&limit=2'
+        )
+        assert filtered_rec_by_breakfast.status_code == status.HTTP_200_OK
+        assert len(filtered_rec_by_breakfast.json()['result']) == 2
+        assert filtered_rec_by_breakfast.json()['count'] == 4
+        assert 'page=2' in filtered_rec_by_breakfast.json()['next']
+        assert not filtered_rec_by_breakfast.json()['previous']
+
+        filtered_rec_by_breakfast_and_dinner = await ac.get(
+            '/api/recipes?page=3&tags=dinner&tags=breakfast&limit=1'
+        )
+        assert filtered_rec_by_breakfast_and_dinner.status_code == status.HTTP_200_OK
+        assert len(filtered_rec_by_breakfast_and_dinner.json()['result']) == 1
+        assert filtered_rec_by_breakfast_and_dinner.json()['count'] == 6
+        assert (
+                'page=4' in filtered_rec_by_breakfast_and_dinner.json()['next'] and
+                'limit=1' in filtered_rec_by_breakfast_and_dinner.json()['next']
+        )
+        assert (
+                'page=2' in filtered_rec_by_breakfast_and_dinner.json()['previous'] and
+                'limit=1' in filtered_rec_by_breakfast_and_dinner.json()['previous']
+        )
+
+        filtered_rec_by_breakfast_dinner_lunch = await ac.get(
+            '/api/recipes?tags=dinner&tags=breakfast&tags=lunch&page=2&limit=4'
+            # '/api/recipes'
+        )
+        assert filtered_rec_by_breakfast_dinner_lunch.status_code == status.HTTP_200_OK
+        assert len(filtered_rec_by_breakfast_dinner_lunch.json()['result']) == 3
+        assert filtered_rec_by_breakfast_dinner_lunch.json()['count'] == 7
 
     async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
         print('Все рецепты удалены')
         assert not removing_recipes_after_tests
+
