@@ -1,4 +1,4 @@
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, delete
 
 from backend.src.constants import MAIN_URL, MOUNT_PATH
 from backend.src.models.recipes import (FavoriteRecipeModel, ImageModel,
@@ -12,16 +12,16 @@ class FavoriteRecipeRepository(BaseRepository):
     schema = FavoriteRecipeRead
 
     async def create(self, data):
-        favorite_recipe_info_stmt = (
-            select(
-                RecipeModel.id,
-                RecipeModel.name,
-                RecipeModel.cooking_time,
-                ImageModel.name.label('image')
-            )
-            .join(ImageModel, ImageModel.id == RecipeModel.image)
-            .filter_by(id=data.recipe_id)
-        )
+        # favorite_recipe_info_stmt = (
+        #     select(
+        #         RecipeModel.id,
+        #         RecipeModel.name,
+        #         RecipeModel.cooking_time,
+        #         ImageModel.name.label('image')
+        #     )
+        #     .join(ImageModel, ImageModel.id == RecipeModel.image)
+        #     .filter_by(id=data.recipe_id)
+        # )
         make_recipe_favorite_stmt = (
             insert(self.model)
             .values(**data.model_dump())
@@ -52,3 +52,9 @@ class FavoriteRecipeRepository(BaseRepository):
             image=image_url,
             cooking_time=favorite_recipe_info.cooking_time
         )
+
+    async def delete(self, **filter_by):
+        stmt = delete(self.model).filter_by(**filter_by).returning(self.model.id)
+        result = await self.session.execute(stmt)
+        result = result.scalars().one_or_none()
+        return result

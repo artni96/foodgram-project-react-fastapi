@@ -1,4 +1,10 @@
-tags_combinations = (1, 2, 3, (1, 2), (1, 3), (2, 3), (1, 2, 3))
-recipe_author_ids = (1, 1, 1, 2, 2, 2, 2)
+import re
+from xxlimited_35 import error
 
-print(set(tags_combinations))
+patter = 'Ключ \(recipe_id\)=\(\d+\) отсутствует в таблице "recipe"'
+input_error = '  Ключ (recipe_id)=(1) отсутствует в таблице "recipe".'
+# print(input_error)
+if re.findall(patter, input_error):
+    print(True)
+else:
+    print(False)

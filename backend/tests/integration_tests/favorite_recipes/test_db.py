@@ -3,7 +3,7 @@ import pytest
 from backend.src.schemas.recipes import FavoriteRecipeCreate
 
 
-@pytest.mark.order(9)
+@pytest.mark.order(11)
 async def test_favorite_recipes_cd(
     db,
     test_recipe

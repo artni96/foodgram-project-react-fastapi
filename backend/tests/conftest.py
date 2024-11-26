@@ -251,6 +251,16 @@ async def removing_recipes_after_tests(db):
 
 
 @pytest.fixture()
+async def removing_recipe_after_test(db, recipe_id):
+    stmt = delete(RecipeModel).filter_by(id=recipe_id)
+    await db.session.execute(stmt)
+    await db.commit()
+    existing_recipes_stmt = select(RecipeModel)
+    existing_recipes = await db.session.execute(existing_recipes_stmt)
+    return existing_recipes.scalars().one()
+
+
+@pytest.fixture(autouse=False)
 async def test_recipe(
     db,
     recipe_creation_fixture: RecipeCreateRequest):

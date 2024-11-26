@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 
@@ -183,7 +185,13 @@ async def make_recipe_favorite(
     try:
         result = await db.favorite_recipes.create(data=favorite_recipe_data)
         await db.commit()
-    except IntegrityError:
+    except IntegrityError as e:
+        error_pattern = r'Ключ \(recipe_id\)=\(\d+\) отсутствует в таблице "recipe"'
+        if re.findall(error_pattern, str(e.__cause__).split('DETAIL:')[1]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f'Рецепт c id {id} не найден.'
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Рецепт уже в избранном.'
@@ -202,14 +210,14 @@ async def cancel_favorite_recipe(
     db: DBDep,
     current_user: UserDep,
 ):
-    try:
-        await db.favorite_recipes.delete(recipe_id=id, user_id=current_user.id)
-        await db.commit()
 
-    except Exception:
+    result = await db.favorite_recipes.delete(recipe_id=id, user_id=current_user.id)
+    await db.commit()
+
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Рецепт в избранном не найден.'
+            detail=f'Рецепт с id {id} в избранном не найден.'
         )
 
 
@@ -254,10 +262,11 @@ async def add_recipe_to_shopping_cart(
         result = await db.shopping_cart.create(data=shopping_cart_recipe_data)
         await db.commit()
     except IntegrityError as e:
-        if 'отсутствует в таблице "recipe"' in str(e.__cause__):
+        error_pattern = r'Ключ \(recipe_id\)=\(\d+\) отсутствует в таблице "recipe"'
+        if re.findall(error_pattern, str(e.__cause__).split('DETAIL:')[1]):
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Рецепт не найден.'
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f'Рецепт c id {id} не найден.'
             )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -277,11 +286,10 @@ async def remove_recipe_from_shopping_cart(
     db: DBDep,
     current_user: UserDep,
 ):
-    try:
-        await db.shopping_cart.delete(recipe_id=id, user_id=current_user.id)
-        await db.commit()
+    result = await db.shopping_cart.delete(recipe_id=id, user_id=current_user.id)
+    await db.commit()
 
-    except Exception:
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Рецепт в списке покупок не найден.'

@@ -83,6 +83,7 @@ from backend.tests.conftest import PARAMS_MAX_LENGTH
         ),
     ]
 )
+@pytest.mark.order(9)
 async def test_recipe_creating(
     auth_ac,
     name,
@@ -170,7 +171,7 @@ async def test_recipe_creating(
         )
     ]
 )
-
+@pytest.mark.order(10)
 async def test_recipe_updating(
     auth_ac,
     name,
