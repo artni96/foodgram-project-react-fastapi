@@ -24,6 +24,9 @@ USER_PARAMS_MAX_LENGTH = 150
 PARAMS_MAX_LENGTH = 200
 
 
+def pytest_configure():
+    return {'recipe': None}
+
 @pytest.fixture(scope='session', autouse=True)
 async def check_test_mode():
     assert settings.MODE == 'TEST'
@@ -40,7 +43,7 @@ async def setup_database():
             image_to_delete = (
                 f'{media_path}/src{MOUNT_PATH}/{image}'
             )
-            print(image_to_delete)
+            # print(image_to_delete)
             if os.path.exists(image_to_delete):
                 os.remove(image_to_delete)
     async with engine.begin() as conn:
@@ -245,3 +248,16 @@ async def removing_recipes_after_tests(db):
     existing_recipes_stmt = select(RecipeModel)
     existing_recipes = await db.session.execute(existing_recipes_stmt)
     return existing_recipes.scalars().all()
+
+
+@pytest.fixture()
+async def test_recipe(
+    db,
+    recipe_creation_fixture: RecipeCreateRequest):
+    recipe = await db.recipes.create(
+        recipe_data=recipe_creation_fixture,
+        db=db,
+        current_user_id=1
+    )
+    await db.commit()
+    return recipe

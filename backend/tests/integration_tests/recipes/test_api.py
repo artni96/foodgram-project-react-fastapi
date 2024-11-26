@@ -316,7 +316,6 @@ class TestFilteredRecipe:
 
         filtered_rec_by_breakfast_dinner_lunch = await ac.get(
             '/api/recipes?tags=dinner&tags=breakfast&tags=lunch&page=2&limit=4'
-            # '/api/recipes'
         )
         assert filtered_rec_by_breakfast_dinner_lunch.status_code == status.HTTP_200_OK
         assert len(filtered_rec_by_breakfast_dinner_lunch.json()['result']) == 3

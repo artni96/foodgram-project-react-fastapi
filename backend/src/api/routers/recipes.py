@@ -246,12 +246,12 @@ async def add_recipe_to_shopping_cart(
     db: DBDep,
     current_user: UserDep,
 ):
-    favorite_recipe_data = ShoppingCartRecipeCreate(
+    shopping_cart_recipe_data = ShoppingCartRecipeCreate(
         recipe_id=id,
         user_id=current_user.id
     )
     try:
-        result = await db.shopping_cart.create(data=favorite_recipe_data)
+        result = await db.shopping_cart.create(data=shopping_cart_recipe_data)
         await db.commit()
     except IntegrityError as e:
         if 'отсутствует в таблице "recipe"' in str(e.__cause__):
