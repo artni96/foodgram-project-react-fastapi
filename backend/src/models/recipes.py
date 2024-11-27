@@ -33,7 +33,7 @@ class RecipeModel(Base):
         back_populates="recipe"
     )
     author_info: Mapped['UserModel'] = relationship(back_populates='recipe')
-    is_favorite: Mapped[list['FavoriteRecipeModel']] = relationship(
+    is_favorited: Mapped[list['FavoriteRecipeModel']] = relationship(
         back_populates='recipe'
     )
     is_in_shopping_cart: Mapped[list['ShoppingCartModel']] = relationship(
@@ -64,7 +64,7 @@ class UserRecipeBaseModel(Base):
 
 class FavoriteRecipeModel(UserRecipeBaseModel):
     recipe: Mapped['RecipeModel'] = relationship(
-        back_populates='is_favorite'
+        back_populates='is_favorited'
     )
     __table_args__ = (
         UniqueConstraint(

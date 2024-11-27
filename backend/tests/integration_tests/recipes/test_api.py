@@ -348,7 +348,7 @@ class TestFilteredRecipe:
         )
     async def test_filter_by_is_favorited(self, auth_ac, another_auth_ac):
         recipe_to_shopping_cart = await auth_ac.get(
-            '/api/recipes?is_favorite=1&limit=2&page=2'
+            '/api/recipes?is_favorited=1&limit=2&page=2'
         )
         assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK
         assert len(recipe_to_shopping_cart.json()['result']) == 2
@@ -357,7 +357,7 @@ class TestFilteredRecipe:
         assert 'limit=2' in recipe_to_shopping_cart.json()['previous']
 
         recipe_to_shopping_cart_by_another = await another_auth_ac.get(
-            '/api/recipes?is_favorite=1&limit=1&page=2'
+            '/api/recipes?is_favorited=1&limit=1&page=2'
         )
         assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK
         assert len(recipe_to_shopping_cart_by_another.json()['result']) == 1

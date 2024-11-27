@@ -28,7 +28,7 @@ async def get_recipe_list(
     db: DBDep,
     author: int | None = Query(default=None),
     tags: list[str] | None = Query(default=None),
-    is_favorite: int = Query(default=0),
+    is_favorited: int = Query(default=0),
     is_in_shopping_cart: int = Query(default=0),
     page: int | None = Query(default=None, title='Номер страницы'),
     limit: int | None = Query(
@@ -44,7 +44,7 @@ async def get_recipe_list(
         page = 1
     result = await db.recipes.get_filtered(
         current_user=current_user,
-        is_favorite=is_favorite,
+        is_favorited=is_favorited,
         is_in_shopping_cart=is_in_shopping_cart,
         tags=tags,
         author=author,

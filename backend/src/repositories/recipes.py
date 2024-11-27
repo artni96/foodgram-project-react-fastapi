@@ -39,7 +39,7 @@ class RecipeRepository(BaseRepository):
     async def get_filtered(
             self,
             current_user,
-            is_favorite,
+            is_favorited,
             is_in_shopping_cart,
             tags,
             author,
@@ -82,7 +82,7 @@ class RecipeRepository(BaseRepository):
         # )
         # recipe_count = len(filtered_recipe_id_list)
         if current_user:
-            if is_favorite:
+            if is_favorited:
                 filtered_recipe_id_list_stmt = (
                     filtered_recipe_id_list_stmt.join(
                         FavoriteRecipeModel,
@@ -187,7 +187,7 @@ class RecipeRepository(BaseRepository):
                         UserModel.email,
                     )
                     ,
-                    selectinload(self.model.is_favorite),
+                    selectinload(self.model.is_favorited),
                     selectinload(self.model.is_in_shopping_cart)
                 )
                 # .outerjoin(
@@ -236,7 +236,7 @@ class RecipeRepository(BaseRepository):
                 cooking_time=recipe_body_result.cooking_time
             )
             if current_user:
-                if recipe_body_result.is_favorite:
+                if recipe_body_result.is_favorited:
                     response.is_favorited = True
                 if recipe_body_result.is_in_shopping_cart:
                     response.is_in_shopping_cart = True
