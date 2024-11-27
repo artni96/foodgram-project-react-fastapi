@@ -136,7 +136,7 @@ async def another_auth_ac(ac):
     jwt_token = await ac.post(
         'api/users/token/login',
         data={
-            "username": "test_user_1@ya.net",
+            "username": "test_user_2@ya.net",
             "password": "string"
         }
     )

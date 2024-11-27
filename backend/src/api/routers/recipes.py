@@ -1,7 +1,7 @@
 import re
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
@@ -210,11 +210,11 @@ async def cancel_favorite_recipe(
     db: DBDep,
     current_user: UserDep,
 ):
+    try:
+        await db.favorite_recipes.delete(recipe_id=id, user_id=current_user.id)
+        await db.commit()
 
-    result = await db.favorite_recipes.delete(recipe_id=id, user_id=current_user.id)
-    await db.commit()
-
-    if not result:
+    except NoResultFound:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Рецепт с id {id} в избранном не найден.'
@@ -286,10 +286,11 @@ async def remove_recipe_from_shopping_cart(
     db: DBDep,
     current_user: UserDep,
 ):
-    result = await db.shopping_cart.delete(recipe_id=id, user_id=current_user.id)
-    await db.commit()
+    try:
+        await db.shopping_cart.delete(recipe_id=id, user_id=current_user.id)
+        await db.commit()
 
-    if not result:
+    except NoResultFound:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Рецепт в списке покупок не найден.'

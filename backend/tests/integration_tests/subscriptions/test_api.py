@@ -21,9 +21,9 @@ async def test_auth_subsrtibe_flow(auth_ac, ac, db):
     )
     followed_user = await db.users.get_one_or_none(user_id=user_to_subscribe)
     assert new_sub.status_code == status.HTTP_201_CREATED
-    assert new_sub.json()['username'] == followed_user.username
-    assert new_sub.json()['email'] == followed_user.email
-    assert new_sub.json()['id'] == followed_user.id
+    assert new_sub.json()['username'] == followed_user.username, 'В ответе должно быть поле username'
+    assert new_sub.json()['email'] == followed_user.email, 'В ответе должно быть поле email'
+    assert new_sub.json()['id'] == followed_user.id, 'В ответе должно быть поле id'
     assert new_sub.json()['first_name'] == followed_user.first_name
     assert new_sub.json()['last_name'] == followed_user.last_name
     assert 'recipes' in new_sub.json()
@@ -49,7 +49,7 @@ async def test_auth_subsrtibe_flow(auth_ac, ac, db):
     assert follow_non_existent_user.status_code == status.HTTP_404_NOT_FOUND
 
     unfollow = await auth_ac.delete(
-        f'/api/users/{users_to_subscribe[-1]}/subscribe'
+        f'/api/users/{new_sub.json()["id"]}/subscribe'
     )
     assert unfollow.status_code == status.HTTP_204_NO_CONTENT
 

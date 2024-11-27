@@ -107,7 +107,7 @@ async def unsubscribe(
     except NoResultFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='Подписка не найдена.'
+            detail=f'Подписка на пользователя с id {user_id} не найдена.'
         )
     except Exception:
         raise HTTPException(

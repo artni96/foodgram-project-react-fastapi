@@ -1,5 +1,6 @@
 from fastapi.responses import FileResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, select, delete
+from sqlalchemy.exc import NoResultFound
 
 from backend.src.models.ingredients import (IngredientAmountModel,
                                             IngredientModel,
@@ -64,3 +65,11 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
                 'Content-Type': 'application/pdf',
                 'Content-Disposition': f'attachment; filename={pdf_file.split("/")[-1]}'}
         )
+
+    async def delete(self, **filter_by):
+        stmt = delete(self.model).filter_by(**filter_by).returning(self.model)
+        sub_to_delete = await self.session.execute(stmt)
+        try:
+            return sub_to_delete.scalars().one()
+        except NoResultFound:
+            raise NoResultFound

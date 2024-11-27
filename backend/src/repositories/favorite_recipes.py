@@ -1,4 +1,5 @@
 from sqlalchemy import insert, select, delete
+from sqlalchemy.exc import NoResultFound
 
 from backend.src.constants import MAIN_URL, MOUNT_PATH
 from backend.src.models.recipes import (FavoriteRecipeModel, ImageModel,
@@ -56,5 +57,7 @@ class FavoriteRecipeRepository(BaseRepository):
     async def delete(self, **filter_by):
         stmt = delete(self.model).filter_by(**filter_by).returning(self.model.id)
         result = await self.session.execute(stmt)
-        result = result.scalars().one_or_none()
-        return result
+        try:
+            return result.scalars().one()
+        except NoResultFound:
+            raise NoResultFound

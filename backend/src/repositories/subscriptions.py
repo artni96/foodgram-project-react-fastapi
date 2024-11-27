@@ -1,4 +1,5 @@
 from sqlalchemy import delete, func, insert, select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import load_only
 
 from backend.src.constants import MAIN_URL, MOUNT_PATH
@@ -176,4 +177,7 @@ class SubscriptionRepository(BaseRepository):
     async def delete(self, **filter_by):
         stmt = delete(self.model).filter_by(**filter_by).returning(self.model)
         sub_to_delete = await self.session.execute(stmt)
-        return sub_to_delete.scalars().one()
+        try:
+            return sub_to_delete.scalars().one()
+        except NoResultFound:
+            raise NoResultFound

@@ -16,10 +16,12 @@ async def test_shopping_cart_cd(
     add_in_shopping_cart = await db.shopping_cart.create(
         shopping_cart_recipe_data
     )
-    await db.commit()
+    assert add_in_shopping_cart.id == recipe.id
+    assert add_in_shopping_cart.name == recipe.name
+    assert add_in_shopping_cart.cooking_time == recipe.cooking_time
+    assert add_in_shopping_cart.image == recipe.image
 
     await db.shopping_cart.delete(recipe_id=add_in_shopping_cart.id, user_id=recipe.author.id)
-    await db.commit()
 
     await db.recipes.delete(id=recipe.id)
     await db.commit()
