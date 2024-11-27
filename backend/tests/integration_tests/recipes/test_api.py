@@ -323,15 +323,52 @@ class TestFilteredRecipe:
         assert len(filtered_rec_by_breakfast_dinner_lunch.json()['result']) == 3
         assert filtered_rec_by_breakfast_dinner_lunch.json()['count'] == 7
 
-    async def test_filter_by_shopping_cart(self, auth_ac, another_auth_ac):
+    async def test_filter_by_is_in_shopping_cart(self, auth_ac, another_auth_ac):
         recipe_to_shopping_cart = await auth_ac.get(
-            '/api/recipes?is_in_shopping_cart=1&limit=7'
+            '/api/recipes?is_in_shopping_cart=1&limit=2'
         )
         assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK
-        assert len(recipe_to_shopping_cart.json()['result']) == 3
-        print(len(recipe_to_shopping_cart.json()['result']))
+        assert len(recipe_to_shopping_cart.json()['result']) == 2
+        assert recipe_to_shopping_cart.json()['count'] == 3
+        assert not recipe_to_shopping_cart.json()['previous']
+        assert (
+                'page=2' in recipe_to_shopping_cart.json()['next']
+                and 'limit=2' in recipe_to_shopping_cart.json()['next']
+        )
+        recipe_to_shopping_cart_by_another = await another_auth_ac.get(
+            '/api/recipes?is_in_shopping_cart=1&limit=2'
+        )
+        assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK
+        assert len(recipe_to_shopping_cart_by_another.json()['result']) == 2
+        assert recipe_to_shopping_cart_by_another.json()['count'] == 4
+        assert not recipe_to_shopping_cart_by_another.json()['previous']
+        assert (
+                'page=2' in recipe_to_shopping_cart_by_another.json()['next']
+                and 'limit=2' in recipe_to_shopping_cart_by_another.json()['next']
+        )
+    async def test_filter_by_is_favorited(self, auth_ac, another_auth_ac):
+        recipe_to_shopping_cart = await auth_ac.get(
+            '/api/recipes?is_favorite=1&limit=2&page=2'
+        )
+        assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK
+        assert len(recipe_to_shopping_cart.json()['result']) == 2
+        assert recipe_to_shopping_cart.json()['count'] == 4
+        assert not recipe_to_shopping_cart.json()['next']
+        assert 'limit=2' in recipe_to_shopping_cart.json()['previous']
+
+        recipe_to_shopping_cart_by_another = await another_auth_ac.get(
+            '/api/recipes?is_favorite=1&limit=1&page=2'
+        )
+        assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK
+        assert len(recipe_to_shopping_cart_by_another.json()['result']) == 1
+        assert recipe_to_shopping_cart_by_another.json()['count'] == 3
+        assert 'limit=1' in recipe_to_shopping_cart_by_another.json()['previous']
+
+        assert (
+                'page=3' in recipe_to_shopping_cart_by_another.json()['next']
+                and 'limit=1' in recipe_to_shopping_cart_by_another.json()['next']
+        )
 
     async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
         print('Все рецепты удалены')
         assert not removing_recipes_after_tests
-
