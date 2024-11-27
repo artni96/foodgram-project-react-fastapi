@@ -466,7 +466,6 @@ class RecipeRepository(BaseRepository):
         recipe_ingredient_amount_ids = (
             recipe_ingredient_amount_ids.scalars().all()
         )
-        # print(recipe_ingredient_amount_ids)
         recipe_to_delete_stmt = (
             delete(self.model)
             .filter_by(id=id)

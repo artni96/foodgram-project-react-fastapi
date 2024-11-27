@@ -17,6 +17,7 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
     schema = ShoppingCartRecipeRead
 
     async def get_shopping_cart(self, user_id):
+        """Ответ со списком покупок в формате pdf."""
         user_product_list_stmt = (
             select(
 
@@ -67,6 +68,7 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
         )
 
     async def delete(self, **filter_by):
+        """Удаление рецепта из списка покупок."""
         stmt = delete(self.model).filter_by(**filter_by).returning(self.model)
         sub_to_delete = await self.session.execute(stmt)
         try:

@@ -284,7 +284,7 @@ async def removing_recipe_after_test(db, recipe_id):
     return existing_recipes.scalars().one()
 
 
-@pytest.fixture(autouse=False)
+@pytest.fixture()
 async def test_recipe(
     db,
     recipe_creation_fixture: RecipeCreateRequest):
@@ -295,3 +295,10 @@ async def test_recipe(
     )
     await db.commit()
     return recipe
+
+
+@pytest.fixture()
+async def test_base64_fixture():
+    test_base64_string = ("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEBAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+                   "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==")
+    return test_base64_string

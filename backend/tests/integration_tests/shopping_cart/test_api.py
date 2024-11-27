@@ -43,5 +43,6 @@ async def test_shopping_cart_flow(
     )
 
     pdf_path_to_delete = f'src/utils/shopping_lists/{pdf_to_delete}'
-    if os.path.exists(pdf_path_to_delete):
-        os.remove(pdf_path_to_delete)
+    assert os.path.exists(pdf_path_to_delete)
+    os.remove(pdf_path_to_delete)
+    assert not os.path.exists(pdf_path_to_delete)
