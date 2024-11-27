@@ -4,7 +4,8 @@ import jinja2
 import pdfkit
 from datetime import datetime
 
-def give_shopping_list(data, username):
+
+def create_shopping_list(data, username):
     today_date = datetime.now().strftime("%d.%m.%Y %H:%M")
 
     context = {
@@ -24,7 +25,7 @@ def give_shopping_list(data, username):
     filename = f'{datetime.now().strftime("%d.%m.%Y_%H:%M:%S")}_{username}_shopping_list.pdf'
     output_pdf = f'src/utils/shopping_lists/{filename}'
     pdfkit.from_string(output_text, output_pdf, configuration=config)
-    pdf_path_to_delete = f'src/utils/shopping_lists/{filename}'
+    # pdf_path_to_delete = f'src/utils/shopping_lists/{filename}'
     # if os.path.exists(pdf_path_to_delete): удалить через брокер
     #     os.remove(pdf_path_to_delete)
     return output_pdf

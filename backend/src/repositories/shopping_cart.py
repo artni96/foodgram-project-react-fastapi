@@ -9,7 +9,7 @@ from backend.src.models.recipes import ShoppingCartModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.favorite_recipes import FavoriteRecipeRepository
 from backend.src.schemas.recipes import ShoppingCartRecipeRead
-from backend.src.utils.pdf_shopping_list import give_shopping_list
+from backend.src.utils.pdf_shopping_list import create_shopping_list
 
 
 class ShoppingCartRepository(FavoriteRecipeRepository):
@@ -58,7 +58,7 @@ class ShoppingCartRepository(FavoriteRecipeRepository):
             f'{elem["name"].capitalize()} - {elem["total_amount"]} {elem["measurement_unit"]}'
             for elem in product_list.mappings().all()
         ]
-        pdf_file = give_shopping_list(data=result_list, username=username)
+        pdf_file = create_shopping_list(data=result_list, username=username)
         return FileResponse(
             path=pdf_file,
             media_type='multipart/form-data',
