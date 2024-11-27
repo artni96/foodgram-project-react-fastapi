@@ -13,16 +13,6 @@ class FavoriteRecipeRepository(BaseRepository):
     schema = FavoriteRecipeRead
 
     async def create(self, data):
-        # favorite_recipe_info_stmt = (
-        #     select(
-        #         RecipeModel.id,
-        #         RecipeModel.name,
-        #         RecipeModel.cooking_time,
-        #         ImageModel.name.label('image')
-        #     )
-        #     .join(ImageModel, ImageModel.id == RecipeModel.image)
-        #     .filter_by(id=data.recipe_id)
-        # )
         make_recipe_favorite_stmt = (
             insert(self.model)
             .values(**data.model_dump())

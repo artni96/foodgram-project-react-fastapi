@@ -30,10 +30,10 @@ async def test_make_recipe_favorite_flow(
     delete_favorite_recipe_by_another_user = await auth_ac.delete(
         f'/api/recipes/{recipe.id}/favorite'
     )
-    # assert delete_favorite_recipe_by_another_user.status_code == status.HTTP_400_BAD_REQUEST
-    # assert (
-    #         delete_favorite_recipe_by_another_user.json()['detail']
-    #         == f'Рецепт с id {recipe.id} в избранном не найден.'
-    # )
+    assert delete_favorite_recipe_by_another_user.status_code == status.HTTP_400_BAD_REQUEST
+    assert (
+            delete_favorite_recipe_by_another_user.json()['detail']
+            == f'Рецепт с id {recipe.id} в избранном не найден.'
+    )
     await db.recipes.delete(id=recipe.id)
     await db.commit()

@@ -72,27 +72,34 @@ class RecipeRepository(BaseRepository):
                 TagModel,
                 TagModel.id == RecipeTagModel.tag_id
             )
+
         )
-        filtered_recipe_id_list = await self.session.execute(
-            filtered_recipe_id_list_stmt
-        )
-        filtered_recipe_id_list = (
-            filtered_recipe_id_list.unique().scalars().all()
-        )
+        # filtered_recipe_id_list = await self.session.execute(
+        #     filtered_recipe_id_list_stmt
+        # )
+        # filtered_recipe_id_list = (
+        #     filtered_recipe_id_list.unique().scalars().all()
+        # )
         # recipe_count = len(filtered_recipe_id_list)
         if current_user:
             if is_favorite:
                 filtered_recipe_id_list_stmt = (
                     filtered_recipe_id_list_stmt.join(
                         FavoriteRecipeModel,
-                        FavoriteRecipeModel.recipe_id == self.model.id
+                        and_(
+                            FavoriteRecipeModel.recipe_id == self.model.id,
+                            FavoriteRecipeModel.user_id == current_user.id
+                        )
                     )
                 )
             if is_in_shopping_cart:
                 filtered_recipe_id_list_stmt = (
                     filtered_recipe_id_list_stmt.join(
                         ShoppingCartModel,
-                        ShoppingCartModel.recipe_id == self.model.id
+                        and_(
+                            ShoppingCartModel.recipe_id == self.model.id,
+                            ShoppingCartModel.user_id == current_user.id
+                        )
                     )
                 )
         if tags:
@@ -161,24 +168,41 @@ class RecipeRepository(BaseRepository):
                 ingredient_list_result.unique().mappings().all()
             )
             recipe_body_stmt = (
-                select(self.model)
-                .filter_by(id=id)
+                select(
+                    self.model
+                )
+                .filter(
+                    RecipeModel.id==id,
+                    # ShoppingCartModel.user_id == current_user.id,
+                    # # FavoriteRecipeModel.user_id == current_user.id
+                )
                 .options(
                     selectinload(self.model.tags),
                     selectinload(self.model.author_info)
                     .load_only(
-                        UserModel.email,
                         UserModel.username,
                         UserModel.id,
                         UserModel.first_name,
-                        UserModel.last_name
-                    ),
+                        UserModel.last_name,
+                        UserModel.email,
+                    )
+                    ,
                     selectinload(self.model.is_favorite),
                     selectinload(self.model.is_in_shopping_cart)
                 )
+                # .outerjoin(
+                #     FavoriteRecipeModel,
+                #     FavoriteRecipeModel.user_id == RecipeModel.author
+                # )
+                # .outerjoin(
+                #     ShoppingCartModel,
+                #     ShoppingCartModel.user_id == RecipeModel.author
+                # )
+
             )
             recipe_body_result = await self.session.execute(recipe_body_stmt)
             recipe_body_result = recipe_body_result.scalars().one()
+            # print(recipe_body_result.is_in_shopping_cart[0].user_id)
             recipe_image = await db.images.get_one_or_none(
                 id=recipe_body_result.image
             )
@@ -211,10 +235,11 @@ class RecipeRepository(BaseRepository):
                 text=recipe_body_result.text,
                 cooking_time=recipe_body_result.cooking_time
             )
-            if recipe_body_result.is_favorite:
-                response.is_favorited = True
-            if recipe_body_result.is_in_shopping_cart:
-                response.is_in_shopping_cart = True
+            if current_user:
+                if recipe_body_result.is_favorite:
+                    response.is_favorited = True
+                if recipe_body_result.is_in_shopping_cart:
+                    response.is_in_shopping_cart = True
             return response
         except NoResultFound:
             raise HTTPException(
@@ -313,6 +338,7 @@ class RecipeRepository(BaseRepository):
         return response
 
     async def update(self, recipe_data: RecipeUpdateRequest, db, id: int):
+        """Обновление рецепта по его id."""
         _recipe_data = RecipeUpdate(
             **recipe_data.model_dump(),
             id=id
@@ -429,6 +455,7 @@ class RecipeRepository(BaseRepository):
         return response
 
     async def delete(self, id):
+        """Удаление рецепта по его id."""
         recipe_ingredient_amount_ids_stmt = (
             select(RecipeIngredientModel.ingredient_amount_id)
             .filter_by(recipe_id=id)

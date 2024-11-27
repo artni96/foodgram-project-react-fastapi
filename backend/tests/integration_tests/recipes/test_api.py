@@ -2,6 +2,7 @@ import pytest
 from fastapi import status
 from sqlalchemy import select
 
+from backend.src.api.routers.recipes import add_recipe_to_shopping_cart
 from backend.src.models.recipes import RecipeModel
 from backend.tests.conftest import PARAMS_MAX_LENGTH
 
@@ -321,6 +322,14 @@ class TestFilteredRecipe:
         assert filtered_rec_by_breakfast_dinner_lunch.status_code == status.HTTP_200_OK
         assert len(filtered_rec_by_breakfast_dinner_lunch.json()['result']) == 3
         assert filtered_rec_by_breakfast_dinner_lunch.json()['count'] == 7
+
+    async def test_filter_by_shopping_cart(self, auth_ac, another_auth_ac):
+        recipe_to_shopping_cart = await auth_ac.get(
+            '/api/recipes?is_in_shopping_cart=1&limit=7'
+        )
+        assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK
+        assert len(recipe_to_shopping_cart.json()['result']) == 3
+        print(len(recipe_to_shopping_cart.json()['result']))
 
     async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
         print('Все рецепты удалены')

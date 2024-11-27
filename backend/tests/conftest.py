@@ -15,7 +15,8 @@ from backend.src.db_manager import DBManager
 from backend.src.main import app
 from backend.src.models.recipes import ImageModel
 from backend.src.schemas.ingredients import IngredientCreate
-from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest
+from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest, ShoppingCartRecipeCreate, \
+    FavoriteRecipeCreate
 from backend.src.schemas.tags import TagCreate
 
 
@@ -218,10 +219,33 @@ async def recipe_updating_fixture():
 async def recipe_bulk_creating_fixture(db, recipe_creation_fixture):
     tags_combinations = ([1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3])
     recipe_author_ids = (1, 1, 1, 2, 2, 2, 2)
+    recipe_ids = list()
     for _ in range(len(tags_combinations)):
         current_recipe = recipe_creation_fixture
         current_recipe.tags = tags_combinations[_]
-        await db.recipes.create(recipe_data=current_recipe, db=db, current_user_id=recipe_author_ids[_])
+        recipe = await db.recipes.create(recipe_data=current_recipe, db=db, current_user_id=recipe_author_ids[_])
+        if recipe.id % 2 == 1:
+            shopping_cart_creation_data = ShoppingCartRecipeCreate(
+                recipe_id=recipe.id,
+                user_id=2
+            )
+            await db.shopping_cart.create(data=shopping_cart_creation_data)
+            favorite_recipe_data = FavoriteRecipeCreate(
+                recipe_id=recipe.id,
+                user_id=1
+            )
+            await db.favorite_recipes.create(data=favorite_recipe_data)
+        else:
+            shopping_cart_creation_data = ShoppingCartRecipeCreate(
+                recipe_id=recipe.id,
+                user_id=1
+            )
+            await db.shopping_cart.create(data=shopping_cart_creation_data)
+            favorite_recipe_data = FavoriteRecipeCreate(
+                recipe_id=recipe.id,
+                user_id=2
+            )
+            await db.favorite_recipes.create(data=favorite_recipe_data)
     recipes_data = {
         'author':
             {
