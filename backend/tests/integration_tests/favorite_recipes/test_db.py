@@ -16,10 +16,10 @@ async def test_favorite_recipes_cd(
     make_recipe_favorite = await db.favorite_recipes.create(
         favorite_recipe_data
     )
-    assert make_recipe_favorite.id == recipe.id
-    assert make_recipe_favorite.name == recipe.name
-    assert make_recipe_favorite.cooking_time == recipe.cooking_time
-    assert make_recipe_favorite.image == recipe.image
+    assert make_recipe_favorite.id == recipe.id, 'id рецепта не соответствует id избранного рецепта'
+    assert make_recipe_favorite.name == recipe.name, 'name рецепта не соответствует name избранного рецепта'
+    assert make_recipe_favorite.cooking_time == recipe.cooking_time, 'id рецепта не соответствует id избранного рецепта'
+    assert make_recipe_favorite.image == recipe.image, 'image рецепта не соответствует image избранного рецепта'
 
     await db.favorite_recipes.delete(recipe_id=make_recipe_favorite.id, user_id=recipe.author.id)
 

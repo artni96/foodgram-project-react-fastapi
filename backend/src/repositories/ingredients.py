@@ -93,7 +93,7 @@ class IngredientAmountRepository(BaseRepository):
         ingredients_amount_stmt = (
             select(RecipeIngredientModel.ingredient_amount_id)
             .filter_by(recipe_id=recipe_id)
-            .subquery('ingredients_amount_stmt')
+            .scalar_subquery()
         )
         current_ingredient_ids_stmt = (
             select(

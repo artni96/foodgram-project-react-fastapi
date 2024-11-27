@@ -32,7 +32,8 @@ class SubscriptionRepository(BaseRepository):
         author_ids = (
             select(self.model.author_id)
             .filter_by(subscriber_id=user_id)
-            .subquery('author_ids'))
+            .scalar_subquery()
+        )
         user_subs_count_stmt = (
             select(
                 func.coalesce(func.count('*').label('subs_count'), 0)

@@ -347,7 +347,8 @@ class RecipeRepository(BaseRepository):
             recipe_image_id_stmt = (
                 select(RecipeModel.image)
                 .filter_by(id=_recipe_data.id)
-                .subquery('recipe_image_id')
+                .scalar_subquery()
+                # .subquery.label('recipe_image_id')
             )
             image_stmt = (
                 select(
