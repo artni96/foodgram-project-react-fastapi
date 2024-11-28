@@ -13,14 +13,14 @@ async def test_shopping_cart_flow(
     recipe_to_shopping_cart = await auth_ac.post(
         f'/api/recipes/{recipe.id}/shopping_cart'
     )
-    assert recipe_to_shopping_cart.status_code == status.HTTP_201_CREATED
-    assert recipe_to_shopping_cart.json()['id'] == recipe.id
-    assert recipe_to_shopping_cart.json()['name'] == recipe.name
+    assert recipe_to_shopping_cart.status_code == status.HTTP_201_CREATED, 'статус ответа отличается от 201'
+    assert recipe_to_shopping_cart.json()['id'] == recipe.id, 'в ответе отсутствует поле id'
+    assert recipe_to_shopping_cart.json()['name'] == recipe.name, 'в ответе отсутствует поле name'
     assert (
         recipe_to_shopping_cart.json()['cooking_time']
         == recipe.cooking_time
-    )
-    assert recipe_to_shopping_cart.json()['image'] == recipe.image
+    ), 'в ответе отсутствует поле cooking_time'
+    assert recipe_to_shopping_cart.json()['image'] == recipe.image, 'в ответе отсутствует поле image'
 
     recipe_from_shopping_cart_by_another = await another_auth_ac.delete(
         f'/api/recipes/{recipe.id}/shopping_cart'
@@ -30,14 +30,16 @@ async def test_shopping_cart_flow(
     recipe_from_shopping_cart = await auth_ac.delete(
         f'/api/recipes/{recipe.id}/shopping_cart'
     )
-    assert recipe_from_shopping_cart.status_code == status.HTTP_204_NO_CONTENT
+    assert recipe_from_shopping_cart.status_code == status.HTTP_204_NO_CONTENT, ('один пользователь не может удалять '
+                                                                                 'рецепты из корзины другого '
+                                                                                 'пользователя')
     await db.recipes.delete(id=recipe.id)
     await db.commit()
 
     download_shopping_cart = await auth_ac.get(
         '/api/recipes/download_shopping_cart'
     )
-    assert download_shopping_cart.status_code == status.HTTP_200_OK
+    assert download_shopping_cart.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     pdf_to_delete = (
         download_shopping_cart.headers['content-disposition'].split('filename=')[1]
     )

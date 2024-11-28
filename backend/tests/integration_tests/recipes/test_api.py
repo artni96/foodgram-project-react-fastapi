@@ -1,7 +1,7 @@
 import pytest
 from fastapi import status
 
-from backend.tests.conftest import PARAMS_MAX_LENGTH
+from backend.tests.conftest import PARAMS_MAX_LENGTH, another_auth_ac
 
 
 @pytest.mark.parametrize(
@@ -373,6 +373,25 @@ class TestFilteredRecipe:
                 and 'limit=1' in recipe_to_shopping_cart_by_another.json()['next']
         ), 'неверное значение (ссылка) в поле next'
 
+    async def test_full_filtering_recipes(self, auth_ac, another_auth_ac, test_recipe_with_params):
+        filtered_recipes = await auth_ac.get(
+            '/api/recipes?is_in_shopping_cart=1&is_favorited=1&page=1&limit=2&tag=breakfast&tags=lunch'
+        )
+        assert filtered_recipes.status_code == status.HTTP_200_OK
+        assert len(filtered_recipes.json()['result']) == 1
+        assert filtered_recipes.json()['count'] == 1
+        assert not filtered_recipes.json()['next']
+        assert not filtered_recipes.json()['previous']
+
+        filtered_recipes_by_another = await another_auth_ac.get(
+            '/api/recipes?is_in_shopping_cart=1&is_favorited=1&page=1&limit=2&tag=breakfast&tags=lunch'
+        )
+        assert filtered_recipes_by_another.status_code == status.HTTP_200_OK
+        assert len(filtered_recipes_by_another.json()['result']) == 0
+        assert filtered_recipes_by_another.json()['count'] == 0
+        assert not filtered_recipes_by_another.json()['next']
+        assert not filtered_recipes_by_another.json()['previous']
+
     async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
         print('Все рецепты удалены')
-        assert not removing_recipes_after_tests
+        assert not removing_recipes_after_tests, 'все рецепты должны быть удалены после тестов'

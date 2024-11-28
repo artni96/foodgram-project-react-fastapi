@@ -99,12 +99,12 @@ async def test_auth_flow(
             'last_name': last_name
         }
     )
-    assert new_user.status_code == status_code
-    assert new_user.json()['username'] == username
-    assert new_user.json()['email'] == email
-    assert new_user.json()['first_name'] == first_name
-    assert new_user.json()['last_name'] == last_name
-    assert 'id' in new_user.json()
+    assert new_user.status_code == status_code, f'статус ответа отличается от {status_code}'
+    assert new_user.json()['username'] == username, 'В ответе должно быть поле username'
+    assert new_user.json()['email'] == email, 'В ответе должно быть поле email'
+    assert new_user.json()['first_name'] == first_name, 'В ответе должно быть поле first_name'
+    assert new_user.json()['last_name'] == last_name, 'В ответе должно быть поле last_name'
+    assert 'id' in new_user.json(), 'В ответе должно быть поле id'
 
     jwt_token = await ac.post(
         '/api/users/token/login',
@@ -113,21 +113,22 @@ async def test_auth_flow(
             "password": password
         }
     )
-    assert jwt_token.status_code == status.HTTP_200_OK
-    assert isinstance(jwt_token.json()['access_token'], str)
+    assert jwt_token.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
+    assert isinstance(jwt_token.json()['access_token'], str), 'неверный формат jwt-токена'
 
     current_user_info = await ac.get(
         '/api/users/me',
         headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}
     )
-    assert current_user_info.status_code == status.HTTP_200_OK
+    assert current_user_info.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     user_info = current_user_info.json()
-    assert user_info['email'] == email
-    assert user_info['username'] == username
-    assert user_info['first_name'] == first_name
-    assert user_info['last_name'] == last_name
-    assert 'id' in user_info
-    assert user_info['is_subscribed'] == False
+    assert user_info['email'] == email, 'В ответе должно быть поле email'
+    assert user_info['username'] == username, 'В ответе должно быть поле username'
+    assert user_info['first_name'] == first_name, 'В ответе должно быть поле first_name'
+    assert user_info['last_name'] == last_name, 'В ответе должно быть поле last_name'
+    assert 'id' in user_info, 'В ответе должно быть поле id'
+    assert user_info['is_subscribed'] == False, ('При запросе /api/users/me значение поля is_subscribed должно быть '
+                                                 'False')
 
     current_user_info = await ac.get(
         f'/api/users/{user_info["id"]}',
@@ -139,8 +140,8 @@ async def test_auth_flow(
         f'/api/users',
         headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}
     )
-    assert user_list.status_code == status.HTTP_200_OK
-    assert len(user_list.json()['result']) == 3
+    assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
+    assert len(user_list.json()['result']) == 3, 'неверное количество пользователей в поле result'
 
     new_password = 'string123'
     password_chaning = await ac.post(
@@ -151,13 +152,13 @@ async def test_auth_flow(
         },
         headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}
     )
-    assert password_chaning.status_code == status.HTTP_204_NO_CONTENT
+    assert password_chaning.status_code == status.HTTP_204_NO_CONTENT, 'статус ответа отличается от 204'
 
     logout = await ac.post(
         '/api/users/token/logout',
         headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}
     )
-    assert logout.status_code == status.HTTP_204_NO_CONTENT
+    assert logout.status_code == status.HTTP_204_NO_CONTENT, 'статус ответа отличается от 204'
     await db.users.delete(id=user_info['id'])
     user_list_stmt = select(
         UserModel
@@ -173,23 +174,23 @@ async def test_not_auth_flow(ac):
     user_list = await ac.get(
         '/api/users'
     )
-    assert user_list.status_code == status.HTTP_200_OK
+    assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
 
     user_list = await ac.get(
         f'/api/users',
     )
-    assert user_list.status_code == status.HTTP_200_OK
+    assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     current_user_info = await ac.get(
         f'/api/users/{user_list.json()["result"][-1]["id"]}',
     )
-    assert current_user_info.status_code == status.HTTP_200_OK
+    assert current_user_info.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     user_id_to_check = user_list.json()["result"][-1]["id"]
     current_user_info = await ac.get(
         f'/api/users/{user_id_to_check}',
     )
-    assert current_user_info.status_code == status.HTTP_200_OK
+    assert current_user_info.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     non_existent_user_id = user_id_to_check + 1
-    current_user_info = await ac.get(
+    non_existent_user_info = await ac.get(
         f'/api/users/{non_existent_user_id}',
     )
-    assert current_user_info.status_code == status.HTTP_404_NOT_FOUND
+    assert non_existent_user_info.status_code == status.HTTP_404_NOT_FOUND, 'статус ответа отличается от 404'

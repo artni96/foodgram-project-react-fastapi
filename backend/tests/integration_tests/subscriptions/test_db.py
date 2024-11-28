@@ -19,13 +19,17 @@ async def test_subscription_crud(db):
         offset=0,
         router_prefix='/api/subscriptions',
     )
-    assert len(user_subs.result) == 1
-    assert user_subs.result[-1].id == author.id
-    assert user_subs.result[-1].username == author.username
-    assert user_subs.result[-1].email == author.email
-    assert user_subs.result[-1].first_name == author.first_name
-    assert user_subs.result[-1].last_name == author.last_name
-    assert user_subs.result[-1].is_subscribed == True
+    assert len(user_subs.result) == 1, 'неверное количество подписок пользователя после создания подписки'
+    assert user_subs.result[-1].id == author.id, 'значение id пользователя отличается от исходных данных'
+    assert user_subs.result[-1].username == author.username, ('значение username пользователя отличается от исходных '
+                                                              'данных')
+    assert user_subs.result[-1].email == author.email, 'значение email пользователя отличается от исходных данных'
+    assert user_subs.result[-1].first_name == author.first_name, ('значение first_name пользователя отличается от '
+                                                                  'исходных данных')
+    assert user_subs.result[-1].last_name == author.last_name, ('значение last_name пользователя отличается от '
+                                                                'исходных данных')
+    assert user_subs.result[-1].is_subscribed is True, ('при успешном создании подписки значение поля is_subscribed '
+                                                        'должно быть True')
 
     await db.subscriptions.delete(author_id=author.id, subscriber_id=subscriber.id)
     user_subs = await db.subscriptions.get_user_subs(
@@ -36,4 +40,4 @@ async def test_subscription_crud(db):
         offset=0,
         router_prefix='/api/subscriptions'
     )
-    assert len(user_subs.result) == 0
+    assert len(user_subs.result) == 0, 'неверное количество подписок пользователя после отмены подписки'

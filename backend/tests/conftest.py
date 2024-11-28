@@ -246,6 +246,7 @@ async def recipe_bulk_creating_fixture(db, recipe_creation_fixture):
                 user_id=2
             )
             await db.favorite_recipes.create(data=favorite_recipe_data)
+
     recipes_data = {
         'author':
             {
@@ -295,6 +296,26 @@ async def test_recipe(
     )
     await db.commit()
     return recipe
+
+
+@pytest.fixture()
+async def test_recipe_with_params(
+    db,
+    test_recipe
+):
+
+    shopping_cart_creation_data = ShoppingCartRecipeCreate(
+        recipe_id=test_recipe.id,
+        user_id=1
+    )
+    await db.shopping_cart.create(data=shopping_cart_creation_data)
+    favorite_recipe_data = FavoriteRecipeCreate(
+        recipe_id=test_recipe.id,
+        user_id=1
+    )
+    await db.favorite_recipes.create(data=favorite_recipe_data)
+    await db.commit()
+    return test_recipe
 
 
 @pytest.fixture()

@@ -19,19 +19,19 @@ async def test_make_recipe_favorite_flow(
     assert favorite_recipe.json()['name'] == recipe.name, 'в ответе отсутствует поле name'
     assert favorite_recipe.json()['cooking_time'] == recipe.cooking_time, 'в ответе отсутствует поле cooking_time'
     assert favorite_recipe.json()['image'] == recipe.image, 'в ответе отсутствует поле image'
-    assert len(favorite_recipe.json()) == 4, 'требуемые поля ответа: id, name, cooking_time, image'
-
-    print(recipe.id)
-    delete_favorite_recipe = await auth_ac.delete(
-        f'/api/recipes/{recipe.id}/favorite'
-    )
-    print(delete_favorite_recipe)
-    assert delete_favorite_recipe.status_code == status.HTTP_204_NO_CONTENT, 'статус ответа отличается от 204'
-    delete_favorite_recipe_by_another_user = await auth_ac.delete(
+    assert len(favorite_recipe.json()) == 4, 'Корректные поля в ответе: id, name, cooking_time, image'
+    delete_favorite_recipe_by_another_user = await another_auth_ac.delete(
         f'/api/recipes/{recipe.id}/favorite'
     )
     assert delete_favorite_recipe_by_another_user.status_code == status.HTTP_400_BAD_REQUEST, ('статус ответа '
                                                                                                'отличается от 400')
+    # print(recipe.id)
+    delete_favorite_recipe = await auth_ac.delete(
+        f'/api/recipes/{recipe.id}/favorite'
+    )
+    # print(delete_favorite_recipe)
+    assert delete_favorite_recipe.status_code == status.HTTP_204_NO_CONTENT, 'статус ответа отличается от 204'
+
     assert (
             delete_favorite_recipe_by_another_user.json()['detail']
             == f'Рецепт с id {recipe.id} в избранном не найден.'
