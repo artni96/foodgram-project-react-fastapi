@@ -5,7 +5,7 @@ from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.repositories.utils.users import PasswordManager
 from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
-                                       UserPasswordUpdate)
+                                       UserPasswordUpdate, UserListRead, UserCreateResponse)
 from backend.src.services.users import auth_backend, fastapi_users, optional_current_user
 
 ROUTER_PREFIX = '/api/users'
@@ -30,7 +30,7 @@ async def get_user_list(
         default=None,
         title='Количество объектов на странице'
     )
-):
+) -> UserListRead | []:
     if not limit:
         limit = constants.PAGINATION_LIMIT
     if page:
@@ -60,7 +60,7 @@ async def get_user_list(
 async def get_current_user(
     db: DBDep,
     current_user: UserDep
-):
+) -> dict:
     current_user = await db.users.get_one_or_none(
         user_id=current_user.id)
     return current_user
@@ -76,7 +76,7 @@ async def get_user_by_id(
     db: DBDep,
     id: int,
     current_user=Depends(optional_current_user)
-):
+) -> dict:
     options = {}
     if current_user:
         options['current_user_id'] = current_user.id
@@ -100,7 +100,7 @@ async def get_user_by_id(
 async def create_new_user(
     db: DBDep,
     user_data: UserCreateRequest
-):
+) -> UserCreateResponse:
     hashed_password = PasswordManager().hash_password(user_data.password)
     _user_data = UserCreate(
         username=user_data.username,
@@ -124,7 +124,7 @@ async def change_password(
     db: DBDep,
     password_data: UserPasswordUpdate,
     current_user: UserDep
-):
+) -> None:
     user = await db.users.get_user_hashed_password(current_user.id)
     try:
         PasswordManager().verify_password(

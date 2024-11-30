@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
 from backend.src.api.dependencies import DBDep
-
+from backend.src.schemas.ingredients import IngredientRead
 
 router = APIRouter(prefix='/api/ingredients', tags=['Ингредиенты'])
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix='/api/ingredients', tags=['Ингредиенты'])
 async def get_ingredient_by_id(
         db: DBDep,
         id: int
-):
+) -> IngredientRead | None:
     result = await db.ingredients.get_one_or_none(id=id)
     return result
 
@@ -29,6 +29,6 @@ async def get_ingredient_by_id(
 async def get_filtered_ingredients_by_name(
         db: DBDep,
         name: str | None = None
-):
+) -> list[IngredientRead] | []:
     result = await db.ingredients.get_filtered(name=name)
     return result

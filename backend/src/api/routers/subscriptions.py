@@ -5,8 +5,8 @@ from sqlalchemy.exc import NoResultFound, IntegrityError
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
-from backend.src.schemas.users import UserRead
-from backend.src.schemas.subscriptions import SubscriptionCreate
+from backend.src.schemas.subscriptions import SubscriptionCreate, SubscriptionListRead
+from backend.src.schemas.users import FollowedUserWithRecipiesRead
 
 
 ROUTER_PREFIX = '/api/users'
@@ -37,7 +37,7 @@ async def get_my_subscriptions(
         default=None,
         title='Количество объектов внутри поля recipes.'
     ),
-):
+) -> SubscriptionListRead | []:
     if not limit:
         limit = constants.PAGINATION_LIMIT
     if page:
@@ -61,12 +61,12 @@ async def get_my_subscriptions(
     summary='Подписаться на пользователя',
     description='Доступно только авторизованным пользователям'
 )
-async def subsrtibe(
+async def subscribe(
     db: DBDep,
     current_user: UserDep,
     user_id: int = Path(),
     recipes_limit: int = Query()
-):
+) -> FollowedUserWithRecipiesRead:
     data = SubscriptionCreate(author_id=user_id, subscriber_id=current_user.id)
     try:
         subscription = await db.subscriptions.create(data, recipes_limit)

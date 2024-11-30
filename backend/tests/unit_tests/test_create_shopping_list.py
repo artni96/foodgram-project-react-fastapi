@@ -7,6 +7,6 @@ async def test_create_shopping_list():
     username = 'artni-test'
 
     shopping_list_pdf = create_shopping_list(data=data, username=username)
-    assert os.path.exists(shopping_list_pdf)
+    assert os.path.exists(shopping_list_pdf), 'Не удалось создать файл'
     os.remove(shopping_list_pdf)
-    assert not os.path.exists(shopping_list_pdf)
+    assert not os.path.exists(shopping_list_pdf), 'Не удалось удалить pdf файл'

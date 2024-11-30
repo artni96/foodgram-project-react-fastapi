@@ -8,11 +8,15 @@ from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.schemas.recipes import (FavoriteRecipeCreate,
                                          RecipeCreateRequest,
                                          RecipeUpdateRequest,
-                                         ShoppingCartRecipeCreate)
+                                         ShoppingCartRecipeCreate, RecipeRead, RecipeListRead, FavoriteRecipeRead,
+                                         ShoppingCartRecipeRead)
 from backend.src.services.users import optional_current_user
+from pydantic import JsonValue
+
 
 ROUTER_PREFIX = '/api/recipes'
 recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
+
 
 
 @recipe_router.get(
@@ -37,7 +41,7 @@ async def get_recipe_list(
     ),
     current_user=Depends(optional_current_user),
 
-):
+) -> RecipeListRead | []:
     if not limit:
         limit = constants.PAGINATION_LIMIT
     if not page:
@@ -65,7 +69,7 @@ async def get_recipe(
     db: DBDep,
     id: int,
     current_user=Depends(optional_current_user)
-):
+) -> RecipeRead | None:
     result = await db.recipes.get_one_or_none(
         id=id,
         current_user=current_user,
@@ -109,7 +113,7 @@ async def update_recipe(
     recipe_data: RecipeUpdateRequest = Body(
         openapi_examples=RecipeUpdateRequest.model_config['json_schema_extra']
     ),
-):
+) -> RecipeRead:
     check_recipe = await db.recipes.check_recipe_exists(id=id)
     if check_recipe:
         if check_recipe.author == current_user.id:
@@ -142,7 +146,7 @@ async def delete_recipe(
         db: DBDep,
         current_user: UserDep,
         id: int
-):
+) -> None:
     check_recipe = await db.recipes.check_recipe_exists(id=id)
     if check_recipe:
         if check_recipe.author == current_user.id:
@@ -177,7 +181,7 @@ async def make_recipe_favorite(
     id: int,
     db: DBDep,
     current_user: UserDep,
-):
+) -> FavoriteRecipeRead:
     favorite_recipe_data = FavoriteRecipeCreate(
         recipe_id=id,
         user_id=current_user.id
@@ -209,7 +213,7 @@ async def cancel_favorite_recipe(
     id: int,
     db: DBDep,
     current_user: UserDep,
-):
+) -> None:
     try:
         await db.favorite_recipes.delete(recipe_id=id, user_id=current_user.id)
         await db.commit()
@@ -253,7 +257,7 @@ async def add_recipe_to_shopping_cart(
     id: int,
     db: DBDep,
     current_user: UserDep,
-):
+) -> ShoppingCartRecipeRead:
     shopping_cart_recipe_data = ShoppingCartRecipeCreate(
         recipe_id=id,
         user_id=current_user.id
@@ -285,7 +289,7 @@ async def remove_recipe_from_shopping_cart(
     id: int,
     db: DBDep,
     current_user: UserDep,
-):
+) -> None:
     try:
         await db.shopping_cart.delete(recipe_id=id, user_id=current_user.id)
         await db.commit()

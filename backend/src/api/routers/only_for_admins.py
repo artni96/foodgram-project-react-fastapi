@@ -13,7 +13,6 @@ router = APIRouter(
 
 @router.post(
     '/tags',
-    response_model=TagRead,
     summary='Создание нового тега',
     status_code=status.HTTP_201_CREATED
 )
@@ -22,7 +21,7 @@ async def create_tag(
         data: TagCreate = Body(
             openapi_examples=TagCreate.model_config['json_schema_extra']
         )
-):
+) -> TagRead:
     result = await db.tags.create(data=data)
     await db.commit()
     return result
@@ -30,14 +29,13 @@ async def create_tag(
 
 @router.post(
     '/ingredients',
-    response_model=IngredientRead,
     summary='Создание нового ингредиента',
     status_code=status.HTTP_201_CREATED
 )
 async def create_ingredient(
         db: DBDep,
         data: IngredientCreate
-):
+) -> IngredientRead:
     result = await db.ingredients.create(data=data)
     await db.commit()
     return result
