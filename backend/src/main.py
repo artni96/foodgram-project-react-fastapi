@@ -1,7 +1,10 @@
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -22,13 +25,24 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from backend.src.constants import MAX_EMAIL_LENGTH
+from backend.src.setup import redis_manager
 
-origins = [
-    "http://localhost",
-    "http://localhost:8000",
-]
 
-app = FastAPI()
+# origins = [
+#     "http://localhost",
+#     "http://localhost:8000",
+# ]
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await redis_manager.connect()
+    FastAPICache.init(RedisBackend(redis_manager.redis), prefix="fastapi-cache")
+    yield
+    await redis_manager.close()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.exception_handler(RequestValidationError)
@@ -56,13 +70,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return response
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 app.mount(
     MOUNT_PATH,

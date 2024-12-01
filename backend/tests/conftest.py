@@ -1,6 +1,17 @@
 import json
 import os
 import pathlib
+from unittest import mock
+
+
+def disable_cache(*args, **kwargs):
+    def wrapper(func):
+        return func
+
+    return wrapper
+
+
+mock.patch('fastapi_cache.decorator.cache', disable_cache).start()
 
 import pytest
 from fastapi import status
@@ -19,7 +30,6 @@ from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest
     FavoriteRecipeCreate
 from backend.src.schemas.tags import TagCreate
 
-
 MAX_EMAIL_LENGTH = 254
 USER_PARAMS_MAX_LENGTH = 150
 PARAMS_MAX_LENGTH = 200
@@ -27,6 +37,7 @@ PARAMS_MAX_LENGTH = 200
 
 def pytest_configure():
     return {'recipe': None}
+
 
 @pytest.fixture(scope='session', autouse=True)
 async def check_test_mode():
@@ -113,6 +124,7 @@ async def add_new_user(ac):
             "username": "test_user_2",
         })
     assert another_new_user.status_code == status.HTTP_201_CREATED
+
 
 @pytest.fixture(scope='session')
 async def auth_ac(ac):
@@ -287,8 +299,8 @@ async def removing_recipe_after_test(db, recipe_id):
 
 @pytest.fixture()
 async def test_recipe(
-    db,
-    recipe_creation_fixture: RecipeCreateRequest):
+        db,
+        recipe_creation_fixture: RecipeCreateRequest):
     recipe = await db.recipes.create(
         recipe_data=recipe_creation_fixture,
         db=db,
@@ -300,10 +312,9 @@ async def test_recipe(
 
 @pytest.fixture()
 async def test_recipe_with_params(
-    db,
-    test_recipe
+        db,
+        test_recipe
 ):
-
     shopping_cart_creation_data = ShoppingCartRecipeCreate(
         recipe_id=test_recipe.id,
         user_id=1
@@ -321,5 +332,5 @@ async def test_recipe_with_params(
 @pytest.fixture()
 async def test_base64_fixture():
     test_base64_string = ("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEBAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
-                   "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==")
+                          "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==")
     return test_base64_string

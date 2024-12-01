@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     DB_USER_PASSWORD: str
     DB_PORT: int
     SECRET_KEY: str
+    REDIS_HOST: str
+    REDIS_PORT: int
 
     @property
     def DB_URL(self) -> str:

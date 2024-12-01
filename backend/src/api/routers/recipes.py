@@ -1,6 +1,7 @@
 import re
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from fastapi_cache.decorator import cache
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from backend.src import constants
@@ -28,6 +29,7 @@ recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
             'избранному, автору, списку покупок и тегам.'
     )
 )
+@cache(expire=60)
 async def get_recipe_list(
     db: DBDep,
     author: int | None = Query(default=None),
@@ -41,7 +43,7 @@ async def get_recipe_list(
     ),
     current_user=Depends(optional_current_user),
 
-) -> RecipeListRead | []:
+) -> RecipeListRead | None:
     if not limit:
         limit = constants.PAGINATION_LIMIT
     if not page:
@@ -65,6 +67,7 @@ async def get_recipe_list(
     status_code=status.HTTP_200_OK,
     summary='Получение рецепта'
 )
+@cache(expire=60)
 async def get_recipe(
     db: DBDep,
     id: int,

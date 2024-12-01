@@ -37,7 +37,7 @@ async def get_my_subscriptions(
         default=None,
         title='Количество объектов внутри поля recipes.'
     ),
-) -> SubscriptionListRead | []:
+) -> SubscriptionListRead | None:
     if not limit:
         limit = constants.PAGINATION_LIMIT
     if page:

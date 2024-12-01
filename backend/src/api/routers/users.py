@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Query, status, Depends, HTTPException
+from fastapi_cache.decorator import cache
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.repositories.utils.users import PasswordManager
 from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
-                                       UserPasswordUpdate, UserListRead, UserCreateResponse)
+                                       UserPasswordUpdate, UserListRead, UserCreateResponse, FollowedUserRead)
 from backend.src.services.users import auth_backend, fastapi_users, optional_current_user
 
 ROUTER_PREFIX = '/api/users'
@@ -22,6 +23,7 @@ user_router.include_router(
     status_code=status.HTTP_200_OK,
     summary='Список пользователей',
 )
+@cache(expire=60)
 async def get_user_list(
     db: DBDep,
     current_user=Depends(optional_current_user),
@@ -30,7 +32,7 @@ async def get_user_list(
         default=None,
         title='Количество объектов на странице'
     )
-) -> UserListRead | []:
+) -> UserListRead:
     if not limit:
         limit = constants.PAGINATION_LIMIT
     if page:
@@ -60,7 +62,7 @@ async def get_user_list(
 async def get_current_user(
     db: DBDep,
     current_user: UserDep
-) -> dict:
+) -> FollowedUserRead | None:
     current_user = await db.users.get_one_or_none(
         user_id=current_user.id)
     return current_user
@@ -72,11 +74,12 @@ async def get_current_user(
     summary='Профиль пользователя',
     description='Доступно всем пользователям.'
 )
+@cache(expire=60)
 async def get_user_by_id(
     db: DBDep,
     id: int,
     current_user=Depends(optional_current_user)
-) -> dict:
+) -> FollowedUserRead | None:
     options = {}
     if current_user:
         options['current_user_id'] = current_user.id
