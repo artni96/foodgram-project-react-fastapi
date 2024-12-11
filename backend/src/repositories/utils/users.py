@@ -1,16 +1,27 @@
 from argon2 import PasswordHasher
+from passlib.context import CryptContext
+
+from backend.src.config import settings
 from backend.src.constants import MAIN_URL
+import jwt
+
+from backend.src.exceptions.users import IncorrectTokenException
 
 
 class PasswordManager:
-    ph = PasswordHasher()
+    # ph = PasswordHasher()
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    def hash_password(self, password):
-        return self.ph.hash(password)
+    # def hash_password(self, password):
+    #     return self.ph.hash(password)
+    #
+    # def verify_password(self, hashed_password, current_password):
+    #     return self.ph.verify(hashed_password, current_password)
+    def hash_password(self, password: str) -> str:
+        return self.pwd_context.hash(password)
 
-    def verify_password(self, hashed_password, current_password):
-        return self.ph.verify(hashed_password, current_password)
-
+    def verify_password(self, plain_password, hashed_password):
+        return self.pwd_context.verify(plain_password, hashed_password)
 
 async def users_url_paginator(page, limit, count):
     url = f'{MAIN_URL}/api/users'
@@ -28,3 +39,9 @@ async def users_url_paginator(page, limit, count):
         'next': next,
         'previous': previous
     }
+
+def decode_token(token: str) -> dict:
+    try:
+        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except jwt.exceptions.DecodeError:
+        raise IncorrectTokenException

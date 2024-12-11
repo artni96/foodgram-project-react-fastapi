@@ -1,21 +1,25 @@
-from fastapi import APIRouter, Query, status, Depends, HTTPException
+from fastapi import APIRouter, Query, status, Depends, HTTPException, Response, Request
 from fastapi_cache.decorator import cache
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
+from backend.src.exceptions.users import EmailNotRegisteredException, IncorrectPasswordException, \
+    IncorrectTokenException
 from backend.src.repositories.utils.users import PasswordManager
 from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
-                                       UserPasswordUpdate, UserListRead, UserCreateResponse, FollowedUserRead)
+                                       UserPasswordUpdate, UserListRead, UserCreateResponse, FollowedUserRead,
+                                       UserLoginRequest)
 from backend.src.services.users import auth_backend, fastapi_users, optional_current_user
 
 ROUTER_PREFIX = '/api/users'
 user_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Пользователи',])
+auth_router = APIRouter(prefix='/api/auth', tags=['Пользователи',])
 
-user_router.include_router(
-    fastapi_users.get_auth_router(auth_backend),
-    prefix='/token',
-)
+# auth_router.include_router(
+#     fastapi_users.get_auth_router(auth_backend),
+#     prefix='/token',
+# )
 
 
 @user_router.get(
@@ -115,6 +119,40 @@ async def create_new_user(
     new_user = await db.users.create(data=_user_data)
     await db.commit()
     return new_user
+
+
+@auth_router.post(
+    "/token/login",
+    summary='Вход пользователя в систему'
+)
+async def login_user(
+    data: UserLoginRequest,
+    response: Response,
+    db: DBDep,
+):
+    try:
+        # access_token = await AuthService(db).login_user(data)
+        access_token = await db.users.create_access_token(data=data)
+    except EmailNotRegisteredException as ex:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+    except IncorrectPasswordException as ex:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+
+    response.set_cookie("access_token", access_token)
+    return {"access_token": access_token}
+
+
+@auth_router.post(
+    "/token/logout",
+    summary='Выход пользователя из системы',
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def logout(response: Response, user: UserDep):
+    try:
+        response.delete_cookie("access_token")
+    except IncorrectTokenException as ex:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+    # return {"status": "OK"}
 
 
 @user_router.post(

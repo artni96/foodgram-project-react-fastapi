@@ -19,7 +19,7 @@ async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, UserModel)
 
 
-bearer_transport = BearerTransport(tokenUrl='api/users/token/login')
+bearer_transport = BearerTransport(tokenUrl='api/auth/token/login')
 
 
 def get_jwt_strategy() -> JWTStrategy:
