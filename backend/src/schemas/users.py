@@ -41,6 +41,10 @@ class UserRead(BaseUser):
     id: int
 
 
+class UserReadWithRole(UserRead):
+    is_superuser: bool
+
+
 class UserPasswordUpdate(BaseModel):
     current_password: str = Field(max_length=USER_PARAMS_MAX_LENGTH)
     new_password: str = Field(max_length=USER_PARAMS_MAX_LENGTH)
@@ -56,6 +60,7 @@ class UserPasswordUpdate(BaseModel):
 
 class UserWithHashedPasswordRead(UserRead):
     hashed_password: str
+    is_superuser: bool = False
 
 
 class UserPasswordChangeRequest(BaseModel):

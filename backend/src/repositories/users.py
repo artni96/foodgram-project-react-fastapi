@@ -174,6 +174,8 @@ class UserRepository(BaseRepository):
             return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         except jwt.exceptions.DecodeError:
             raise IncorrectTokenException
+        except jwt.exceptions.ExpiredSignatureError:
+            raise IncorrectTokenException
 
     # async def register_user(self, data: UserRequestAdd):
     #     hashed_password = self.hash_password(data.password)

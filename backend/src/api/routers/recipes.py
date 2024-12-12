@@ -5,15 +5,15 @@ from fastapi_cache.decorator import cache
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from backend.src import constants
-from backend.src.api.dependencies import DBDep, UserDep
+from backend.src.api.dependencies import DBDep, UserDep, OptionalUserDep
 from backend.src.schemas.recipes import (FavoriteRecipeCreate,
                                          RecipeCreateRequest,
                                          RecipeUpdateRequest,
                                          ShoppingCartRecipeCreate, RecipeRead, RecipeListRead, FavoriteRecipeRead,
                                          ShoppingCartRecipeRead)
-from backend.src.services.users import optional_current_user
+# from backend.src.services.users import optional_current_user
 from pydantic import JsonValue
-
+# from backend.src.api.dependencies import OptionalUserDep
 
 ROUTER_PREFIX = '/api/recipes'
 recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
@@ -32,6 +32,7 @@ recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
 @cache(expire=60)
 async def get_recipe_list(
     db: DBDep,
+    current_user: OptionalUserDep,
     author: int | None = Query(default=None),
     tags: list[str] | None = Query(default=None),
     is_favorited: int = Query(default=0),
@@ -41,8 +42,6 @@ async def get_recipe_list(
         default=None,
         title='Количество объектов на странице.'
     ),
-    current_user=Depends(optional_current_user),
-
 ) -> RecipeListRead | None:
     if not limit:
         limit = constants.PAGINATION_LIMIT
@@ -71,7 +70,7 @@ async def get_recipe_list(
 async def get_recipe(
     db: DBDep,
     id: int,
-    current_user=Depends(optional_current_user)
+    current_user: OptionalUserDep
 ) -> RecipeRead | None:
     result = await db.recipes.get_one_or_none(
         id=id,

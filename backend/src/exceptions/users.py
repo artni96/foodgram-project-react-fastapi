@@ -11,3 +11,11 @@ class IncorrectPasswordException(FoodgramBaseException):
 
 class IncorrectTokenException(FoodgramBaseException):
     detail = 'Невалидный токен'
+
+
+class ExpiredTokenException(FoodgramBaseException):
+    detail = 'Необходимо авторизоваться'
+
+
+class OnlyForAdminException(FoodgramBaseException):
+    detail = 'Доступно только администраторам'

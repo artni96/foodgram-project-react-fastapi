@@ -1,13 +1,14 @@
 from starlette import status
 
-from backend.src.exceptions.users import IncorrectTokenException
+from backend.src.exceptions.users import IncorrectTokenException, ExpiredTokenException
 from backend.src.models.users import UserModel
 from backend.src.db_manager import DBManager
 
 from typing import Annotated
 
 from backend.src.repositories.utils.users import decode_token
-from backend.src.services.users import current_user, current_superuser
+from backend.src.schemas.users import UserRead, UserReadWithRole
+# from backend.src.services.users import current_user, current_superuser
 from fastapi import Depends, Request, HTTPException
 from backend.src.db import async_session_maker, session
 from backend.src.repositories.users import UserRepository
@@ -20,20 +21,48 @@ async def get_db():
 
 DBDep = Annotated[DBManager, Depends(get_db)]
 
+
 def get_token(request: Request) -> str:
     token = request.cookies.get("access_token", None)
     if not token:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Необходимо авторизоваться')
     return token
 
 
-def get_current_user_id(token: str = Depends(get_token)):
+def get_current_user(token: str = Depends(get_token)):
     try:
         data = decode_token(token)
-        # data = PasswordManager().decode_token(token)
     except IncorrectTokenException:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Неверный JWT Token')
-        # raise IncorrectTokenHTTPException
-    return data['id']
-    # return UserForJWT.model_validate(data, from_attributes=True)
-UserDep = Annotated[UserModel, Depends(get_current_user_id)]
+    return UserReadWithRole.model_validate(
+        data, from_attributes=True
+    )
+
+
+UserDep = Annotated[UserModel, Depends(get_current_user)]
+
+
+def get_current_user_optional(request: Request):
+    token = request.cookies.get("access_token", None)
+    if token:
+        return get_current_user(token)
+
+
+OptionalUserDep = Annotated[UserModel, Depends(get_current_user_optional)]
+
+
+def get_current_superuser(token: str = Depends(get_token)):
+    try:
+        data = decode_token(token)
+    except IncorrectTokenException:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Неверный JWT Token')
+    except ExpiredTokenException as ex:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.detail)
+    if data['is_superuser']:
+        return UserReadWithRole.model_validate(
+            data, from_attributes=True
+        )
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Доступно только администраторам')
+
+
+SuperuserDep = Annotated[UserModel, Depends(get_current_superuser)]

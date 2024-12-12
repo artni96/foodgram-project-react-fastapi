@@ -5,18 +5,12 @@ from backend.src.config import settings
 from backend.src.constants import MAIN_URL
 import jwt
 
-from backend.src.exceptions.users import IncorrectTokenException
+from backend.src.exceptions.users import IncorrectTokenException, ExpiredTokenException
 
 
 class PasswordManager:
-    # ph = PasswordHasher()
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    # def hash_password(self, password):
-    #     return self.ph.hash(password)
-    #
-    # def verify_password(self, hashed_password, current_password):
-    #     return self.ph.verify(hashed_password, current_password)
     def hash_password(self, password: str) -> str:
         return self.pwd_context.hash(password)
 
@@ -45,3 +39,5 @@ def decode_token(token: str) -> dict:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except jwt.exceptions.DecodeError:
         raise IncorrectTokenException
+    except jwt.exceptions.ExpiredSignatureError:
+        raise ExpiredTokenException

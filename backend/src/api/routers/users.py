@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, status, Depends, HTTPException, Response, 
 from fastapi_cache.decorator import cache
 
 from backend.src import constants
-from backend.src.api.dependencies import DBDep, UserDep
+from backend.src.api.dependencies import DBDep, UserDep, OptionalUserDep
 from backend.src.exceptions.users import EmailNotRegisteredException, IncorrectPasswordException, \
     IncorrectTokenException
 from backend.src.repositories.utils.users import PasswordManager
@@ -10,7 +10,7 @@ from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
                                        UserPasswordUpdate, UserListRead, UserCreateResponse, FollowedUserRead,
                                        UserLoginRequest)
-from backend.src.services.users import auth_backend, fastapi_users, optional_current_user
+# from backend.src.services.users import auth_backend, fastapi_users, optional_current_user
 
 ROUTER_PREFIX = '/api/users'
 user_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Пользователи',])
@@ -30,7 +30,7 @@ auth_router = APIRouter(prefix='/api/auth', tags=['Пользователи',])
 @cache(expire=60)
 async def get_user_list(
     db: DBDep,
-    current_user=Depends(optional_current_user),
+    current_user=OptionalUserDep,
     page: int | None = Query(default=None, title='Номер страницы'),
     limit: int | None = Query(
         default=None,
@@ -82,7 +82,7 @@ async def get_current_user(
 async def get_user_by_id(
     db: DBDep,
     id: int,
-    current_user=Depends(optional_current_user)
+    current_user=OptionalUserDep
 ) -> FollowedUserRead | None:
     options = {}
     if current_user:
@@ -123,7 +123,8 @@ async def create_new_user(
 
 @auth_router.post(
     "/token/login",
-    summary='Вход пользователя в систему'
+    summary='Вход пользователя в систему',
+    status_code=status.HTTP_201_CREATED
 )
 async def login_user(
     data: UserLoginRequest,
@@ -166,17 +167,16 @@ async def change_password(
     password_data: UserPasswordUpdate,
     current_user: UserDep
 ) -> None:
-    user = await db.users.get_user_hashed_password(current_user.id)
-    try:
-        PasswordManager().verify_password(
-            user.hashed_password,
-            password_data.current_password
+    user = await db.users.get_user_hashed_password(id=current_user.id)
+    if not PasswordManager().verify_password(
+            hashed_password=user.hashed_password,
+            plain_password=password_data.current_password
+        ):
+        # except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Неверный пароль'
         )
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Неверный пароль'
-    )
     new_hashed_password = PasswordManager().hash_password(
         password_data.new_password
     )
