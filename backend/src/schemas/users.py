@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, EmailStr
 
 from backend.src.constants import USER_PARAMS_MAX_LENGTH, MAX_EMAIL_LENGTH
 from backend.src.schemas.base import ShortRecipeRead
@@ -41,6 +41,10 @@ class UserRead(BaseUser):
     id: int
 
 
+class UserReadWithRole(UserRead):
+    is_superuser: bool
+
+
 class UserPasswordUpdate(BaseModel):
     current_password: str = Field(max_length=USER_PARAMS_MAX_LENGTH)
     new_password: str = Field(max_length=USER_PARAMS_MAX_LENGTH)
@@ -56,6 +60,7 @@ class UserPasswordUpdate(BaseModel):
 
 class UserWithHashedPasswordRead(UserRead):
     hashed_password: str
+    is_superuser: bool = False
 
 
 class UserPasswordChangeRequest(BaseModel):
@@ -80,3 +85,8 @@ class UserListRead(BaseModel):
     next: str | None = None
     previous: str | None = None
     result: list[FollowedUserRead] = []
+
+
+class UserLoginRequest(BaseModel):
+    email: EmailStr
+    password: str

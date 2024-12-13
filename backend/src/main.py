@@ -18,7 +18,7 @@ from backend.src.api.routers.recipes import favorite_recipe_router
 from backend.src.api.routers.recipes import recipe_router, shopping_cart_router
 from backend.src.api.routers.subscriptions import subscription_router
 from backend.src.api.routers.tags import router as tag_router
-from backend.src.api.routers.users import user_router
+from backend.src.api.routers.users import user_router, auth_router
 from backend.src.constants import MOUNT_PATH
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -28,10 +28,10 @@ from backend.src.constants import MAX_EMAIL_LENGTH
 from backend.src.setup import redis_manager
 
 
-# origins = [
-#     "http://localhost",
-#     "http://localhost:8000",
-# ]
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+]
 
 
 @asynccontextmanager
@@ -70,13 +70,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return response
 
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mount(
     MOUNT_PATH,
@@ -84,6 +84,7 @@ app.mount(
 )
 app.include_router(subscription_router)
 app.include_router(user_router)
+app.include_router(auth_router)
 app.include_router(ingredient_router)
 app.include_router(admin_router)
 app.include_router(tag_router)

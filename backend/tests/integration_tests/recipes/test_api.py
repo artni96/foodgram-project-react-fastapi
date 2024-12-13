@@ -22,7 +22,8 @@ from backend.tests.conftest import PARAMS_MAX_LENGTH, another_auth_ac
                     "amount": 200
                 }
             ],
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+            "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
             status.HTTP_201_CREATED
         ),
         (
@@ -40,7 +41,8 @@ from backend.tests.conftest import PARAMS_MAX_LENGTH, another_auth_ac
                     "amount": 200
                 }
             ],
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+            "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
             status.HTTP_400_BAD_REQUEST
         ),
         (
@@ -58,7 +60,8 @@ from backend.tests.conftest import PARAMS_MAX_LENGTH, another_auth_ac
                     "amount": 200
                 }
             ],
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+            "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
             status.HTTP_400_BAD_REQUEST
         ),
         (
@@ -76,7 +79,8 @@ from backend.tests.conftest import PARAMS_MAX_LENGTH, another_auth_ac
                     "amount": 200
                 }
             ],
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+            "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
             status.HTTP_400_BAD_REQUEST
         ),
     ]
@@ -103,6 +107,7 @@ async def test_recipe_creating(
             "image": image
         }
     )
+    print(new_recipe.json())
     assert new_recipe.status_code == status_code, f'статус ответа отличается от {status_code}'
     if new_recipe.status_code == status.HTTP_201_CREATED:
         assert new_recipe.json()['name'] == name, 'в ответе отсутствует поле name'
@@ -204,17 +209,20 @@ async def test_recipe_updating(
         assert updated_recipe.json()['cooking_time'] == cooking_time, 'в ответе отсутствует поле cooking_time'
         assert 'image' in updated_recipe.json(), 'в ответе отсутствует поле image'
 
-
+@pytest.mark.order(11)
 async def test_recipe_removing(auth_ac):
     recipes = await auth_ac.get(
         '/api/recipes'
     )
     recipe_to_delete = recipes.json()['result'][0]['id']
+    print(recipe_to_delete)
     removed_recipe = await auth_ac.delete(
         f'/api/recipes/{recipe_to_delete}'
     )
     assert removed_recipe.status_code == status.HTTP_204_NO_CONTENT
 
+
+@pytest.mark.order(12)
 class TestFilteredRecipe:
     recipes_data = {
         'author':
@@ -349,6 +357,7 @@ class TestFilteredRecipe:
                 'page=2' in recipe_to_shopping_cart_by_another.json()['next']
                 and 'limit=2' in recipe_to_shopping_cart_by_another.json()['next']
         ), 'неверное значение (ссылка) в поле next'
+
     async def test_filter_by_is_favorited(self, auth_ac, another_auth_ac):
         recipe_to_shopping_cart = await auth_ac.get(
             '/api/recipes?is_favorited=1&limit=2&page=2'

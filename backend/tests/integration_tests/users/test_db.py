@@ -31,8 +31,8 @@ async def test_user_repository(db):
 
     get_one_user_or_none = await db.users.get_one_or_none(user_id=user_list.result[-1].id + 1)
     assert not get_one_user_or_none, 'При запросе несуществующего пользователя должно возвращаться None'
-
+    #
     get_user_hashed_password = await db.users.get_user_hashed_password(
-        user_id=user_list.result[-1].id
+        id=user_list.result[-1].id
     )
     assert isinstance(get_user_hashed_password.hashed_password, str), 'корректный тип hashed_password - str'

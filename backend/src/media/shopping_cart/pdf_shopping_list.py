@@ -14,7 +14,7 @@ def create_shopping_list(data, username):
                'today_date': today_date
             }
 
-    template_loader = jinja2.FileSystemLoader('src/media/shopping_cart')
+    template_loader = jinja2.FileSystemLoader('src/media')
     template_env = jinja2.Environment(loader=template_loader)
 
     html_template = './base_shopping_list_template.html'
@@ -23,6 +23,6 @@ def create_shopping_list(data, username):
 
     config = pdfkit.configuration(wkhtmltopdf='/usr/bin/wkhtmltopdf')
     filename = f'{datetime.now().strftime("%d.%m.%Y_%H:%M:%S")}_{username}_shopping_list.pdf'
-    output_pdf = f'src/media/shopping_cart/shopping_lists/{filename}'
+    output_pdf = f'src/media/shopping_lists/{filename}'
     pdfkit.from_string(output_text, output_pdf, configuration=config)
     return output_pdf

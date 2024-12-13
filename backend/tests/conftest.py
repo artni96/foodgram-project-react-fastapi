@@ -129,36 +129,39 @@ async def add_new_user(ac):
 @pytest.fixture(scope='session')
 async def auth_ac(ac):
     jwt_token = await ac.post(
-        'api/users/token/login',
-        data={
-            "username": "test_user_1@ya.net",
+        'api/auth/token/login',
+        json={
+            "email": "test_user_1@ya.net",
             "password": "string"
         }
     )
-    assert jwt_token.status_code == status.HTTP_200_OK
+
+    assert jwt_token.status_code == status.HTTP_201_CREATED
     assert isinstance(jwt_token.json()['access_token'], str)
+    # return ac
     async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}) as ac:
+            headers={'Authorization': f'{jwt_token.json()["access_token"]}'}) as ac:
         yield ac
 
 
 @pytest.fixture(scope='session')
 async def another_auth_ac(ac):
     jwt_token = await ac.post(
-        'api/users/token/login',
-        data={
-            "username": "test_user_2@ya.net",
+        'api/auth/token/login',
+        json={
+            "email": "test_user_2@ya.net",
             "password": "string"
         }
     )
-    assert jwt_token.status_code == status.HTTP_200_OK
+    assert jwt_token.status_code == status.HTTP_201_CREATED
     assert isinstance(jwt_token.json()['access_token'], str)
+    # return ac
     async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={'Authorization': f'Bearer {jwt_token.json()["access_token"]}'}) as ac:
+            headers={'Authorization': f'{jwt_token.json()["access_token"]}'}) as ac:
         yield ac
 
 
@@ -231,7 +234,6 @@ async def recipe_updating_fixture():
 async def recipe_bulk_creating_fixture(db, recipe_creation_fixture):
     tags_combinations = ([1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3])
     recipe_author_ids = (1, 1, 1, 2, 2, 2, 2)
-    recipe_ids = list()
     for _ in range(len(tags_combinations)):
         current_recipe = recipe_creation_fixture
         current_recipe.tags = tags_combinations[_]

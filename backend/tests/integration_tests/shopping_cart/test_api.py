@@ -44,7 +44,7 @@ async def test_shopping_cart_flow(
         download_shopping_cart.headers['content-disposition'].split('filename=')[1]
     )
 
-    pdf_path_to_delete = f'src/utils/shopping_lists/{pdf_to_delete}'
+    pdf_path_to_delete = f'src/media/shopping_cart/shopping_lists/{pdf_to_delete}'
     assert os.path.exists(pdf_path_to_delete)
     os.remove(pdf_path_to_delete)
     assert not os.path.exists(pdf_path_to_delete)
