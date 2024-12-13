@@ -11,40 +11,40 @@ from backend.tests.conftest import MAX_EMAIL_LENGTH, USER_PARAMS_MAX_LENGTH
     'username, email, password, first_name, last_name, status_code, detail',
     [
         (
-            'user2',
-            'user2@ya.ru',
-            'string',
-            'Вася',
-            'Пупкин',
-            status.HTTP_201_CREATED,
-            ''
+                'user2',
+                'user2@ya.ru',
+                'string',
+                'Вася',
+                'Пупкин',
+                status.HTTP_201_CREATED,
+                ''
         ),
         (
-            f'user3',
-            f'{"".join(["t"] * (MAX_EMAIL_LENGTH + 1))}@ya.ru',
-            f'string',
-            '',
-            '',
-            status.HTTP_400_BAD_REQUEST,
-            f'Максимальная длина поля email - {MAX_EMAIL_LENGTH} символа'
+                f'user3',
+                f'{"".join(["t"] * (MAX_EMAIL_LENGTH + 1))}@ya.ru',
+                f'string',
+                '',
+                '',
+                status.HTTP_400_BAD_REQUEST,
+                f'Максимальная длина поля email - {MAX_EMAIL_LENGTH} символа'
         ),
         (
-            f'{"".join(["t"] * (USER_PARAMS_MAX_LENGTH + 1))}',
-            f'user4@ya.ru',
-            f'string',
-            '',
-            '',
-            status.HTTP_400_BAD_REQUEST,
-            f'Максимальная длина поля username - {USER_PARAMS_MAX_LENGTH} символов'
+                f'{"".join(["t"] * (USER_PARAMS_MAX_LENGTH + 1))}',
+                f'user4@ya.ru',
+                f'string',
+                '',
+                '',
+                status.HTTP_400_BAD_REQUEST,
+                f'Максимальная длина поля username - {USER_PARAMS_MAX_LENGTH} символов'
         ),
         (
-            f'user5',
-            f'user5@ya.ru',
-            f'{"".join(["t"] * (USER_PARAMS_MAX_LENGTH + 1))}',
-            '',
-            '',
-            status.HTTP_400_BAD_REQUEST,
-            f'Максимальная длина поля email - {USER_PARAMS_MAX_LENGTH} символов'
+                f'user5',
+                f'user5@ya.ru',
+                f'{"".join(["t"] * (USER_PARAMS_MAX_LENGTH + 1))}',
+                '',
+                '',
+                status.HTTP_400_BAD_REQUEST,
+                f'Максимальная длина поля email - {USER_PARAMS_MAX_LENGTH} символов'
         ),
     ]
 )
@@ -107,13 +107,13 @@ async def test_auth_flow(
     assert 'id' in new_user.json(), 'В ответе должно быть поле id'
 
     jwt_token = await ac.post(
-        '/api/auth/token/login',
-        json={
-            "email": email,
+        '/api/users/token/login',
+        data={
+            "username": email,
             "password": password
         }
     )
-    assert jwt_token.status_code == status.HTTP_201_CREATED, f'статус ответа отличается от {status_code}'
+    assert jwt_token.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     assert isinstance(jwt_token.json()['access_token'], str), 'неверный формат jwt-токена'
 
     current_user_info = await ac.get(

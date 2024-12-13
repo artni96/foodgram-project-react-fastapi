@@ -135,8 +135,7 @@ async def auth_ac(ac):
             "password": "string"
         }
     )
-
-    assert jwt_token.status_code == status.HTTP_201_CREATED
+    assert jwt_token.status_code == status.HTTP_200_OK
     assert isinstance(jwt_token.json()['access_token'], str)
     # return ac
     async with AsyncClient(
@@ -149,13 +148,13 @@ async def auth_ac(ac):
 @pytest.fixture(scope='session')
 async def another_auth_ac(ac):
     jwt_token = await ac.post(
-        'api/auth/token/login',
-        json={
-            "email": "test_user_2@ya.net",
+        'api/users/token/login',
+        data={
+            "username": "test_user_2@ya.net",
             "password": "string"
         }
     )
-    assert jwt_token.status_code == status.HTTP_201_CREATED
+    assert jwt_token.status_code == status.HTTP_200_OK
     assert isinstance(jwt_token.json()['access_token'], str)
     # return ac
     async with AsyncClient(
@@ -234,6 +233,7 @@ async def recipe_updating_fixture():
 async def recipe_bulk_creating_fixture(db, recipe_creation_fixture):
     tags_combinations = ([1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3])
     recipe_author_ids = (1, 1, 1, 2, 2, 2, 2)
+    recipe_ids = list()
     for _ in range(len(tags_combinations)):
         current_recipe = recipe_creation_fixture
         current_recipe.tags = tags_combinations[_]

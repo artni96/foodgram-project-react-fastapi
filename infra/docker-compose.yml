@@ -1,8 +1,7 @@
 version: '3.3'
 services:
-
   db:
-    container_name: 'foodgram_db'
+    container_name: 'foodgram-db'
     image: postgres:16
 
     ports:
@@ -14,15 +13,17 @@ services:
     networks:
       - foodgram-network
     volumes:
-      - pg-booking-data:/var/lib/postgresql/data
+      - pg-foodgram-data:/var/lib/postgresql/data
     env_file:
       - ../backend/.env
 
   backend:
-    container_name: 'foodgram_backend'
+    container_name: 'foodgram-backend'
     build:
       context: ../backend/
       dockerfile: Dockerfile
+#    ports:
+#      - '8000:8000'
     depends_on:
       - db
     networks:
@@ -37,18 +38,44 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
+    networks:
+      - foodgram-network
 
   nginx:
-    container_name: 'foodgram_nginx'
+    container_name: 'foodgram-nginx'
     image: nginx:1.19.3
     ports:
       - "80:80"
     volumes:
+#      - ./nginx.conf:/etc/nginx/nginx.conf
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - foodgram-network
 
 volumes:
-  pg-booking-data:
+  pg-foodgram-data:
 networks:
   foodgram-network:
+
+#version: '3.3'
+#services:
+#
+#  frontend:
+#    build:
+#      context: ../frontend
+#      dockerfile: Dockerfile
+#    volumes:
+#      - ../frontend/:/app/result_build/
+#  nginx:
+#    image: nginx:1.19.3
+#    ports:
+#      - "80:80"
+#    volumes:
+#      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+#      - ../frontend/build:/usr/share/nginx/html/
+#      - ../docs/:/usr/share/nginx/html/api/docs/

@@ -107,7 +107,7 @@ async def test_recipe_creating(
             "image": image
         }
     )
-    print(new_recipe.json())
+
     assert new_recipe.status_code == status_code, f'статус ответа отличается от {status_code}'
     if new_recipe.status_code == status.HTTP_201_CREATED:
         assert new_recipe.json()['name'] == name, 'в ответе отсутствует поле name'
@@ -215,7 +215,6 @@ async def test_recipe_removing(auth_ac):
         '/api/recipes'
     )
     recipe_to_delete = recipes.json()['result'][0]['id']
-    print(recipe_to_delete)
     removed_recipe = await auth_ac.delete(
         f'/api/recipes/{recipe_to_delete}'
     )
