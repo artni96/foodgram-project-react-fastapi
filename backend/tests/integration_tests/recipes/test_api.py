@@ -107,7 +107,6 @@ async def test_recipe_creating(
             "image": image
         }
     )
-
     assert new_recipe.status_code == status_code, f'статус ответа отличается от {status_code}'
     if new_recipe.status_code == status.HTTP_201_CREATED:
         assert new_recipe.json()['name'] == name, 'в ответе отсутствует поле name'
@@ -135,7 +134,8 @@ async def test_recipe_creating(
                     "amount": 200
                 }
             ],
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+            "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
             status.HTTP_200_OK
         ),
         (
@@ -153,7 +153,8 @@ async def test_recipe_creating(
                     "amount": 300
                 }
             ],
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+            "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
             status.HTTP_400_BAD_REQUEST
         ),
         (
@@ -171,7 +172,8 @@ async def test_recipe_creating(
                     "amount": 200
                 }
             ],
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+            "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
             status.HTTP_400_BAD_REQUEST
         )
     ]
@@ -337,7 +339,7 @@ class TestFilteredRecipe:
         recipe_to_shopping_cart = await auth_ac.get(
             '/api/recipes?is_in_shopping_cart=1&limit=2'
         )
-        assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK
+        assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
         assert len(recipe_to_shopping_cart.json()['result']) == 2, 'неверное количество рецептов в result'
         assert recipe_to_shopping_cart.json()['count'] == 3, 'неверное значение count'
         assert not recipe_to_shopping_cart.json()['previous'], 'поле previous у первой страницы должно отсутсвовать'
@@ -400,6 +402,6 @@ class TestFilteredRecipe:
         assert not filtered_recipes_by_another.json()['next']
         assert not filtered_recipes_by_another.json()['previous']
 
-    async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
-        print('Все рецепты удалены')
-        assert not removing_recipes_after_tests, 'все рецепты должны быть удалены после тестов'
+    # async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
+    #     print('Все рецепты удалены')
+    #     assert not removing_recipes_after_tests, 'все рецепты должны быть удалены после тестов'

@@ -107,13 +107,13 @@ async def test_auth_flow(
     assert 'id' in new_user.json(), 'В ответе должно быть поле id'
 
     jwt_token = await ac.post(
-        '/api/users/token/login',
-        data={
-            "username": email,
+        '/api/auth/token/login',
+        json={
+            "email": email,
             "password": password
         }
     )
-    assert jwt_token.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
+    assert jwt_token.status_code == status.HTTP_201_CREATED, 'статус ответа отличается от 201'
     assert isinstance(jwt_token.json()['access_token'], str), 'неверный формат jwt-токена'
 
     current_user_info = await ac.get(

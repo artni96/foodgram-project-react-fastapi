@@ -135,7 +135,7 @@ async def auth_ac(ac):
             "password": "string"
         }
     )
-    assert jwt_token.status_code == status.HTTP_200_OK
+    assert jwt_token.status_code == status.HTTP_201_CREATED
     assert isinstance(jwt_token.json()['access_token'], str)
     # return ac
     async with AsyncClient(
@@ -148,13 +148,13 @@ async def auth_ac(ac):
 @pytest.fixture(scope='session')
 async def another_auth_ac(ac):
     jwt_token = await ac.post(
-        'api/users/token/login',
-        data={
-            "username": "test_user_2@ya.net",
+        'api/auth/token/login',
+        json={
+            "email": "test_user_2@ya.net",
             "password": "string"
         }
     )
-    assert jwt_token.status_code == status.HTTP_200_OK
+    assert jwt_token.status_code == status.HTTP_201_CREATED, 'Статус успешного создания токена должен быть 201'
     assert isinstance(jwt_token.json()['access_token'], str)
     # return ac
     async with AsyncClient(
@@ -184,7 +184,8 @@ async def recipe_creation_fixture():
                 "amount": 200
             }
         ],
-        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg=="
+        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+                 "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg=="
     }
     recipe_data = RecipeCreateRequest(
         name=initial_data['name'],
@@ -216,7 +217,8 @@ async def recipe_updating_fixture():
                 "amount": 400
             }
         ],
-        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEBAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg=="
+        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEBAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1"
+                 "/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg=="
     }
     recipe_data = RecipeUpdateRequest(
         name=initial_data['name'],

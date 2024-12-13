@@ -67,8 +67,7 @@ async def get_current_user(
     db: DBDep,
     current_user: UserDep
 ) -> FollowedUserRead | None:
-    current_user = await db.users.get_one_or_none(
-        user_id=current_user.id)
+    current_user = await db.users.get_one_or_none(user_id=current_user.id)
     return current_user
 
 

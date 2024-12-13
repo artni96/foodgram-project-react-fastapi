@@ -5,13 +5,13 @@ from backend.src.models.users import UserModel
 from backend.src.db_manager import DBManager
 
 from typing import Annotated
-from backend.src.services.users import current_user, current_superuser
+# from backend.src.services.users import current_user, current_superuser
 from fastapi import Depends
 from backend.src.db import async_session_maker
 
 from backend.src.repositories.utils.users import decode_token
 from backend.src.schemas.users import UserRead, UserReadWithRole
-from backend.src.services.users import current_user, current_superuser, optional_current_user
+# from backend.src.services.users import current_user, current_superuser, optional_current_user
 from fastapi import Depends, Request, HTTPException
 from backend.src.db import async_session_maker, session
 from backend.src.repositories.users import UserRepository
@@ -20,7 +20,7 @@ async def get_db():
     async with DBManager(session_factory=async_session_maker) as db:
         yield db
 
-UserDep = Annotated[UserModel, Depends(current_user)]
+# UserDep = Annotated[UserModel, Depends(current_user)]
 DBDep = Annotated[DBManager, Depends(get_db)]
 
 
