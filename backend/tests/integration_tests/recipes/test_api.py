@@ -408,22 +408,25 @@ class TestFilteredRecipe:
         filtered_recipes = await auth_ac.get(
             '/api/recipes?is_in_shopping_cart=1&is_favorited=1&page=1&limit=2&tag=breakfast&tags=lunch'
         )
-        assert filtered_recipes.status_code == status.HTTP_200_OK
-        assert len(filtered_recipes.json()['result']) == 1
-        assert filtered_recipes.json()['count'] == 1
-        assert not filtered_recipes.json()['next']
-        assert not filtered_recipes.json()['previous']
+        assert filtered_recipes.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200 у пользователя 1'
+        assert len(filtered_recipes.json()['result']) == 1, 'неверное количество рецептов в result у пользователя 1'
+        assert filtered_recipes.json()['count'] == 1, 'неверное значение count у пользователя 1'
+        assert not filtered_recipes.json()['next'], 'поля next не должно быть в ответе у пользователя 1'
+        assert not filtered_recipes.json()['previous'], 'поля previous не должно быть в ответе у пользователя 1'
 
         filtered_recipes_by_another = await another_auth_ac.get(
             '/api/recipes?is_in_shopping_cart=1&is_favorited=1&page=1&limit=2&tag=breakfast&tags=lunch'
         )
-        assert filtered_recipes_by_another.status_code == status.HTTP_200_OK
-        assert len(filtered_recipes_by_another.json()['result']) == 0
-        assert filtered_recipes_by_another.json()['count'] == 0
-        assert not filtered_recipes_by_another.json()['next']
-        assert not filtered_recipes_by_another.json()['previous']
+        assert filtered_recipes_by_another.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 у '
+                                                                               'пользователя 2')
+        assert len(filtered_recipes_by_another.json()['result']) == 0, ('неверное количество рецептов в result у '
+                                                                        'пользователя 2')
+        assert filtered_recipes_by_another.json()['count'] == 0, 'неверное значение count у пользователя 2'
+        assert not filtered_recipes_by_another.json()['next'],'поля next не должно быть в ответе у пользователя 2'
+        assert not filtered_recipes_by_another.json()['previous'], ('поля previous не должно быть в ответе у '
+                                                                    'пользователя 2')
 
     @pytest.mark.order(20)
     async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
-        print('Все рецепты удалены')
+        print('Все рецепты успешно удалены')
         assert not removing_recipes_after_tests, 'все рецепты должны быть удалены после тестов'
