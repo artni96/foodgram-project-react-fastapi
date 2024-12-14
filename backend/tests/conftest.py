@@ -29,6 +29,8 @@ from backend.src.schemas.ingredients import IngredientCreate
 from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest, ShoppingCartRecipeCreate, \
     FavoriteRecipeCreate
 from backend.src.schemas.tags import TagCreate
+from backend.src.repositories.utils.users import decode_token
+
 
 MAX_EMAIL_LENGTH = 254
 USER_PARAMS_MAX_LENGTH = 150
@@ -157,6 +159,8 @@ async def another_auth_ac(ac):
     assert jwt_token.status_code == status.HTTP_201_CREATED, 'Статус успешного создания токена должен быть 201'
     assert isinstance(jwt_token.json()['access_token'], str)
     # return ac
+    print(jwt_token.json())
+    # print(decode_token(jwt_token.json()))
     async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
@@ -315,7 +319,7 @@ async def test_recipe(
 
 
 @pytest.fixture()
-async def test_recipe_with_params(
+async def test_recipe_with_all_params(
         db,
         test_recipe
 ):

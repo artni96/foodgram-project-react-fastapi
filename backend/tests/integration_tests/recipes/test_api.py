@@ -223,7 +223,7 @@ async def test_recipe_removing(auth_ac):
     assert removed_recipe.status_code == status.HTTP_204_NO_CONTENT
 
 
-@pytest.mark.order(12)
+# @pytest.mark.order(12)
 class TestFilteredRecipe:
     recipes_data = {
         'author':
@@ -240,6 +240,7 @@ class TestFilteredRecipe:
         'recipes_count': 7
     }
 
+    @pytest.mark.order(12)
     async def test_filtered_recipe_list(self, ac, recipe_bulk_creating_fixture):
         recipes_to_test = await ac.get(
             '/api/recipes'
@@ -252,6 +253,7 @@ class TestFilteredRecipe:
         assert not recipes_to_test.json()['previous'], 'поле previous у первой страницы должно отсутсвовать'
         assert recipes_to_test.json()['count'] == self.recipes_data['recipes_count'], 'неверное значение count'
 
+    @pytest.mark.order(13)
     async def test_filter_recipes_by_limit_and_page(self, ac):
         recipes_to_test = await ac.get(
             '/api/recipes?page=2&limit=2'
@@ -268,6 +270,7 @@ class TestFilteredRecipe:
         ), 'неверное значение (ссылка) в поле next'
         assert recipes_to_test.json()['count'] == self.recipes_data['recipes_count'], 'неверное значение count'
 
+    @pytest.mark.order(14)
     async def test_filter_recipes_by_limit_and_last_page(self, ac):
         recipes_to_test = await ac.get(
             '/api/recipes?page=4&limit=2'
@@ -281,6 +284,7 @@ class TestFilteredRecipe:
         ), 'неверное значение (ссылка) в поле previous'
         assert recipes_to_test.json()['count'] == self.recipes_data['recipes_count'], 'неверное значение count'
 
+    @pytest.mark.order(15)
     async def test_filter_recipes_by_author(self, ac):
         filtered_recipes_by_author_1 = await ac.get(
             '/api/recipes?author=1&limit=2'
@@ -302,6 +306,7 @@ class TestFilteredRecipe:
         assert len(filtered_recipes_by_author_2.json()['result']) == 1, 'неверное количество рецептов в result'
         assert filtered_recipes_by_author_2.json()['count'] == 4, 'неверное значение count'
 
+    @pytest.mark.order(16)
     async def test_filter_recipes_by_tags(self, ac):
         filtered_rec_by_breakfast = await ac.get(
             '/api/recipes?tags=breakfast&limit=2'
@@ -335,55 +340,71 @@ class TestFilteredRecipe:
         assert len(filtered_rec_by_breakfast_dinner_lunch.json()['result']) == 3, 'неверное количество рецептов в result'
         assert filtered_rec_by_breakfast_dinner_lunch.json()['count'] == 7, 'неверное значение count'
 
+    @pytest.mark.order(17)
     async def test_filter_by_is_in_shopping_cart(self, auth_ac, another_auth_ac):
         recipe_to_shopping_cart = await auth_ac.get(
             '/api/recipes?is_in_shopping_cart=1&limit=2'
         )
-        assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-        assert len(recipe_to_shopping_cart.json()['result']) == 2, 'неверное количество рецептов в result'
-        assert recipe_to_shopping_cart.json()['count'] == 3, 'неверное значение count'
-        assert not recipe_to_shopping_cart.json()['previous'], 'поле previous у первой страницы должно отсутсвовать'
+        assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 у '
+                                                                           'пользователя 1')
+        assert len(recipe_to_shopping_cart.json()['result']) == 2, ('неверное количество рецептов в result у '
+                                                                    'пользователя 1')
+        assert recipe_to_shopping_cart.json()['count'] == 4, 'неверное значение count у пользователя 1'
+        assert not recipe_to_shopping_cart.json()['previous'], ('поле previous у первой страницы должно отсутсвовать в '
+                                                                'запросе у пользователя 1')
         assert (
                 'page=2' in recipe_to_shopping_cart.json()['next']
                 and 'limit=2' in recipe_to_shopping_cart.json()['next']
         ), 'неверное значение (ссылка) в поле next'
         recipe_to_shopping_cart_by_another = await another_auth_ac.get(
-            '/api/recipes?is_in_shopping_cart=1&limit=2'
+            '/api/recipes?is_in_shopping_cart=1&limit=2&page=1'
         )
-        assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-        assert len(recipe_to_shopping_cart_by_another.json()['result']) == 2, 'неверное количество рецептов в result'
-        assert recipe_to_shopping_cart_by_another.json()['count'] == 4, 'неверное значение count'
-        assert not recipe_to_shopping_cart_by_another.json()['previous'], 'поле previous у первой страницы должно отсутсвовать'
+        assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 '
+                                                                                      'у пользователя 2')
+        assert len(recipe_to_shopping_cart_by_another.json()['result']) == 2, ('неверное количество рецептов в result '
+                                                                               'у пользователя 2')
+        assert recipe_to_shopping_cart_by_another.json()['count'] == 3, 'неверное значение count у пользователя 2'
+        assert not recipe_to_shopping_cart_by_another.json()['previous'], ('поле previous у первой страницы должно '
+                                                                           'отсутсвовать в запросе у пользователя 2')
         assert (
                 'page=2' in recipe_to_shopping_cart_by_another.json()['next']
                 and 'limit=2' in recipe_to_shopping_cart_by_another.json()['next']
         ), 'неверное значение (ссылка) в поле next'
 
+    @pytest.mark.order(18)
     async def test_filter_by_is_favorited(self, auth_ac, another_auth_ac):
         recipe_to_shopping_cart = await auth_ac.get(
             '/api/recipes?is_favorited=1&limit=2&page=2'
         )
-        assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-        assert len(recipe_to_shopping_cart.json()['result']) == 2, 'неверное количество рецептов в result'
-        assert recipe_to_shopping_cart.json()['count'] == 4, 'неверное значение count'
-        assert not recipe_to_shopping_cart.json()['next'], 'поле next у последней страницы должно отсутсвовать'
-        assert 'limit=2' in recipe_to_shopping_cart.json()['previous'], 'неверное значение (ссылка) в поле previous'
+        assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 у '
+                                                                           'пользователя 1')
+        assert len(recipe_to_shopping_cart.json()['result']) == 1, ('неверное количество рецептов в result у '
+                                                                    'пользователя 1')
+        assert recipe_to_shopping_cart.json()['count'] == 3, 'неверное значение count у пользователя 1'
+        assert not recipe_to_shopping_cart.json()['next'], ('поле next у последней страницы должно отсутсвовать в '
+                                                            'запросе у пользователя 1')
+        assert 'limit=2' in recipe_to_shopping_cart.json()['previous'], ('неверное значение (ссылка) в поле previous в '
+                                                                         'запросе у пользователя 1')
 
         recipe_to_shopping_cart_by_another = await another_auth_ac.get(
             '/api/recipes?is_favorited=1&limit=1&page=2'
         )
-        assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-        assert len(recipe_to_shopping_cart_by_another.json()['result']) == 1, 'неверное количество рецептов в result'
-        assert recipe_to_shopping_cart_by_another.json()['count'] == 3, 'неверное значение count'
+        assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 '
+                                                                                      'у пользователя 2')
+        assert len(recipe_to_shopping_cart_by_another.json()['result']) == 1, ('неверное количество рецептов в result '
+                                                                               'у пользователя 2')
+        assert recipe_to_shopping_cart_by_another.json()['count'] == 4, 'неверное значение count у пользователя 2'
         assert 'limit=1' in recipe_to_shopping_cart_by_another.json()['previous'], ('неверное значение (ссылка) в поле '
-                                                                                    'previous')
+                                                                                    'previous в запросе у '
+                                                                                    'пользователя 2')
 
         assert (
                 'page=3' in recipe_to_shopping_cart_by_another.json()['next']
                 and 'limit=1' in recipe_to_shopping_cart_by_another.json()['next']
-        ), 'неверное значение (ссылка) в поле next'
+        ), 'неверное значение (ссылка) в поле next в запросе у пользователя 2'
 
-    async def test_full_filtering_recipes(self, auth_ac, another_auth_ac, test_recipe_with_params):
+    @pytest.mark.order(19)
+    async def test_full_filtering_recipes(self, auth_ac, another_auth_ac, test_recipe_with_all_params):
         filtered_recipes = await auth_ac.get(
             '/api/recipes?is_in_shopping_cart=1&is_favorited=1&page=1&limit=2&tag=breakfast&tags=lunch'
         )
@@ -402,6 +423,7 @@ class TestFilteredRecipe:
         assert not filtered_recipes_by_another.json()['next']
         assert not filtered_recipes_by_another.json()['previous']
 
-    # async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
-    #     print('Все рецепты удалены')
-    #     assert not removing_recipes_after_tests, 'все рецепты должны быть удалены после тестов'
+    @pytest.mark.order(20)
+    async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
+        print('Все рецепты удалены')
+        assert not removing_recipes_after_tests, 'все рецепты должны быть удалены после тестов'

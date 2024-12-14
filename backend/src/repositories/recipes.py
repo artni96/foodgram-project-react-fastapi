@@ -174,7 +174,7 @@ class RecipeRepository(BaseRepository):
                 .filter(
                     RecipeModel.id==id,
                     # ShoppingCartModel.user_id == current_user.id,
-                    # # FavoriteRecipeModel.user_id == current_user.id
+                    # FavoriteRecipeModel.user_id == current_user.id
                 )
                 .options(
                     selectinload(self.model.tags),
@@ -190,11 +190,11 @@ class RecipeRepository(BaseRepository):
                     selectinload(self.model.is_favorited),
                     selectinload(self.model.is_in_shopping_cart)
                 )
-                # .outerjoin(
+                # .join(
                 #     FavoriteRecipeModel,
                 #     FavoriteRecipeModel.user_id == RecipeModel.author
                 # )
-                # .outerjoin(
+                # .join(
                 #     ShoppingCartModel,
                 #     ShoppingCartModel.user_id == RecipeModel.author
                 # )
@@ -237,9 +237,13 @@ class RecipeRepository(BaseRepository):
             )
             if current_user:
                 if recipe_body_result.is_favorited:
-                    response.is_favorited = True
+                        for elem in recipe_body_result.is_favorited:
+                            if elem.user_id == current_user.id:
+                                response.is_favorited = True
                 if recipe_body_result.is_in_shopping_cart:
-                    response.is_in_shopping_cart = True
+                    for elem in recipe_body_result.is_in_shopping_cart:
+                        if elem.user_id == current_user.id:
+                            response.is_in_shopping_cart = True
             return response
         except NoResultFound:
             raise HTTPException(
