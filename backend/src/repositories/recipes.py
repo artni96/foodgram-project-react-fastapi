@@ -136,7 +136,7 @@ class RecipeRepository(BaseRepository):
             count= recipes_count,
             next=paginator_values['next'],
             previous=paginator_values['previous'],
-            result=filtered_recipe_list
+            results=filtered_recipe_list
         )
         return result
 

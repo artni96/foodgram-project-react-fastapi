@@ -103,4 +103,4 @@ class RecipeListRead(BaseModel):
     count: int
     next: str | None = None
     previous: str | None = None
-    result: list[RecipeRead] = []
+    results: list[RecipeRead] = []

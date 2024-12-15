@@ -141,7 +141,7 @@ async def test_auth_flow(
         headers={'Authorization': f'{jwt_token.json()["access_token"]}'}
     )
     assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-    assert len(user_list.json()['result']) == 3, 'неверное количество пользователей в поле result'
+    assert len(user_list.json()['results']) == 3, 'неверное количество пользователей в поле results'
 
     new_password = 'string123'
     password_chaning = await ac.post(
@@ -181,10 +181,10 @@ async def test_not_auth_flow(ac):
     )
     assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     current_user_info = await ac.get(
-        f'/api/users/{user_list.json()["result"][-1]["id"]}',
+        f'/api/users/{user_list.json()["results"][-1]["id"]}',
     )
     assert current_user_info.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-    user_id_to_check = user_list.json()["result"][-1]["id"]
+    user_id_to_check = user_list.json()["results"][-1]["id"]
     current_user_info = await ac.get(
         f'/api/users/{user_id_to_check}',
     )

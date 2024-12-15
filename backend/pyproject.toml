@@ -29,6 +29,7 @@ pdfkit = "^1.0.0"
 httpx = "^0.27.2"
 datamodel-code-generator = "^0.26.3"
 fastapi-cache2 = "^0.2.2"
+fastapi-login = "^1.10.3"
 
 
 [build-system]

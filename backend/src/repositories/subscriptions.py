@@ -110,7 +110,7 @@ class SubscriptionRepository(BaseRepository):
             count=user_subs_count,
             next=paginator_values['next'],
             previous=paginator_values['previous'],
-            result=result_list
+            results=result_list
         )
         return response
 

@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Query, status, Depends, HTTPException, Response, Request
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_cache.decorator import cache
+from fastapi_login.exceptions import InvalidCredentialsException
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep, OptionalUserDep
+from backend.src.config import settings
 from backend.src.exceptions.users import EmailNotRegisteredException, IncorrectPasswordException, \
     IncorrectTokenException
 from backend.src.repositories.utils.users import PasswordManager
@@ -10,6 +13,8 @@ from backend.src.schemas.users import (UserCreate, UserCreateRequest,
                                        UserPasswordChangeRequest,
                                        UserPasswordUpdate, UserListRead, UserCreateResponse, FollowedUserRead,
                                        UserLoginRequest)
+from starlette.responses import RedirectResponse
+from fastapi_login import LoginManager
 # from backend.src.services.users import auth_backend, fastapi_users, optional_current_user
 
 ROUTER_PREFIX = '/api/users'
@@ -20,6 +25,8 @@ auth_router = APIRouter(prefix='/api/auth', tags=['Пользователи',])
 #     fastapi_users.get_auth_router(auth_backend),
 #     prefix='/token',
 # )
+
+
 
 
 @user_router.get(
@@ -120,6 +127,29 @@ async def create_new_user(
     return new_user
 
 
+# manager = LoginManager(secret=settings.SECRET_KEY, token_url='/api/auth/token/login')
+#
+#
+# async def query_user(user_email: str, db: DBDep):
+#     return await db.users.get_one(email=user_email)
+#
+# @auth_router.post(
+#     '/token/login'
+# )
+# async def login_test(
+#     data: UserLoginRequest,
+#     db: DBDep
+# ):
+#     user = await query_user(user_email=data.email, db=db)
+#     if user:
+#         access_token = manager.create_access_token(data={"sub": data.email})
+#         return {"access_token": access_token}
+
+#
+# @auth_router.get("/protected")
+# async def protected_route(user=Depends(manager)):
+#     return {"user": user}
+
 @auth_router.post(
     "/token/login",
     summary='Вход пользователя в систему',
@@ -131,7 +161,6 @@ async def login_user(
     db: DBDep,
 ):
     try:
-        # access_token = await AuthService(db).login_user(data)
         access_token = await db.users.create_access_token(data=data)
     except EmailNotRegisteredException as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
@@ -140,6 +169,8 @@ async def login_user(
 
     response.set_cookie("access_token", access_token)
     return {"access_token": access_token}
+    # return {"authorization": f'Token {token}'}
+    # return RedirectResponse(url='/api/recipes', headers={"authorization": f'Token {access_token}'})
 
 
 @auth_router.post(

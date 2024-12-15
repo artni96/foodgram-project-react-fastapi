@@ -550,6 +550,25 @@ memcache = ["aiomcache (>=0.8.2,<0.9.0)"]
 redis = ["redis (>=4.2.0rc1,<5.0.0)"]
 
 [[package]]
+name = "fastapi-login"
+version = "1.10.3"
+description = "Flask-Login like package for FastAPI"
+optional = false
+python-versions = "<4.0,>=3.8"
+files = [
+    {file = "fastapi_login-1.10.3-py3-none-any.whl", hash = "sha256:4a88a5e82f35084075d22191173fa9ddc195c96647f984114a066dd93c067067"},
+    {file = "fastapi_login-1.10.3.tar.gz", hash = "sha256:f0db92f59bc7dfa301dfe8fa5914062ff1582efc2f56b51ca5e23dde4edf8c27"},
+]
+
+[package.dependencies]
+fastapi = "*"
+pyjwt = ">=2.4"
+typing-extensions = ">=4.1.1,<5.0.0"
+
+[package.extras]
+asymmetric = ["cryptography (>=39.0.1,<45.0.0)"]
+
+[[package]]
 name = "fastapi-users"
 version = "13.0.0"
 description = "Ready-to-use and customizable users management for FastAPI"
@@ -1696,4 +1715,4 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11"
-content-hash = "db18b1bacd93b3b0047e998e7203c6415fec810c9f4240ac4cd95651d0343900"
+content-hash = "5aad6d84e471ee164e8471420ac8e3c008648b54b94bbd8700627db1e3488c69"

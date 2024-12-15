@@ -29,7 +29,7 @@ recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
             'избранному, автору, списку покупок и тегам.'
     )
 )
-# @cache(expire=60)
+@cache(expire=60)
 async def get_recipe_list(
     db: DBDep,
     current_user: OptionalUserDep,

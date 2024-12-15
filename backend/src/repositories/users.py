@@ -79,7 +79,7 @@ class UserRepository(BaseRepository):
             count=users_count,
             next=paginator_values['next'],
             previous=paginator_values['previous'],
-            result=user_list_result
+            results=user_list_result
         )
         return response
 

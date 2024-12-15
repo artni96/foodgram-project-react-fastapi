@@ -84,7 +84,7 @@ class UserListRead(BaseModel):
     count: int
     next: str | None = None
     previous: str | None = None
-    result: list[FollowedUserRead] = []
+    results: list[FollowedUserRead] = []
 
 
 class UserLoginRequest(BaseModel):

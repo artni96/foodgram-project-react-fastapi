@@ -192,7 +192,7 @@ async def test_recipe_updating(
     recipes = await auth_ac.get(
         '/api/recipes'
     )
-    recipe_to_update = recipes.json()['result'][0]['id']
+    recipe_to_update = recipes.json()['results'][0]['id']
     updated_recipe = await auth_ac.patch(
         f'/api/recipes/{recipe_to_update}',
         json={
@@ -216,7 +216,7 @@ async def test_recipe_removing(auth_ac):
     recipes = await auth_ac.get(
         '/api/recipes'
     )
-    recipe_to_delete = recipes.json()['result'][0]['id']
+    recipe_to_delete = recipes.json()['results'][0]['id']
     removed_recipe = await auth_ac.delete(
         f'/api/recipes/{recipe_to_delete}'
     )
@@ -246,7 +246,7 @@ class TestFilteredRecipe:
             '/api/recipes'
         )
         assert recipes_to_test.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-        assert len(recipes_to_test.json()['result']) == 3, ('неверное дефолтное количество рецептов в result (в '
+        assert len(recipes_to_test.json()['results']) == 3, ('неверное дефолтное количество рецептов в results (в '
                                                             'проекте по дефолту - 3 рецепта)')
         assert 'limit=3' in recipes_to_test.json()['next'], 'неверное значение (ссылка) в поле next'
         assert 'page=2' in recipes_to_test.json()['next'], 'неверное значение (ссылка) в поле next'
@@ -258,7 +258,7 @@ class TestFilteredRecipe:
         recipes_to_test = await ac.get(
             '/api/recipes?page=2&limit=2'
         )
-        assert len(recipes_to_test.json()['result']) == 2, 'неверное количество рецептов в result'
+        assert len(recipes_to_test.json()['results']) == 2, 'неверное количество рецептов в results'
         assert 'page=3' in recipes_to_test.json()['next'], 'неверное значение (ссылка) в поле next'
         assert (
            'limit=2' in recipes_to_test.json()['previous']
@@ -275,7 +275,7 @@ class TestFilteredRecipe:
         recipes_to_test = await ac.get(
             '/api/recipes?page=4&limit=2'
         )
-        assert len(recipes_to_test.json()['result']) == 1, 'неверное количество рецептов в result'
+        assert len(recipes_to_test.json()['results']) == 1, 'неверное количество рецептов в results'
         assert not recipes_to_test.json()['next'], 'поле next у последней страницы должно отсутсвовать'
         assert 'page=3' in recipes_to_test.json()['previous']
         assert (
@@ -290,7 +290,7 @@ class TestFilteredRecipe:
             '/api/recipes?author=1&limit=2'
         )
         assert filtered_recipes_by_author_1.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-        assert len(filtered_recipes_by_author_1.json()['result']) == 2, 'неверное количество рецептов в result'
+        assert len(filtered_recipes_by_author_1.json()['results']) == 2, 'неверное количество рецептов в results'
         assert filtered_recipes_by_author_1.json()['count'] == 3, 'неверное значение count'
 
         filtered_recipes_by_author_2 = await ac.get(
@@ -303,7 +303,7 @@ class TestFilteredRecipe:
                 'page=3' in filtered_recipes_by_author_2.json()['next'] and
                 'limit=1' in filtered_recipes_by_author_2.json()['next']
         ), 'неверное значение (ссылка) в поле next'
-        assert len(filtered_recipes_by_author_2.json()['result']) == 1, 'неверное количество рецептов в result'
+        assert len(filtered_recipes_by_author_2.json()['results']) == 1, 'неверное количество рецептов в results'
         assert filtered_recipes_by_author_2.json()['count'] == 4, 'неверное значение count'
 
     @pytest.mark.order(16)
@@ -312,7 +312,7 @@ class TestFilteredRecipe:
             '/api/recipes?tags=breakfast&limit=2'
         )
         assert filtered_rec_by_breakfast.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-        assert len(filtered_rec_by_breakfast.json()['result']) == 2, 'неверное количество рецептов в result'
+        assert len(filtered_rec_by_breakfast.json()['results']) == 2, 'неверное количество рецептов в results'
         assert filtered_rec_by_breakfast.json()['count'] == 4, 'неверное значение count'
         assert 'page=2' in filtered_rec_by_breakfast.json()['next'], 'неверное значение (ссылка) в поле next'
         assert not filtered_rec_by_breakfast.json()['previous'], 'поле previous у первой страницы должно отсутсвовать'
@@ -321,7 +321,8 @@ class TestFilteredRecipe:
             '/api/recipes?page=3&tags=dinner&tags=breakfast&limit=1'
         )
         assert filtered_rec_by_breakfast_and_dinner.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
-        assert len(filtered_rec_by_breakfast_and_dinner.json()['result']) == 1, 'неверное количество рецептов в result'
+        assert len(filtered_rec_by_breakfast_and_dinner.json()['results']) == 1, ('неверное количество рецептов в '
+                                                                                  'results')
         assert filtered_rec_by_breakfast_and_dinner.json()['count'] == 6, 'неверное значение count'
         assert (
                 'page=4' in filtered_rec_by_breakfast_and_dinner.json()['next'] and
@@ -337,7 +338,8 @@ class TestFilteredRecipe:
         )
         assert filtered_rec_by_breakfast_dinner_lunch.status_code == status.HTTP_200_OK, ('статус ответа'
                                                                                           'отличается от 200')
-        assert len(filtered_rec_by_breakfast_dinner_lunch.json()['result']) == 3, 'неверное количество рецептов в result'
+        assert len(filtered_rec_by_breakfast_dinner_lunch.json()['results']) == 3, ('неверное количество рецептов в '
+                                                                                    'results')
         assert filtered_rec_by_breakfast_dinner_lunch.json()['count'] == 7, 'неверное значение count'
 
     @pytest.mark.order(17)
@@ -347,7 +349,7 @@ class TestFilteredRecipe:
         )
         assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 у '
                                                                            'пользователя 1')
-        assert len(recipe_to_shopping_cart.json()['result']) == 2, ('неверное количество рецептов в result у '
+        assert len(recipe_to_shopping_cart.json()['results']) == 2, ('неверное количество рецептов в results у '
                                                                     'пользователя 1')
         assert recipe_to_shopping_cart.json()['count'] == 4, 'неверное значение count у пользователя 1'
         assert not recipe_to_shopping_cart.json()['previous'], ('поле previous у первой страницы должно отсутсвовать в '
@@ -361,8 +363,8 @@ class TestFilteredRecipe:
         )
         assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 '
                                                                                       'у пользователя 2')
-        assert len(recipe_to_shopping_cart_by_another.json()['result']) == 2, ('неверное количество рецептов в result '
-                                                                               'у пользователя 2')
+        assert len(recipe_to_shopping_cart_by_another.json()['results']) == 2, ('неверное количество рецептов в results'
+                                                                               ' у пользователя 2')
         assert recipe_to_shopping_cart_by_another.json()['count'] == 3, 'неверное значение count у пользователя 2'
         assert not recipe_to_shopping_cart_by_another.json()['previous'], ('поле previous у первой страницы должно '
                                                                            'отсутсвовать в запросе у пользователя 2')
@@ -378,7 +380,7 @@ class TestFilteredRecipe:
         )
         assert recipe_to_shopping_cart.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 у '
                                                                            'пользователя 1')
-        assert len(recipe_to_shopping_cart.json()['result']) == 1, ('неверное количество рецептов в result у '
+        assert len(recipe_to_shopping_cart.json()['results']) == 1, ('неверное количество рецептов в results у '
                                                                     'пользователя 1')
         assert recipe_to_shopping_cart.json()['count'] == 3, 'неверное значение count у пользователя 1'
         assert not recipe_to_shopping_cart.json()['next'], ('поле next у последней страницы должно отсутсвовать в '
@@ -391,8 +393,8 @@ class TestFilteredRecipe:
         )
         assert recipe_to_shopping_cart_by_another.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 '
                                                                                       'у пользователя 2')
-        assert len(recipe_to_shopping_cart_by_another.json()['result']) == 1, ('неверное количество рецептов в result '
-                                                                               'у пользователя 2')
+        assert len(recipe_to_shopping_cart_by_another.json()['results']) == 1, ('неверное количество рецептов в results'
+                                                                               ' у пользователя 2')
         assert recipe_to_shopping_cart_by_another.json()['count'] == 4, 'неверное значение count у пользователя 2'
         assert 'limit=1' in recipe_to_shopping_cart_by_another.json()['previous'], ('неверное значение (ссылка) в поле '
                                                                                     'previous в запросе у '
@@ -409,7 +411,7 @@ class TestFilteredRecipe:
             '/api/recipes?is_in_shopping_cart=1&is_favorited=1&page=1&limit=2&tag=breakfast&tags=lunch'
         )
         assert filtered_recipes.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200 у пользователя 1'
-        assert len(filtered_recipes.json()['result']) == 1, 'неверное количество рецептов в result у пользователя 1'
+        assert len(filtered_recipes.json()['results']) == 1, 'неверное количество рецептов в results у пользователя 1'
         assert filtered_recipes.json()['count'] == 1, 'неверное значение count у пользователя 1'
         assert not filtered_recipes.json()['next'], 'поля next не должно быть в ответе у пользователя 1'
         assert not filtered_recipes.json()['previous'], 'поля previous не должно быть в ответе у пользователя 1'
@@ -419,7 +421,7 @@ class TestFilteredRecipe:
         )
         assert filtered_recipes_by_another.status_code == status.HTTP_200_OK, ('статус ответа отличается от 200 у '
                                                                                'пользователя 2')
-        assert len(filtered_recipes_by_another.json()['result']) == 0, ('неверное количество рецептов в result у '
+        assert len(filtered_recipes_by_another.json()['results']) == 0, ('неверное количество рецептов в results у '
                                                                         'пользователя 2')
         assert filtered_recipes_by_another.json()['count'] == 0, 'неверное значение count у пользователя 2'
         assert not filtered_recipes_by_another.json()['next'],'поля next не должно быть в ответе у пользователя 2'
