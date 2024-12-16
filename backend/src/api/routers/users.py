@@ -137,14 +137,18 @@ async def create_new_user(
 #     '/token/login'
 # )
 # async def login_test(
-#     data: UserLoginRequest,
-#     db: DBDep
+#     db: DBDep,
+#     request: Request,
+#     data: OAuth2PasswordRequestForm = Depends()
+#     # data: UserLoginRequest,
+#
 # ):
-#     user = await query_user(user_email=data.email, db=db)
+#     user = await query_user(user_email=data.username, db=db)
 #     if user:
-#         access_token = manager.create_access_token(data={"sub": data.email})
-#         return {"access_token": access_token}
-
+#         access_token = manager.create_access_token(data={"sub": data.username})
+#         # request.session['authorization'] = f'Token {access_token}'
+#         return {"auth_token": access_token}
+#
 #
 # @auth_router.get("/protected")
 # async def protected_route(user=Depends(manager)):
@@ -167,9 +171,9 @@ async def login_user(
     except IncorrectPasswordException as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
 
-    response.set_cookie("access_token", access_token)
-    return {"access_token": access_token}
-    # return {"authorization": f'Token {token}'}
+    # response.set_cookie("access_token", access_token)
+    # return {"access_token": access_token} # работающий вариант для проекта
+    return {"auth_token": access_token}
     # return RedirectResponse(url='/api/recipes', headers={"authorization": f'Token {access_token}'})
 
 

@@ -27,10 +27,10 @@ DBDep = Annotated[DBManager, Depends(get_db)]
 def get_token(request: Request) -> str:
     # token = request.cookies.get("access_token", None)
     token = request.headers.get("Authorization", None)
-    print(token)
+    # print(token)
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Необходимо авторизоваться')
-    return token
+    return token.split(' ')[1]
 
 
 def get_current_user(token: str = Depends(get_token)):

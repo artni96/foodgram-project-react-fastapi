@@ -30,6 +30,22 @@ class Api {
       reject()
     })
   }
+//
+//    signin ({ email, password }) {
+//      const token = fetch(
+//        '/api/auth/token/login/',
+//        {
+//          method: 'POST',
+//          headers: this._headers,
+//          body: JSON.stringify({
+//            email, password
+//          })
+//        }
+//      ).then(this.checkResponse)
+//    localStorage.setItem('authorization', `Token ${token}`)
+//    return token
+//  }
+
 
   signin ({ email, password }) {
     return fetch(

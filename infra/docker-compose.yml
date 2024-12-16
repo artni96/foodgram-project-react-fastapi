@@ -3,7 +3,6 @@ services:
   db:
     container_name: 'foodgram-db'
     image: postgres:16
-
     ports:
       - '6432:5432'
     environment:
@@ -22,8 +21,8 @@ services:
     build:
       context: ../backend/
       dockerfile: Dockerfile
-#    ports:
-#      - '8000:8000'
+    ports:
+      - '8000:8000'
     depends_on:
       - db
     networks:
@@ -38,6 +37,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
+    depends_on:
+      - backend
     networks:
       - foodgram-network
 
@@ -61,21 +62,3 @@ volumes:
   pg-foodgram-data:
 networks:
   foodgram-network:
-
-#version: '3.3'
-#services:
-#
-#  frontend:
-#    build:
-#      context: ../frontend
-#      dockerfile: Dockerfile
-#    volumes:
-#      - ../frontend/:/app/result_build/
-#  nginx:
-#    image: nginx:1.19.3
-#    ports:
-#      - "80:80"
-#    volumes:
-#      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-#      - ../frontend/build:/usr/share/nginx/html/
-#      - ../docs/:/usr/share/nginx/html/api/docs/
