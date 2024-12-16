@@ -53,7 +53,7 @@ def get_current_user_optional(request: Request):
     # token = request.cookies.get("access_token", None)
     token = request.headers.get("Authorization", None)
     if token:
-        return get_current_user(token)
+        return get_current_user(token.split(' ')[1])
 
 
 OptionalUserDep = Annotated[UserModel, Depends(get_current_user_optional)]
