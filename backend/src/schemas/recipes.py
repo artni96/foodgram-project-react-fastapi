@@ -46,13 +46,34 @@ class RecipeCreate(BaseRecipe):
     image: str
 
 
-class RecipeUpdateRequest(RecipeCreateRequest):
-    pass
+class RecipeUpdateRequest(BaseRecipe):
+    tags: list[int] = []
+    ingredients: list[IngredientAmountCreateRequest] = []
+    image: str | None = None
+
+    model_config = {
+        'json_schema_extra': {
+                'Тестовый рецепт': {
+                    'summary': 'Тестовый рецепт',
+                    'value': {
+                        "name": "string",
+                        "text": "string",
+                        "cooking_time": 1,
+                        "tags": [1, 2],
+                        "ingredients": [
+                            {'id': 1, 'amount': 100},
+                            {'id': 2, 'amount': 200},
+                        ],
+                        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==" # noqa
+                    }
+                }
+            }
+        }
 
 
 class RecipeUpdate(BaseRecipe):
     id: int
-    image: str
+    image: str | None
 
 
 class RecipeAfterCreateRead(RecipeCreate):

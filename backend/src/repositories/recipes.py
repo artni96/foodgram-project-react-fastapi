@@ -2,7 +2,7 @@ import os
 import pathlib
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, delete, insert, select, update
+from sqlalchemy import and_, delete, insert, select, update, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import NoResultFound
 
@@ -72,15 +72,7 @@ class RecipeRepository(BaseRepository):
                 TagModel,
                 TagModel.id == RecipeTagModel.tag_id
             )
-
         )
-        # filtered_recipe_id_list = await self.session.execute(
-        #     filtered_recipe_id_list_stmt
-        # )
-        # filtered_recipe_id_list = (
-        #     filtered_recipe_id_list.unique().scalars().all()
-        # )
-        # recipe_count = len(filtered_recipe_id_list)
         if current_user:
             if is_favorited:
                 filtered_recipe_id_list_stmt = (
@@ -109,7 +101,7 @@ class RecipeRepository(BaseRepository):
         if author:
             filtered_recipe_id_list_stmt = filtered_recipe_id_list_stmt.filter(
                 self.model.author == author
-            )
+            ).order_by(desc('id'))
         recipe_id_list = await self.session.execute(
             filtered_recipe_id_list_stmt
         )
@@ -173,8 +165,6 @@ class RecipeRepository(BaseRepository):
                 )
                 .filter(
                     RecipeModel.id==id,
-                    # ShoppingCartModel.user_id == current_user.id,
-                    # FavoriteRecipeModel.user_id == current_user.id
                 )
                 .options(
                     selectinload(self.model.tags),
@@ -190,15 +180,6 @@ class RecipeRepository(BaseRepository):
                     selectinload(self.model.is_favorited),
                     selectinload(self.model.is_in_shopping_cart)
                 )
-                # .join(
-                #     FavoriteRecipeModel,
-                #     FavoriteRecipeModel.user_id == RecipeModel.author
-                # )
-                # .join(
-                #     ShoppingCartModel,
-                #     ShoppingCartModel.user_id == RecipeModel.author
-                # )
-
             )
             recipe_body_result = await self.session.execute(recipe_body_stmt)
             recipe_body_result = recipe_body_result.scalars().one()
@@ -260,7 +241,6 @@ class RecipeRepository(BaseRepository):
         try:
             image_base64 = _recipe_data.image
             generated_image_name = ImageManager().create_random_name(image_base64)
-            # print(generated_image_name)
             while await self.check_image_name(generated_image_name):
                 generated_image_name = ImageManager().create_random_name(image_base64)
 
@@ -325,7 +305,6 @@ class RecipeRepository(BaseRepository):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail='Указанных тегов нет в БД.'
                 )
-        # print(generated_image_name)
         ImageManager().base64_to_file(
             base64_string=image_base64,
             image_name=generated_image_name)
@@ -352,7 +331,6 @@ class RecipeRepository(BaseRepository):
                 select(RecipeModel.image)
                 .filter_by(id=_recipe_data.id)
                 .scalar_subquery()
-                # .subquery.label('recipe_image_id')
             )
             image_stmt = (
                 select(
@@ -360,11 +338,11 @@ class RecipeRepository(BaseRepository):
                 )
                 .filter(
                     ImageModel.id == recipe_image_id_stmt,
-                    ImageModel.base64 == _recipe_data.image)
+                )
             )
             image_result = await self.session.execute(image_stmt)
             image_result = image_result.scalars().one_or_none()
-            if not image_result:
+            if _recipe_data.image and _recipe_data.image != image_result.base64:
                 recipe_image_update_stmt = (
                     update(ImageModel)
                     .filter_by(id=recipe_image_id_stmt)
@@ -386,7 +364,6 @@ class RecipeRepository(BaseRepository):
                 image_name = ImageManager().base64_to_file(
                     base64_string=image_base64,
                     image_name=current_image.name)
-
             else:
                 _recipe_data.image = image_result.id
                 image_name = image_result.name
@@ -491,7 +468,6 @@ class RecipeRepository(BaseRepository):
         image_to_delete = (
             f'{media_path}{MOUNT_PATH}/{image_name_to_delete}'
         )
-        # print(image_to_delete)
         if os.path.exists(image_to_delete):
             os.remove(image_to_delete)
         recipe_ingredient_amount_ids_to_delete = list()

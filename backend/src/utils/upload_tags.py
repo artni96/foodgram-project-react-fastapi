@@ -13,7 +13,7 @@ from backend.src.db import async_session_maker
 
 
 def tags_to_add():
-    with open('../data/tags.csv') as f:
+    with open('./data/tags.csv') as f:
         tags_file = csv.reader(f)
         tags_list_to_add = []
         for row in tags_file:

@@ -10,5 +10,5 @@ RUN poetry install --no-interaction --no-ansi
 
 COPY . .
 
-ENTRYPOINT docker cp ../data foodgram-backend:/; alembic upgrade head; python src/main.py #need_to_fix
-#ENTRYPOINT docker cp ../data foodgram-backend:/
+#ENTRYPOINT [ "sh", "entrypoint.sh" ]
+ENTRYPOINT alembic upgrade head; python src/main.py

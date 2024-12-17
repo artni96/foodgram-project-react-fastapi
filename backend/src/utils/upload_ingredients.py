@@ -13,7 +13,7 @@ from backend.src.db import session, async_session_maker  # noqa
 
 
 def ingredietns_to_add():
-    with open('../data/ingredients.csv') as f:
+    with open('./data/ingredients.csv') as f:
         ingredients_file = csv.reader(f)
         ingredients_to_add = []
         for row in ingredients_file:
