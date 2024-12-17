@@ -195,17 +195,17 @@ class RecipeRepository(BaseRepository):
                 recipe_body_result.author_info, from_attributes=True
             )
             if current_user:
-                if current_user.id == recipe_body_result.author_info.id:
-                    author_schema_response.is_subscribed = False
-                else:
-                    subs = await db.subscriptions.get_one_or_none(
-                        author_id=recipe_body_result.author_info.id,
-                        subscriber_id=current_user.id
-                    )
-                    if not subs:
-                        author_schema_response.is_subscribed = False
-            else:
-                author_schema_response.is_subscribed = False
+                # if current_user.id == recipe_body_result.author_info.id:
+                #     author_schema_response.is_subscribed = False
+                # else:
+                subs = await db.subscriptions.get_one_or_none(
+                    author_id=recipe_body_result.author_info.id,
+                    subscriber_id=current_user.id
+                )
+                if subs:
+                    author_schema_response.is_subscribed = True
+            # else:
+            #     author_schema_response.is_subscribed = False
             response = self.schema(
                 id=recipe_body_result.id,
                 tags=recipe_body_result.tags,
