@@ -114,11 +114,11 @@ async def test_auth_flow(
         }
     )
     assert jwt_token.status_code == status.HTTP_201_CREATED, 'статус ответа отличается от 201'
-    assert isinstance(jwt_token.json()['access_token'], str), 'неверный формат jwt-токена'
+    assert isinstance(jwt_token.json()['auth_token'], str), 'неверный формат jwt-токена'
 
     current_user_info = await ac.get(
         '/api/users/me',
-        headers={'Authorization': f'{jwt_token.json()["access_token"]}'}
+        headers={'Authorization': f'Token {jwt_token.json()["auth_token"]}'}
     )
     assert current_user_info.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     user_info = current_user_info.json()
@@ -132,13 +132,13 @@ async def test_auth_flow(
     #
     current_user_info = await ac.get(
         f'/api/users/{user_info["id"]}',
-        headers={'Authorization': f'{jwt_token.json()["access_token"]}'}
+        headers={'Authorization': f'Token {jwt_token.json()["auth_token"]}'}
     )
     assert current_user_info.status_code == status.HTTP_200_OK
 
     user_list = await ac.get(
         f'/api/users',
-        headers={'Authorization': f'{jwt_token.json()["access_token"]}'}
+        headers={'Authorization': f'Token {jwt_token.json()["auth_token"]}'}
     )
     assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     assert len(user_list.json()['results']) == 3, 'неверное количество пользователей в поле results'
@@ -150,13 +150,13 @@ async def test_auth_flow(
             'current_password': password,
             'new_password': new_password
         },
-        headers={'Authorization': f'{jwt_token.json()["access_token"]}'}
+        headers={'Authorization': f'Token {jwt_token.json()["auth_token"]}'}
     )
     assert password_chaning.status_code == status.HTTP_204_NO_CONTENT, 'статус ответа отличается от 204'
 
     logout = await ac.post(
         '/api/auth/token/logout',
-        headers={'Authorization': f'{jwt_token.json()["access_token"]}'}
+        headers={'Authorization': f'Token {jwt_token.json()["auth_token"]}'}
     )
     assert logout.status_code == status.HTTP_204_NO_CONTENT, 'статус ответа отличается от 204'
     await db.users.delete(id=user_info['id'])

@@ -138,12 +138,12 @@ async def auth_ac(ac):
         }
     )
     assert jwt_token.status_code == status.HTTP_201_CREATED
-    assert isinstance(jwt_token.json()['access_token'], str)
+    assert isinstance(jwt_token.json()['auth_token'], str)
     # return ac
     async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={'Authorization': f'{jwt_token.json()["access_token"]}'}) as ac:
+            headers={'Authorization': f'Token {jwt_token.json()["auth_token"]}'}) as ac:
         yield ac
 
 
@@ -157,14 +157,14 @@ async def another_auth_ac(ac):
         }
     )
     assert jwt_token.status_code == status.HTTP_201_CREATED, 'Статус успешного создания токена должен быть 201'
-    assert isinstance(jwt_token.json()['access_token'], str)
+    assert isinstance(jwt_token.json()['auth_token'], str)
     # return ac
     print(jwt_token.json())
     # print(decode_token(jwt_token.json()))
     async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={'Authorization': f'{jwt_token.json()["access_token"]}'}) as ac:
+            headers={'Authorization': f'Token {jwt_token.json()["auth_token"]}'}) as ac:
         yield ac
 
 

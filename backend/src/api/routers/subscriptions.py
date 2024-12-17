@@ -65,7 +65,7 @@ async def subscribe(
     db: DBDep,
     current_user: UserDep,
     user_id: int = Path(),
-    recipes_limit: int = Query()
+    recipes_limit: int = Query(default=6)
 ) -> FollowedUserWithRecipiesRead:
     data = SubscriptionCreate(author_id=user_id, subscriber_id=current_user.id)
     try:

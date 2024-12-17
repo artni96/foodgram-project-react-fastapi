@@ -73,7 +73,7 @@ class SubscriptionRepository(BaseRepository):
         if offset:
             user_subs_stmt = user_subs_stmt.offset(offset)
         user_subs_result = await self.session.execute(user_subs_stmt)
-        user_subs_result = user_subs_result.scalars().all()
+        user_subs_result = user_subs_result.unique().scalars().all()
         paginator_values = url_paginator(
             limit=limit,
             page=page,
