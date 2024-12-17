@@ -80,7 +80,8 @@ app.add_middleware(
 
 app.mount(
     MOUNT_PATH,
-    StaticFiles(directory='src/media/recipes/images')
+    StaticFiles(directory='src/media/recipes/images'),
+    name='media'
 )
 app.include_router(subscription_router)
 app.include_router(user_router)
