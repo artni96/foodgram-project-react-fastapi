@@ -30,6 +30,8 @@ httpx = "^0.27.2"
 datamodel-code-generator = "^0.26.3"
 fastapi-cache2 = "^0.2.2"
 fastapi-login = "^1.10.3"
+pytz = "^2024.2"
+wkhtmltopdf = "^0.2"
 
 
 [build-system]
