@@ -31,7 +31,6 @@ recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
             'избранному, автору, списку покупок и тегам.'
     )
 )
-# @cache(expire=60)
 async def get_recipe_list(
     db: DBDep,
     current_user: OptionalUserDep,
@@ -68,7 +67,6 @@ async def get_recipe_list(
     status_code=status.HTTP_200_OK,
     summary='Получение рецепта'
 )
-# @cache(expire=60)
 async def get_recipe(
     db: DBDep,
     id: int,

@@ -326,63 +326,60 @@ class RecipeRepository(BaseRepository):
             **recipe_data.model_dump(),
             id=id
         )
+        recipe_image_id_stmt = (
+            select(RecipeModel.image)
+            .filter_by(id=_recipe_data.id)
+            .scalar_subquery()
+        )
+        current_image_stmt = (
+            select(
+                ImageModel
+            )
+            .filter(
+                ImageModel.id == recipe_image_id_stmt,
+            )
+        )
+        file_to_delete = await self.session.execute(current_image_stmt)
+        file_to_delete = file_to_delete.scalars().one()
         try:
-            recipe_image_id_stmt = (
-                select(RecipeModel.image)
-                .filter_by(id=_recipe_data.id)
-                .scalar_subquery()
-            )
-            image_stmt = (
-                select(
-                    ImageModel
-                )
-                .filter(
-                    ImageModel.id == recipe_image_id_stmt,
-                )
-            )
-            image_result = await self.session.execute(image_stmt)
-            image_result = image_result.scalars().one_or_none()
-            if _recipe_data.image and _recipe_data.image != image_result.base64:
-                recipe_image_update_stmt = (
-                    update(ImageModel)
-                    .filter_by(id=recipe_image_id_stmt)
-                    .values(base64=_recipe_data.image)
-                    .returning(ImageModel.name, ImageModel.id)
-                )
-                current_image = await self.session.execute(
-                    recipe_image_update_stmt
-                )
-                current_image = current_image.mappings().one_or_none()
+            if _recipe_data.image:
                 media_path = pathlib.Path(__file__).parent.parent.resolve()
                 image_to_delete = (
-                    f'{media_path}{MOUNT_PATH}/{current_image.name}'
+                    f'{media_path}{MOUNT_PATH}/{file_to_delete.name}'
                 )
+                print(file_to_delete.name)
                 if os.path.exists(image_to_delete):
                     os.remove(image_to_delete)
                 image_base64 = _recipe_data.image
-                _recipe_data.image = current_image.id
-                image_name = ImageManager().base64_to_file(
+                generated_image_name = ImageManager().create_random_name(image_base64)
+                while await self.check_image_name(generated_image_name):
+                    generated_image_name = ImageManager().create_random_name(image_base64)
+                image_url = (
+                    f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
+                    f'/{generated_image_name}'
+                )
+                image_id = await self.create_image(
+                    name=generated_image_name,
+                    base64=image_base64
+                )
+                ImageManager().base64_to_file(
                     base64_string=image_base64,
-                    image_name=current_image.name)
-            else:
-                _recipe_data.image = image_result.id
-                image_name = image_result.name
-            image_url = (
-                f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
-                f'/{image_name}'
-            )
-            obj_update_stmt = (
-                update(self.model)
-                .filter_by(id=_recipe_data.id)
-                .values(**_recipe_data.model_dump())
-                .returning(self.model)
-            )
-            updated_recipe_result = await self.session.execute(obj_update_stmt)
-            updated_recipe_result = updated_recipe_result.scalars().one()
-            user_result = await db.users.get_one_or_none(
-                user_id=updated_recipe_result.author,
-                current_user_id=updated_recipe_result.id
-            )
+                    image_name=generated_image_name
+                )
+                _recipe_data.image = image_id
+                updated_image_stmt = (
+                    update(ImageModel)
+                    .filter_by(id=file_to_delete.id)
+                    .values(name=generated_image_name, base64=image_base64)
+                )
+                await self.session.execute(updated_image_stmt)
+                recipe_stmt = select(self.model).filter_by(id=_recipe_data.id)
+                updated_recipe = await self.session.execute(recipe_stmt)
+                updated_recipe = updated_recipe.scalars().one()
+                user_result = await db.users.get_one_or_none(
+                    user_id=updated_recipe.author,
+                    current_user_id=updated_recipe.id
+                )
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -425,16 +422,127 @@ class RecipeRepository(BaseRepository):
                     detail='Указанных тегов нет в БД.'
                 )
         response = self.schema(
-            name=updated_recipe_result.name,
-            text=updated_recipe_result.text,
-            cooking_time=updated_recipe_result.cooking_time,
+            name=updated_recipe.name,
+            text=updated_recipe.text,
+            cooking_time=updated_recipe.cooking_time,
             author=user_result,
-            id=updated_recipe_result.id,
+            id=updated_recipe.id,
             tags=tags_result,
             ingredients=ingredients_result,
             image=image_url
         )
         return response
+
+
+
+        #     recipe_image_id_stmt = (
+        #         select(RecipeModel.image)
+        #         .filter_by(id=_recipe_data.id)
+        #         .scalar_subquery()
+        #     )
+        #     image_stmt = (
+        #         select(
+        #             ImageModel
+        #         )
+        #         .filter(
+        #             ImageModel.id == recipe_image_id_stmt,
+        #         )
+        #     )
+        #     image_result = await self.session.execute(image_stmt)
+        #     image_result = image_result.scalars().one_or_none()
+        #     if _recipe_data.image and _recipe_data.image != image_result.base64:
+        #         recipe_image_update_stmt = (
+        #             update(ImageModel)
+        #             .filter_by(id=recipe_image_id_stmt)
+        #             .values(base64=_recipe_data.image)
+        #             .returning(ImageModel.name, ImageModel.id)
+        #         )
+        #         current_image = await self.session.execute(
+        #             recipe_image_update_stmt
+        #         )
+        #         current_image = current_image.mappings().one_or_none()
+        #         media_path = pathlib.Path(__file__).parent.parent.resolve()
+        #         image_to_delete = (
+        #             f'{media_path}{MOUNT_PATH}/{current_image.name}'
+        #         )
+        #         if os.path.exists(image_to_delete):
+        #             os.remove(image_to_delete)
+        #         image_base64 = _recipe_data.image
+        #         _recipe_data.image = current_image.id
+        #         image_name = ImageManager().base64_to_file(
+        #             base64_string=image_base64,
+        #             image_name=current_image.name)
+        #     else:
+        #         _recipe_data.image = image_result.id
+        #         image_name = image_result.name
+        #     image_url = (
+        #         f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
+        #         f'/{image_name}'
+        #     )
+        #     obj_update_stmt = (
+        #         update(self.model)
+        #         .filter_by(id=_recipe_data.id)
+        #         .values(**_recipe_data.model_dump())
+        #         .returning(self.model)
+        #     )
+        #     updated_recipe_result = await self.session.execute(obj_update_stmt)
+        #     updated_recipe_result = updated_recipe_result.scalars().one()
+        #     user_result = await db.users.get_one_or_none(
+        #         user_id=updated_recipe_result.author,
+        #         current_user_id=updated_recipe_result.id
+        #     )
+        # except Exception:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail='Проверьте поля name, text, cooking_time, image'
+        #     )
+        # ingredients_data = recipe_data.ingredients
+        # ingredients_result = list()
+        # if ingredients_data:
+        #     try:
+        #         _ingredients_data = (
+        #             await check_ingredient_duplicates_for_recipe(
+        #                 ingredients_data=ingredients_data
+        #             )
+        #         )
+        #         ingredients_result = (
+        #             await db.ingredients_amount.change_recipe_ingredients(
+        #                 ingredients_data=_ingredients_data,
+        #                 recipe_id=id,
+        #                 db=db
+        #             )
+        #         )
+        #     except Exception:
+        #         raise HTTPException(
+        #             status_code=status.HTTP_400_BAD_REQUEST,
+        #             detail='Указанных ингредиентов нет в БД.'
+        #         )
+        #
+        # tags_data = set(recipe_data.tags)
+        # tags_result = list()
+        # if tags_data:
+        #     try:
+        #         tags_result = await db.recipe_tags.update(
+        #             tags_data=tags_data,
+        #             db=db,
+        #             recipe_id=id
+        #         )
+        #     except Exception:
+        #         raise HTTPException(
+        #             status_code=status.HTTP_400_BAD_REQUEST,
+        #             detail='Указанных тегов нет в БД.'
+        #         )
+        # response = self.schema(
+        #     name=updated_recipe_result.name,
+        #     text=updated_recipe_result.text,
+        #     cooking_time=updated_recipe_result.cooking_time,
+        #     author=user_result,
+        #     id=updated_recipe_result.id,
+        #     tags=tags_result,
+        #     ingredients=ingredients_result,
+        #     image=image_url
+        # )
+        # return response
 
     async def delete(self, id):
         """Удаление рецепта по его id."""
