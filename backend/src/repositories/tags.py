@@ -14,6 +14,7 @@ class RecipeTagRepository(BaseRepository):
     model = RecipeTagModel
 
     async def create(self, tags_data, db, recipe_id):
+        """Добавление тегов рецепту."""
         recipe_tags_to_create: list[RecipeTagCreate] = list()
         for tag in tags_data:
             recipe_tags_to_create.append(
@@ -25,6 +26,7 @@ class RecipeTagRepository(BaseRepository):
         return tags_result
 
     async def update(self, tags_data, db, recipe_id):
+        """Обновление тегов рецепта."""
         recipe_tags_to_delete_stmt = (
             delete(RecipeTagModel)
             .filter_by(recipe_id=recipe_id)

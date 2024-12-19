@@ -15,6 +15,7 @@ class IngredientRepository(BaseRepository):
     schema = IngredientRead
 
     async def get_filtered(self, name: str | None):
+        """Получение отфильтрованного списка ингредиентов."""
         filtered_ingredients_stmt = select(self.model)
         if name:
             filtered_ingredients_stmt = (
@@ -37,6 +38,7 @@ class IngredientAmountRepository(BaseRepository):
     schema = IngredientAmountRead
 
     async def add_recipe_ingredients(self, ingredients_data, recipe_id, db):
+        """Добавление ингредиентов рецепту."""
         ingredients_amount_list_to_create: list[IngredientAmountCreate] = (
             list()
         )
@@ -90,6 +92,7 @@ class IngredientAmountRepository(BaseRepository):
         return ingredients_amount_list_response
 
     async def change_recipe_ingredients(self, ingredients_data, recipe_id, db):
+        """Изменение ингредиентов рецепта."""
         ingredients_amount_stmt = (
             select(RecipeIngredientModel.ingredient_amount_id)
             .filter_by(recipe_id=recipe_id)

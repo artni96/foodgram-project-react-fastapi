@@ -29,6 +29,7 @@ class SubscriptionRepository(BaseRepository):
         recipes_limit: int,
         router_prefix: str
     ):
+        """Получение списка подписок пользователя."""
         author_ids = (
             select(self.model.author_id)
             .filter_by(subscriber_id=user_id)
@@ -115,7 +116,7 @@ class SubscriptionRepository(BaseRepository):
         return response
 
     async def create(self, data: SubscriptionCreate, recipes_limit: int):
-        # try:
+        """Создание подписки."""
         subscription_stmt = (
             insert(self.model)
             .values(**data.model_dump())
@@ -176,6 +177,7 @@ class SubscriptionRepository(BaseRepository):
         return sub_response
 
     async def delete(self, **filter_by):
+        """Удаление подписки."""
         stmt = delete(self.model).filter_by(**filter_by).returning(self.model)
         sub_to_delete = await self.session.execute(stmt)
         try:

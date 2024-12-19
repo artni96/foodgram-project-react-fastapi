@@ -13,6 +13,7 @@ class FavoriteRecipeRepository(BaseRepository):
     schema = FavoriteRecipeRead
 
     async def create(self, data):
+        """Добавление рецепта в избранное."""
         make_recipe_favorite_stmt = (
             insert(self.model)
             .values(**data.model_dump())
@@ -45,6 +46,7 @@ class FavoriteRecipeRepository(BaseRepository):
         )
 
     async def delete(self, **filter_by):
+        """Удаление рецепта из избранного."""
         stmt = delete(self.model).filter_by(**filter_by).returning(self.model.id)
         result = await self.session.execute(stmt)
         try:

@@ -3,10 +3,13 @@ import pathlib
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, delete, insert, select, update, desc
-from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import selectinload
 
 from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
+from backend.src.exceptions.ingredients import IngredientNotFoundException
+from backend.src.exceptions.recipes import MainDataRecipeAtModifyingException, RecipeNotFoundException
+from backend.src.exceptions.tags import TagNotFoundException
 from backend.src.models.ingredients import (IngredientAmountModel,
                                             IngredientModel,
                                             RecipeIngredientModel)
@@ -183,7 +186,6 @@ class RecipeRepository(BaseRepository):
             )
             recipe_body_result = await self.session.execute(recipe_body_stmt)
             recipe_body_result = recipe_body_result.scalars().one()
-            # print(recipe_body_result.is_in_shopping_cart[0].user_id)
             recipe_image = await db.images.get_one_or_none(
                 id=recipe_body_result.image
             )
@@ -195,17 +197,12 @@ class RecipeRepository(BaseRepository):
                 recipe_body_result.author_info, from_attributes=True
             )
             if current_user:
-                # if current_user.id == recipe_body_result.author_info.id:
-                #     author_schema_response.is_subscribed = False
-                # else:
                 subs = await db.subscriptions.get_one_or_none(
                     author_id=recipe_body_result.author_info.id,
                     subscriber_id=current_user.id
                 )
                 if subs:
                     author_schema_response.is_subscribed = True
-            # else:
-            #     author_schema_response.is_subscribed = False
             response = self.schema(
                 id=recipe_body_result.id,
                 tags=recipe_body_result.tags,
@@ -264,12 +261,9 @@ class RecipeRepository(BaseRepository):
                 user_id=recipe_result.author,
                 current_user_id=recipe_result.id
             )
-
         except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Проверьте поля name, text, cooking_time, image'
-            )
+            raise MainDataRecipeAtModifyingException
+
         ingredients_data = recipe_data.ingredients
         ingredients_result = list()
         if ingredients_data:
@@ -287,10 +281,8 @@ class RecipeRepository(BaseRepository):
                     )
                 )
             except Exception:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Указанных ингредиентов нет в БД.'
-                )
+                raise IngredientNotFoundException
+
         tags_data = set(recipe_data.tags)
         tags_result = list()
         if tags_data:
@@ -301,10 +293,8 @@ class RecipeRepository(BaseRepository):
                     recipe_id=recipe_result.id
                 )
             except Exception:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Указанных тегов нет в БД.'
-                )
+                raise TagNotFoundException
+
         ImageManager().base64_to_file(
             base64_string=image_base64,
             image_name=generated_image_name)
@@ -381,10 +371,7 @@ class RecipeRepository(BaseRepository):
                     current_user_id=updated_recipe.id
                 )
         except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Проверьте поля name, text, cooking_time, image'
-            )
+            raise MainDataRecipeAtModifyingException
         ingredients_data = recipe_data.ingredients
         ingredients_result = list()
         if ingredients_data:
@@ -402,10 +389,7 @@ class RecipeRepository(BaseRepository):
                     )
                 )
             except Exception:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Указанных ингредиентов нет в БД.'
-                )
+                raise IngredientNotFoundException
 
         tags_data = set(recipe_data.tags)
         tags_result = list()
@@ -417,10 +401,7 @@ class RecipeRepository(BaseRepository):
                     recipe_id=id
                 )
             except Exception:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='Указанных тегов нет в БД.'
-                )
+                raise TagNotFoundException
         response = self.schema(
             name=updated_recipe.name,
             text=updated_recipe.text,
@@ -432,117 +413,6 @@ class RecipeRepository(BaseRepository):
             image=image_url
         )
         return response
-
-
-
-        #     recipe_image_id_stmt = (
-        #         select(RecipeModel.image)
-        #         .filter_by(id=_recipe_data.id)
-        #         .scalar_subquery()
-        #     )
-        #     image_stmt = (
-        #         select(
-        #             ImageModel
-        #         )
-        #         .filter(
-        #             ImageModel.id == recipe_image_id_stmt,
-        #         )
-        #     )
-        #     image_result = await self.session.execute(image_stmt)
-        #     image_result = image_result.scalars().one_or_none()
-        #     if _recipe_data.image and _recipe_data.image != image_result.base64:
-        #         recipe_image_update_stmt = (
-        #             update(ImageModel)
-        #             .filter_by(id=recipe_image_id_stmt)
-        #             .values(base64=_recipe_data.image)
-        #             .returning(ImageModel.name, ImageModel.id)
-        #         )
-        #         current_image = await self.session.execute(
-        #             recipe_image_update_stmt
-        #         )
-        #         current_image = current_image.mappings().one_or_none()
-        #         media_path = pathlib.Path(__file__).parent.parent.resolve()
-        #         image_to_delete = (
-        #             f'{media_path}{MOUNT_PATH}/{current_image.name}'
-        #         )
-        #         if os.path.exists(image_to_delete):
-        #             os.remove(image_to_delete)
-        #         image_base64 = _recipe_data.image
-        #         _recipe_data.image = current_image.id
-        #         image_name = ImageManager().base64_to_file(
-        #             base64_string=image_base64,
-        #             image_name=current_image.name)
-        #     else:
-        #         _recipe_data.image = image_result.id
-        #         image_name = image_result.name
-        #     image_url = (
-        #         f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
-        #         f'/{image_name}'
-        #     )
-        #     obj_update_stmt = (
-        #         update(self.model)
-        #         .filter_by(id=_recipe_data.id)
-        #         .values(**_recipe_data.model_dump())
-        #         .returning(self.model)
-        #     )
-        #     updated_recipe_result = await self.session.execute(obj_update_stmt)
-        #     updated_recipe_result = updated_recipe_result.scalars().one()
-        #     user_result = await db.users.get_one_or_none(
-        #         user_id=updated_recipe_result.author,
-        #         current_user_id=updated_recipe_result.id
-        #     )
-        # except Exception:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail='Проверьте поля name, text, cooking_time, image'
-        #     )
-        # ingredients_data = recipe_data.ingredients
-        # ingredients_result = list()
-        # if ingredients_data:
-        #     try:
-        #         _ingredients_data = (
-        #             await check_ingredient_duplicates_for_recipe(
-        #                 ingredients_data=ingredients_data
-        #             )
-        #         )
-        #         ingredients_result = (
-        #             await db.ingredients_amount.change_recipe_ingredients(
-        #                 ingredients_data=_ingredients_data,
-        #                 recipe_id=id,
-        #                 db=db
-        #             )
-        #         )
-        #     except Exception:
-        #         raise HTTPException(
-        #             status_code=status.HTTP_400_BAD_REQUEST,
-        #             detail='Указанных ингредиентов нет в БД.'
-        #         )
-        #
-        # tags_data = set(recipe_data.tags)
-        # tags_result = list()
-        # if tags_data:
-        #     try:
-        #         tags_result = await db.recipe_tags.update(
-        #             tags_data=tags_data,
-        #             db=db,
-        #             recipe_id=id
-        #         )
-        #     except Exception:
-        #         raise HTTPException(
-        #             status_code=status.HTTP_400_BAD_REQUEST,
-        #             detail='Указанных тегов нет в БД.'
-        #         )
-        # response = self.schema(
-        #     name=updated_recipe_result.name,
-        #     text=updated_recipe_result.text,
-        #     cooking_time=updated_recipe_result.cooking_time,
-        #     author=user_result,
-        #     id=updated_recipe_result.id,
-        #     tags=tags_result,
-        #     ingredients=ingredients_result,
-        #     image=image_url
-        # )
-        # return response
 
     async def delete(self, id):
         """Удаление рецепта по его id."""
@@ -617,6 +487,8 @@ class RecipeRepository(BaseRepository):
         """Проверка на наличие рецепта в бд с указанным id."""
         stmt = select(self.model.author, self.model.id).filter_by(id=id)
         result = await self.session.execute(stmt)
-        result = result.mappings().one_or_none()
-        if result:
+        try:
+            result = result.mappings().one()
             return CheckRecipeRead.model_validate(result, from_attributes=True)
+        except NoResultFound:
+            raise RecipeNotFoundException

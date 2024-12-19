@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError
 
+from backend.src.exceptions.base import ObjectAlreadyExistsException
+
 
 class BaseRepository:
     model = None
@@ -12,6 +14,7 @@ class BaseRepository:
         self.session = session
 
     async def get_filtered(self, *filter, **filter_by):
+        """Получение отфильтрованного списка объектов по указанным параметрам."""
         stmt = (
             select(self.model)
             .filter(*filter)
@@ -27,9 +30,11 @@ class BaseRepository:
 
 
     async def get_all(self, *args, **kwargs):
+        """Получение списка объектов."""
         return await self.get_filtered()
 
     async def get_one_or_none(self, **filter_by):
+        """Получение объекта или None."""
         stmt = select(self.model)
         stmt = stmt.filter_by(**filter_by)
 
@@ -39,6 +44,7 @@ class BaseRepository:
             return self.schema.model_validate(result, from_attributes=True)
 
     async def create(self, data: BaseModel):
+        """Создание объекта."""
         try:
             new_obj_stmt = (
                 insert(self.model)
@@ -50,12 +56,10 @@ class BaseRepository:
             return self.schema.model_validate(
                 result, from_attributes=True)
         except IntegrityError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Пользователь с указанными данными уже существует.'
-            )
+            raise ObjectAlreadyExistsException
 
     async def bulk_create(self, data: list[BaseModel]):
+        """Создание нескольких объектов через один запрос."""
         stmt = (
             insert(self.model)
             .values([obj.model_dump() for obj in data])
@@ -66,6 +70,7 @@ class BaseRepository:
         return result
 
     async def delete(self, **filter_by):
+        """Удаление объекта."""
         stmt = delete(self.model).filter_by(**filter_by)
         await self.session.execute(stmt)
 
@@ -75,6 +80,7 @@ class BaseRepository:
         exclude_unset: bool = False,
         **filter_by
     ):
+        """Обновление объекта."""
         stmt = (
             update(self.model)
             .filter_by(**filter_by)

@@ -1,21 +1,19 @@
 import re
-import time
-from time import sleep
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
-from fastapi_cache.decorator import cache
+from fastapi import APIRouter, Body, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep, OptionalUserDep
+from backend.src.exceptions.ingredients import IngredientNotFoundException
+from backend.src.exceptions.recipes import MainDataRecipeAtModifyingException, RecipeNotFoundException
+from backend.src.exceptions.tags import TagNotFoundException
 from backend.src.schemas.recipes import (FavoriteRecipeCreate,
                                          RecipeCreateRequest,
                                          RecipeUpdateRequest,
                                          ShoppingCartRecipeCreate, RecipeRead, RecipeListRead, FavoriteRecipeRead,
                                          ShoppingCartRecipeRead)
-# from backend.src.services.users import optional_current_user
-from pydantic import JsonValue
-# from backend.src.api.dependencies import OptionalUserDep
+
 
 ROUTER_PREFIX = '/api/recipes'
 recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
@@ -93,14 +91,30 @@ async def create_recipe(
         openapi_examples=RecipeCreateRequest.model_config['json_schema_extra']
     ),
 ):
-    recipe = await db.recipes.create(
-        recipe_data=recipe_data,
-        current_user_id=current_user.id,
-        db=db
-    )
-    await db.commit()
-    return recipe
+    try:
+        recipe = await db.recipes.create(
+            recipe_data=recipe_data,
+            current_user_id=current_user.id,
+            db=db
+        )
+        await db.commit()
+        return recipe
 
+    except MainDataRecipeAtModifyingException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ex.detail
+        )
+    except TagNotFoundException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ex.detail
+        )
+    except IngredientNotFoundException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ex.detail
+        )
 
 @recipe_router.patch(
     '/{id}',
@@ -116,25 +130,42 @@ async def update_recipe(
         openapi_examples=RecipeUpdateRequest.model_config['json_schema_extra']
     ),
 ) -> RecipeRead:
-    check_recipe = await db.recipes.check_recipe_exists(id=id)
-    if check_recipe:
+    try:
+        check_recipe = await db.recipes.check_recipe_exists(id=id)
+    # if check_recipe:
         if check_recipe.author == current_user.id:
-            recipe = await db.recipes.update(
-                recipe_data=recipe_data,
-                id=id,
-                db=db
-            )
-            await db.commit()
-            return recipe
+            try:
+                recipe = await db.recipes.update(
+                    recipe_data=recipe_data,
+                    id=id,
+                    db=db
+                )
+                await db.commit()
+                return recipe
+            except MainDataRecipeAtModifyingException as ex:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=ex.detail
+                )
+            except TagNotFoundException as ex:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=ex.detail
+                )
+            except IngredientNotFoundException as ex:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=ex.detail
+                )
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='Редактирование рецепта доступна только его автору.'
             )
-    else:
+    except RecipeNotFoundException as ex:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Рецепт с указанным id не найден.'
+            detail=ex.detail
         )
 
 
@@ -149,8 +180,9 @@ async def delete_recipe(
         current_user: UserDep,
         id: int
 ) -> None:
-    check_recipe = await db.recipes.check_recipe_exists(id=id)
-    if check_recipe:
+
+    try:
+        check_recipe = await db.recipes.check_recipe_exists(id=id)
         if check_recipe.author == current_user.id:
             recipe = await db.recipes.delete(id=id)
             await db.commit()
@@ -160,7 +192,7 @@ async def delete_recipe(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='Редактирование рецепта доступна только его автору.'
             )
-    else:
+    except RecipeNotFoundException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Рецепт с указанным id не найден.'

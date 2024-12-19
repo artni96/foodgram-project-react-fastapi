@@ -1,7 +1,5 @@
 from datetime import datetime, timezone, timedelta
-from http import HTTPStatus
 
-from fastapi import HTTPException
 import jwt
 from passlib.context import CryptContext
 from sqlalchemy import func, select
@@ -31,6 +29,7 @@ class UserRepository(BaseRepository):
         user_id: int | None = None,
         offset: int | None = None,
     ):
+        """Получение списка пользователей."""
         user_list_stmt = (
             select(self.model)
             .order_by(self.model.id)
@@ -84,6 +83,7 @@ class UserRepository(BaseRepository):
         return response
 
     async def get_one(self, **filter_by):
+        """Получение пользователя."""
         stmt = select(
             self.model.id,
             self.model.first_name,
@@ -99,6 +99,7 @@ class UserRepository(BaseRepository):
             raise EmailNotRegisteredException
 
     async def get_one_or_none(self, user_id, current_user_id=None):
+        """Получение пользователя или None."""
         stmt = select(self.model).filter_by(id=user_id)
 
         user_result = await self.session.execute(stmt)
@@ -131,6 +132,7 @@ class UserRepository(BaseRepository):
             return result
 
     async def get_user_hashed_password(self, **filter_by):
+        """Получение данных пользователя с хешированным паролем."""
         hashed_password_stmt = (
             select(
                 self.model)
@@ -147,6 +149,7 @@ class UserRepository(BaseRepository):
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     async def create_access_token(self, data) -> str:
+        """Создание JWT токена."""
         user = await self.get_user_hashed_password(email=data.email)
         if not user:
             raise EmailNotRegisteredException
@@ -163,35 +166,19 @@ class UserRepository(BaseRepository):
         return encoded_jwt
 
     def hash_password(self, password: str) -> str:
+        """Хеширование пароля."""
         return self.pwd_context.hash(password)
 
     def verify_password(self, plain_password, hashed_password):
+        """Верификация пароля."""
         return self.pwd_context.verify(plain_password, hashed_password)
 
     @staticmethod
     def decode_token(token: str) -> dict:
+        """Получение данных пользователя из JWT токена."""
         try:
             return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         except jwt.exceptions.DecodeError:
             raise IncorrectTokenException
         except jwt.exceptions.ExpiredSignatureError:
             raise IncorrectTokenException
-
-    # async def register_user(self, data: UserRequestAdd):
-    #     hashed_password = self.hash_password(data.password)
-    #     new_user_data = UserAdd(hashed_password=hashed_password, **data.model_dump())
-    #     try:
-    #         new_user = await self.db.users.add(new_user_data)
-    #         await self.db.commit()
-    #         return new_user
-    #     except ObjectAlreadyExistsException as ex:
-    #         raise UserAlreadyExistsException from ex
-
-    # async def login_user(self, data: UserLoginRequest) -> str:
-    #     user = await self.db.users.get_user_with_hashed_password(email=data.email)
-    #     if not user:
-    #         raise EmailNotRegisteredException
-    #     if not self.verify_password(data.password, user.hashed_password):
-    #         raise IncorrectPasswordException
-    #     access_token = await self.create_access_token({"user_id": user.id})
-    #     return access_token
