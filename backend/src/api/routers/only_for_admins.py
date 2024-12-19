@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Body, Depends, status
+from fastapi import APIRouter, Body, Depends, status, HTTPException
 
 from backend.src.api.dependencies import DBDep
+from backend.src.api.dependencies import get_current_superuser
+from backend.src.exceptions.base import ObjectNotFoundException
 from backend.src.schemas.ingredients import IngredientCreate, IngredientRead
 from backend.src.schemas.tags import TagCreate, TagRead
-from backend.src.api.dependencies import get_current_superuser
-
+from backend.src.services.only_for_admins import OnlyForAdminService
 
 router = APIRouter(
     prefix='/api/only-for-admins',
@@ -22,9 +23,7 @@ async def create_tag(
             openapi_examples=TagCreate.model_config['json_schema_extra']
         )
 ) -> TagRead:
-    result = await db.tags.create(data=data)
-    await db.commit()
-    return result
+    return await OnlyForAdminService(db).create_tag(data=data)
 
 
 @router.post(
@@ -36,9 +35,7 @@ async def create_ingredient(
         db: DBDep,
         data: IngredientCreate
 ) -> IngredientRead:
-    result = await db.ingredients.create(data=data)
-    await db.commit()
-    return result
+    return await OnlyForAdminService(db).create_ingredient(data=data)
 
 
 @router.delete(
@@ -50,8 +47,13 @@ async def delete_tag(
         db: DBDep,
         id: int
 ) -> None:
-    await db.tags.delete(id=id)
-    await db.commit()
+    try:
+        await OnlyForAdminService(db).delete_tag(id=id)
+    except ObjectNotFoundException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ex.detail
+        )
 
 
 @router.delete(
@@ -63,5 +65,10 @@ async def delete_ingredient(
         db: DBDep,
         id: int
 ) -> None:
-    await db.ingredients.delete(id=id)
-    await db.commit()
+    try:
+        await OnlyForAdminService(db).delete_ingredient(id=id)
+    except ObjectNotFoundException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ex.detail
+        )

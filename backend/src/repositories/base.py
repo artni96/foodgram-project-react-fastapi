@@ -1,9 +1,9 @@
 from fastapi import HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
-from backend.src.exceptions.base import ObjectAlreadyExistsException
+from backend.src.exceptions.base import ObjectAlreadyExistsException, ObjectNotFoundException
 
 
 class BaseRepository:
@@ -71,8 +71,12 @@ class BaseRepository:
 
     async def delete(self, **filter_by):
         """Удаление объекта."""
-        stmt = delete(self.model).filter_by(**filter_by)
-        await self.session.execute(stmt)
+        stmt = delete(self.model).filter_by(**filter_by).returning(self.model)
+        result = await self.session.execute(stmt)
+        try:
+            result.scalars().one()
+        except NoResultFound:
+            raise ObjectNotFoundException
 
     async def update(
         self,
