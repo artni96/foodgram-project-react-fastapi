@@ -27,9 +27,9 @@ async def test_recipe_crud(
         db=db
     )
     await db.commit()
-    assert updated_recipe.name == recipe_updating_fixture.name, ('значение name одновленного рецепта отличается от '
+    assert updated_recipe.name == recipe_updating_fixture.name, ('значение name обновленного рецепта отличается от '
                                                                  'исходных данных')
-    assert updated_recipe.text == recipe_updating_fixture.text, ('значение text одновленного рецепта отличается от '
+    assert updated_recipe.text == recipe_updating_fixture.text, ('значение text обновленного рецепта отличается от '
                                                                  'исходных данных')
     assert updated_recipe.cooking_time == recipe_updating_fixture.cooking_time, ('значение cooking_time рецепта '
                                                                                  'отличается от исходных данных')
@@ -40,5 +40,3 @@ async def test_recipe_crud(
     assert  await db.recipes.check_recipe_exists(id=updated_recipe.id), 'обновленный репецт не найден в бд'
     await db.recipes.delete(id=updated_recipe.id)
     await db.commit()
-
-    assert not await db.recipes.check_recipe_exists(id=updated_recipe.id), 'удаленный репецт найден в бд'

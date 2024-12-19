@@ -4,10 +4,11 @@ import jwt
 from passlib.context import CryptContext
 from sqlalchemy import func, select
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.sql.functions import current_user
 
 from backend.src.config import settings
 from backend.src.exceptions.users import EmailNotRegisteredException, IncorrectPasswordException, \
-    IncorrectTokenException
+    IncorrectTokenException, UserNotFoundException
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
 from backend.src.repositories.base import BaseRepository
@@ -84,19 +85,45 @@ class UserRepository(BaseRepository):
 
     async def get_one(self, **filter_by):
         """Получение пользователя."""
+        current_user_id = filter_by['current_user_id']
+        user_id = filter_by['user_id']
         stmt = select(
             self.model.id,
             self.model.first_name,
             self.model.last_name,
             self.model.username,
             self.model.email
-        ).filter_by(**filter_by)
-        result = await self.session.execute(stmt)
+        ).filter_by(id=user_id)
+        user_result = await self.session.execute(stmt)
+
         try:
-            result = result.mappings().one()
-            return self.schema.model_validate(result, from_attributes=True)
+            user_result = user_result.mappings().one()
+            result = FollowedUserRead.model_validate(
+                user_result,
+                from_attributes=True
+            )
+            if current_user_id:
+                if_subscribed_stmt = (
+                    select(SubscriptionModel)
+                    .select_from(SubscriptionModel)
+                    .filter_by(
+                        author_id=user_id,
+                        subscriber_id=current_user_id
+                    )
+                )
+                if_subscribed_result = await self.session.execute(
+                    if_subscribed_stmt)
+                if_subscribed_result = (
+                    if_subscribed_result.scalars().one_or_none()
+                )
+                if not if_subscribed_result:
+                    result.is_subscribed = False
+                    return result
+                return result
+            result.is_subscribed = False
+            return result
         except NoResultFound:
-            raise EmailNotRegisteredException
+            raise UserNotFoundException
 
     async def get_one_or_none(self, user_id, current_user_id=None):
         """Получение пользователя или None."""
@@ -152,7 +179,7 @@ class UserRepository(BaseRepository):
         """Создание JWT токена."""
         user = await self.get_user_hashed_password(email=data.email)
         if not user:
-            raise EmailNotRegisteredException
+            raise UserNotFoundException
         if not self.verify_password(data.password, user.hashed_password):
             raise IncorrectPasswordException
         to_encode = user.model_dump()

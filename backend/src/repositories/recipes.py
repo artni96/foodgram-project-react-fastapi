@@ -310,15 +310,11 @@ class RecipeRepository(BaseRepository):
         )
         return response
 
-    async def update(self, recipe_data: RecipeUpdateRequest, db, id: int):
+    async def update(self, db, recipe_data: RecipeUpdateRequest, id: int):
         """Обновление рецепта по его id."""
-        _recipe_data = RecipeUpdate(
-            **recipe_data.model_dump(),
-            id=id
-        )
         recipe_image_id_stmt = (
             select(RecipeModel.image)
-            .filter_by(id=_recipe_data.id)
+            .filter_by(id=id)
             .scalar_subquery()
         )
         current_image_stmt = (
@@ -332,15 +328,14 @@ class RecipeRepository(BaseRepository):
         file_to_delete = await self.session.execute(current_image_stmt)
         file_to_delete = file_to_delete.scalars().one()
         try:
-            if _recipe_data.image:
+            if recipe_data.image:
                 media_path = pathlib.Path(__file__).parent.parent.resolve()
                 image_to_delete = (
                     f'{media_path}{MOUNT_PATH}/{file_to_delete.name}'
                 )
-                print(file_to_delete.name)
                 if os.path.exists(image_to_delete):
                     os.remove(image_to_delete)
-                image_base64 = _recipe_data.image
+                image_base64 = recipe_data.image
                 generated_image_name = ImageManager().create_random_name(image_base64)
                 while await self.check_image_name(generated_image_name):
                     generated_image_name = ImageManager().create_random_name(image_base64)
@@ -356,20 +351,35 @@ class RecipeRepository(BaseRepository):
                     base64_string=image_base64,
                     image_name=generated_image_name
                 )
-                _recipe_data.image = image_id
+                recipe_data.image = image_id
                 updated_image_stmt = (
                     update(ImageModel)
                     .filter_by(id=file_to_delete.id)
                     .values(name=generated_image_name, base64=image_base64)
                 )
                 await self.session.execute(updated_image_stmt)
-                recipe_stmt = select(self.model).filter_by(id=_recipe_data.id)
-                updated_recipe = await self.session.execute(recipe_stmt)
-                updated_recipe = updated_recipe.scalars().one()
-                user_result = await db.users.get_one_or_none(
-                    user_id=updated_recipe.author,
-                    current_user_id=updated_recipe.id
+            else:
+                image_url = (
+                    f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
+                    f'/{file_to_delete.name}'
                 )
+
+            updated_recipe_stmt = (
+                update(self.model)
+                .filter_by(id=id)
+                .values(
+                    name=recipe_data.name,
+                    text=recipe_data.text,
+                    cooking_time=recipe_data.cooking_time
+                )
+                .returning(self.model)
+            )
+            updated_recipe = await self.session.execute(updated_recipe_stmt)
+            updated_recipe = updated_recipe.scalars().one()
+            user_result = await db.users.get_one_or_none(
+                user_id=updated_recipe.author,
+                current_user_id=updated_recipe.id
+            )
         except Exception:
             raise MainDataRecipeAtModifyingException
         ingredients_data = recipe_data.ingredients

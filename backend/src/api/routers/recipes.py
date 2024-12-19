@@ -132,36 +132,33 @@ async def update_recipe(
 ) -> RecipeRead:
     try:
         check_recipe = await db.recipes.check_recipe_exists(id=id)
-    # if check_recipe:
-        if check_recipe.author == current_user.id:
-            try:
-                recipe = await db.recipes.update(
-                    recipe_data=recipe_data,
-                    id=id,
-                    db=db
-                )
-                await db.commit()
-                return recipe
-            except MainDataRecipeAtModifyingException as ex:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=ex.detail
-                )
-            except TagNotFoundException as ex:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=ex.detail
-                )
-            except IngredientNotFoundException as ex:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=ex.detail
-                )
-        else:
+        if check_recipe.author != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='Редактирование рецепта доступна только его автору.'
             )
+        recipe = await db.recipes.update(
+            recipe_data=recipe_data,
+            id=id,
+            db=db
+        )
+        await db.commit()
+        return recipe
+    except MainDataRecipeAtModifyingException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ex.detail
+        )
+    except TagNotFoundException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ex.detail
+        )
+    except IngredientNotFoundException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ex.detail
+        )
     except RecipeNotFoundException as ex:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -5,6 +5,10 @@ class EmailNotRegisteredException(FoodgramBaseException):
     detail = 'Пользователь с указанным email не найден'
 
 
+class UserNotFoundException(FoodgramBaseException):
+    detail = 'Пользователь не найден'
+
+
 class IncorrectPasswordException(FoodgramBaseException):
     detail = 'Неверный пароль'
 
