@@ -2,7 +2,7 @@ from backend.src import constants
 from backend.src.exceptions.users import IncorrectPasswordException
 from backend.src.repositories.utils.users import PasswordManager
 from backend.src.schemas.users import UserListRead, FollowedUserRead, UserCreateRequest, UserCreateResponse, UserCreate, \
-    UserLoginRequest, UserPasswordUpdate, UserPasswordChangeRequest
+    UserLoginRequest, UserPasswordUpdate, UserPasswordChangeRequest, UserReadWithRole
 from backend.src.services.base import BaseService
 
 
@@ -10,8 +10,8 @@ class UserService(BaseService):
 
     async def get_user_list(
             self,
-            current_user,
-            router_prefix,
+            current_user: UserReadWithRole,
+            router_prefix: str,
             page: int | None = None,
             limit: int | None = None
     ) -> UserListRead:
@@ -37,7 +37,7 @@ class UserService(BaseService):
 
     async def get_current_user(
         self,
-        current_user,
+        current_user: UserReadWithRole,
     ) -> FollowedUserRead | None:
         current_user_info = await self.db.users.get_one_or_none(user_id=current_user.id)
         return current_user_info
@@ -80,7 +80,7 @@ class UserService(BaseService):
     async def change_password(
         self,
         password_data: UserPasswordUpdate,
-        current_user
+        current_user: UserReadWithRole
     ) -> None:
         user = await self.db.users.get_user_hashed_password(id=current_user.id)
         if not PasswordManager().verify_password(

@@ -1,14 +1,14 @@
 from backend.src import constants
 from backend.src.schemas.subscriptions import SubscriptionListRead, SubscriptionCreate
-from backend.src.schemas.users import FollowedUserWithRecipiesRead
+from backend.src.schemas.users import FollowedUserWithRecipiesRead, UserReadWithRole
 from backend.src.services.base import BaseService
 
 
 class SubscriptionService(BaseService):
     async def get_my_subscriptions(
         self,
-        current_user,
-        router_prefix,
+        current_user: UserReadWithRole,
+        router_prefix: str,
         page: int | None = None,
         limit: int | None = None,
         recipes_limit: int | None = None,
@@ -31,7 +31,7 @@ class SubscriptionService(BaseService):
 
     async def subscribe(
         self,
-        current_user,
+        current_user: UserReadWithRole,
         user_id: int,
         recipes_limit: int,
     ) -> FollowedUserWithRecipiesRead:
@@ -43,7 +43,7 @@ class SubscriptionService(BaseService):
     async def unsubscribe(
         self,
         user_id: int,
-        current_user
+        current_user: UserReadWithRole
     ) -> None:
         await self.db.subscriptions.delete(
             author_id=user_id,
