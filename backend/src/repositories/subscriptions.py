@@ -1,8 +1,12 @@
+from asyncpg import ForeignKeyViolationError, UniqueViolationError
 from sqlalchemy import delete, func, insert, select
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.orm import load_only
 
 from backend.src.constants import MAIN_URL, MOUNT_PATH
+from backend.src.exceptions.subscriptions import UniqueConstraintSubscriptionException, FollowingYourselfException, \
+    SubscriptionNotFoundException
+from backend.src.exceptions.users import UserNotFoundException
 from backend.src.models.recipes import RecipeModel
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel
@@ -117,13 +121,21 @@ class SubscriptionRepository(BaseRepository):
 
     async def create(self, data: SubscriptionCreate, recipes_limit: int):
         """Создание подписки."""
-        subscription_stmt = (
-            insert(self.model)
-            .values(**data.model_dump())
-            .returning(self.model.author_id)
-        )
-        new_sub_result = await self.session.execute(subscription_stmt)
-        new_sub_result = new_sub_result.scalars().one()
+        if data.author_id == data.subscriber_id:
+            raise FollowingYourselfException
+        try:
+            subscription_stmt = (
+                insert(self.model)
+                .values(**data.model_dump())
+                .returning(self.model.author_id)
+            )
+            new_sub_result = await self.session.execute(subscription_stmt)
+            new_sub_result = new_sub_result.scalars().one()
+        except IntegrityError as ex:
+            if isinstance(ex.orig.__cause__, ForeignKeyViolationError):
+                raise UserNotFoundException
+            elif isinstance(ex.orig.__cause__, UniqueViolationError):
+                raise UniqueConstraintSubscriptionException
         user_info_stmt = (
             select(
                 UserModel
@@ -183,4 +195,4 @@ class SubscriptionRepository(BaseRepository):
         try:
             return sub_to_delete.scalars().one()
         except NoResultFound:
-            raise NoResultFound
+            raise SubscriptionNotFoundException

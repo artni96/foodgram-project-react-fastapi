@@ -1,13 +1,17 @@
 from http import HTTPStatus
 
+from asyncpg import ForeignKeyViolationError, UniqueViolationError
 from fastapi import APIRouter, Path, Query, status, HTTPException
 from sqlalchemy.exc import NoResultFound, IntegrityError
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
+from backend.src.exceptions.subscriptions import UniqueConstraintSubscriptionException, FollowingYourselfException, \
+    SubscriptionNotFoundException
+from backend.src.exceptions.users import UserNotFoundException
 from backend.src.schemas.subscriptions import SubscriptionCreate, SubscriptionListRead
 from backend.src.schemas.users import FollowedUserWithRecipiesRead
-
+from backend.src.services.subscriptions import SubscriptionService
 
 ROUTER_PREFIX = '/api/users'
 subscription_router = APIRouter(tags=['Подписки'], prefix=ROUTER_PREFIX)
@@ -38,21 +42,28 @@ async def get_my_subscriptions(
         title='Количество объектов внутри поля recipes.'
     ),
 ) -> SubscriptionListRead | None:
-    if not limit:
-        limit = constants.PAGINATION_LIMIT
-    if page:
-        offset = (page - 1) * limit
-    else:
-        offset = None
-    user_subs = await db.subscriptions.get_user_subs(
-        user_id=current_user.id,
-        limit=limit,
-        offset=offset,
+    # if not limit:
+    #     limit = constants.PAGINATION_LIMIT
+    # if page:
+    #     offset = (page - 1) * limit
+    # else:
+    #     offset = None
+    # user_subs = await db.subscriptions.get_user_subs(
+    #     user_id=current_user.id,
+    #     limit=limit,
+    #     offset=offset,
+    #     page=page,
+    #     router_prefix=f'{ROUTER_PREFIX}/subscriptions',
+    #     recipes_limit=recipes_limit
+    # )
+    # return user_subs
+    return await SubscriptionService(db).get_my_subscriptions(
+        current_user=current_user,
+        router_prefix=ROUTER_PREFIX,
         page=page,
-        router_prefix=f'{ROUTER_PREFIX}/subscriptions',
+        limit=limit,
         recipes_limit=recipes_limit
     )
-    return user_subs
 
 
 @subscription_router.post(
@@ -73,17 +84,34 @@ async def subscribe(
         await db.commit()
         return subscription
 
-    except IntegrityError as e:
-        if 'ForeignKeyViolationError' in str(e.__cause__):
-            raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND,
-                detail='Пользователь не найден!'
-            )
-        elif 'UniqueViolationError' in str(e.__cause__):
-            raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST,
-                detail='Вы уже подписанны на данного пользователя!'
-            )
+    # except IntegrityError as ex:
+    #     if isinstance(ex.orig.__cause__, ForeignKeyViolationError):
+    #     # if 'ForeignKeyViolationError' in str(e.__cause__):
+    #         raise HTTPException(
+    #             status_code=HTTPStatus.NOT_FOUND,
+    #             detail='Пользователь не найден!'
+    #         )
+    #     # elif 'UniqueViolationError' in str(e.__cause__):
+    #     elif isinstance(ex.orig.__cause__, UniqueViolationError):
+    #         raise HTTPException(
+    #             status_code=HTTPStatus.BAD_REQUEST,
+    #             detail='Вы уже подписанны на данного пользователя!'
+    #         )
+    except FollowingYourselfException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ex.detail
+        )
+    except UserNotFoundException as ex:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=ex.detail
+        )
+    except UniqueConstraintSubscriptionException as ex:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=ex.detail
+        )
 
 
 @subscription_router.delete(
@@ -98,16 +126,11 @@ async def unsubscribe(
     current_user: UserDep
 ) -> None:
     try:
-        await db.subscriptions.delete(
-            author_id=user_id,
-            subscriber_id=current_user.id
-        )
-        await db.commit()
-
-    except NoResultFound:
+        await SubscriptionService(db).unsubscribe(user_id=user_id, current_user=current_user)
+    except SubscriptionNotFoundException as ex:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Подписка на пользователя с id {user_id} не найдена.'
+            detail=ex.detail
         )
     except Exception:
         raise HTTPException(

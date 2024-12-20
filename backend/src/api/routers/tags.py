@@ -3,6 +3,7 @@ from fastapi_cache.decorator import cache
 
 from backend.src.api.dependencies import DBDep
 from backend.src.schemas.tags import TagRead
+from backend.src.services.tags import TagService
 
 router = APIRouter(prefix='/api/tags', tags=['Теги',])
 
@@ -17,8 +18,7 @@ async def get_tag(
     id: int,
     db: DBDep
 ) -> TagRead | None:
-    result = await db.tags.get_one_or_none(id=id)
-    return result
+    return await TagService(db).get_tag(id=id)
 
 
 @router.get(
@@ -30,5 +30,4 @@ async def get_tag(
 async def get_tags(
     db: DBDep
 ) -> list[TagRead] | None:
-    result = await db.tags.get_all()
-    return result
+    return await TagService(db).get_tags()
