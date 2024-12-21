@@ -134,5 +134,5 @@ dmypy.json
 .idea
 
 .media/
-backend/src/media/recipes/images/
-backend/src/utils/shopping_lists/
+#backend/src/media/recipes/images/
+#backend/src/utils/shopping_lists/
