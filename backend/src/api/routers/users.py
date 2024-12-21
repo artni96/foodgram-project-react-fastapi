@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Query, status, HTTPException, Response, Request
-from fastapi_cache.decorator import cache
 from loguru import logger
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
 
 from backend.src.api.dependencies import DBDep, UserDep, OptionalUserDep
 from backend.src.exceptions.users import IncorrectPasswordException, \
-    IncorrectTokenException, UserNotFoundException, UserAlreadyExistsException, AuthRequiredException
-from backend.src.logging.logs_history.foodgram_logger import api_success_log, api_exception_log
+    IncorrectTokenException, UserNotFoundException, UserAlreadyExistsException
+from backend.src.logs.foodgram_logger import api_success_log, api_exception_log
 from backend.src.schemas.users import (UserCreateRequest,
                                        UserPasswordUpdate, UserListRead, UserCreateResponse, FollowedUserRead,
                                        UserLoginRequest)

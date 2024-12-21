@@ -8,7 +8,7 @@ from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.exceptions.subscriptions import UniqueConstraintSubscriptionException, FollowingYourselfException, \
     SubscriptionNotFoundException
 from backend.src.exceptions.users import UserNotFoundException
-from backend.src.logging.logs_history.foodgram_logger import api_exception_log, api_success_log
+from backend.src.logs.foodgram_logger import api_exception_log, api_success_log
 from backend.src.schemas.subscriptions import SubscriptionCreate, SubscriptionListRead
 from backend.src.schemas.users import FollowedUserWithRecipiesRead
 from backend.src.services.subscriptions import SubscriptionService
@@ -106,6 +106,7 @@ async def unsubscribe(
 ) -> None:
     try:
         await SubscriptionService(db).unsubscribe(user_id=user_id, current_user=current_user)
+        logger.info(f'Пользователь {current_user.email} успешно отписался от пользователя с id {user_id}')
     except SubscriptionNotFoundException as ex:
         logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
@@ -119,4 +120,4 @@ async def unsubscribe(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex
         )
-    logger.info(f'Пользователь {current_user.email} успешно подписался на пользователя с id {user_id}')
+

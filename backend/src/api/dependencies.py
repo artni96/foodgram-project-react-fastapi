@@ -7,7 +7,7 @@ from starlette import status
 from backend.src.db import async_session_maker
 from backend.src.db_manager import DBManager
 from backend.src.exceptions.users import IncorrectTokenException, ExpiredTokenException, AuthRequiredException
-from backend.src.logging.logging_config import logging_configuration
+from backend.src.logs.logging_config import logging_configuration
 from backend.src.models.users import UserModel
 from backend.src.repositories.utils.users import decode_token
 from backend.src.schemas.users import UserReadWithRole

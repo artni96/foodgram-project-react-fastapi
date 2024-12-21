@@ -12,7 +12,7 @@ from loguru import logger
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from backend.src.logging.logging_config import logging_configuration
+from backend.src.logs.logging_config import logging_configuration
 from backend.src.api.routers.ingredients import \
     router as ingredient_router
 from backend.src.api.routers.only_for_admins import \

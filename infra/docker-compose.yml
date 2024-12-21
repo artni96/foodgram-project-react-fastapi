@@ -29,6 +29,7 @@ services:
       - foodgram-network
     volumes:
       - media_value:/backend/src/media
+      - static_value:/backend/src/logs/logs_history
     env_file:
       - ../backend/.env
 
@@ -64,6 +65,7 @@ services:
 volumes:
   pg-foodgram-data:
   media_value:
+  static_value:
 networks:
   foodgram-network:
     external: True

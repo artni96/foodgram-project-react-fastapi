@@ -1,11 +1,7 @@
-import re
-
-from asyncpg import UniqueViolationError, ForeignKeyViolationError
 from fastapi import APIRouter, Body, HTTPException, Query, status
 from loguru import logger
-from sqlalchemy.exc import IntegrityError, NoResultFound
 from starlette.requests import Request
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep, OptionalUserDep
@@ -14,11 +10,10 @@ from backend.src.exceptions.recipes import MainDataRecipeAtModifyingException, R
     OnlyAuthorCanEditRecipeException, RecipeAlreadyIsInShoppingListException, RecipeAlreadyIsFavoritedException, \
     RecipeNotInShoppingListException, RecipeNotFavoritedException
 from backend.src.exceptions.tags import TagNotFoundException
-from backend.src.logging.logs_history.foodgram_logger import api_success_log, api_exception_log
-from backend.src.schemas.recipes import (FavoriteRecipeCreate,
-                                         RecipeCreateRequest,
+from backend.src.logs.foodgram_logger import api_success_log, api_exception_log
+from backend.src.schemas.recipes import (RecipeCreateRequest,
                                          RecipeUpdateRequest,
-                                         ShoppingCartRecipeCreate, RecipeRead, RecipeListRead, FavoriteRecipeRead,
+                                         RecipeRead, RecipeListRead, FavoriteRecipeRead,
                                          ShoppingCartRecipeRead)
 from backend.src.services.recipes import RecipeService
 
