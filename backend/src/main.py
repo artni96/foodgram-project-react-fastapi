@@ -1,3 +1,4 @@
+import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -7,9 +8,11 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from loguru import logger
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
+from backend.src.logging.logging_config import logging_configuration
 from backend.src.api.routers.ingredients import \
     router as ingredient_router
 from backend.src.api.routers.only_for_admins import \
@@ -42,7 +45,7 @@ async def lifespan(app: FastAPI):
     await redis_manager.close()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, dependencies=logging_configuration())
 
 
 @app.exception_handler(RequestValidationError)
@@ -93,5 +96,9 @@ app.include_router(favorite_recipe_router)
 app.include_router(shopping_cart_router)
 app.include_router(recipe_router)
 
+logger.add(sys.stderr, format="{time} {level} {message}", level="INFO")
 if __name__ == '__main__':
+    os.environ['TZ'] = 'Europe/Moscow'
+    logging_configuration()
+    logger.info('Запуск приложения')
     uvicorn.run('main:app', reload=True, host='0.0.0.0')

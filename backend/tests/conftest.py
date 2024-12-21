@@ -29,7 +29,6 @@ from backend.src.schemas.ingredients import IngredientCreate
 from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest, ShoppingCartRecipeCreate, \
     FavoriteRecipeCreate
 from backend.src.schemas.tags import TagCreate
-from backend.src.repositories.utils.users import decode_token
 
 
 MAX_EMAIL_LENGTH = 254
@@ -158,9 +157,6 @@ async def another_auth_ac(ac):
     )
     assert jwt_token.status_code == status.HTTP_201_CREATED, 'Статус успешного создания токена должен быть 201'
     assert isinstance(jwt_token.json()['auth_token'], str)
-    # return ac
-    print(jwt_token.json())
-    # print(decode_token(jwt_token.json()))
     async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
@@ -239,7 +235,6 @@ async def recipe_updating_fixture():
 async def recipe_bulk_creating_fixture(db, recipe_creation_fixture):
     tags_combinations = ([1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3])
     recipe_author_ids = (1, 1, 1, 2, 2, 2, 2)
-    recipe_ids = list()
     for _ in range(len(tags_combinations)):
         current_recipe = recipe_creation_fixture
         current_recipe.tags = tags_combinations[_]

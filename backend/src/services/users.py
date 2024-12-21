@@ -1,5 +1,6 @@
 from backend.src import constants
-from backend.src.exceptions.users import IncorrectPasswordException
+from backend.src.exceptions.base import ObjectAlreadyExistsException
+from backend.src.exceptions.users import IncorrectPasswordException, UserAlreadyExistsException
 from backend.src.repositories.utils.users import PasswordManager
 from backend.src.schemas.users import UserListRead, FollowedUserRead, UserCreateRequest, UserCreateResponse, UserCreate, \
     UserLoginRequest, UserPasswordUpdate, UserPasswordChangeRequest, UserReadWithRole
@@ -58,16 +59,19 @@ class UserService(BaseService):
         user_data: UserCreateRequest
     ) -> UserCreateResponse:
         hashed_password = PasswordManager().hash_password(user_data.password)
-        _user_data = UserCreate(
-            username=user_data.username,
-            email=user_data.email,
-            first_name=user_data.first_name,
-            last_name=user_data.last_name,
-            hashed_password=hashed_password
-        )
-        new_user = await self.db.users.create(data=_user_data)
-        await self.db.commit()
-        return new_user
+        try:
+            _user_data = UserCreate(
+                username=user_data.username,
+                email=user_data.email,
+                first_name=user_data.first_name,
+                last_name=user_data.last_name,
+                hashed_password=hashed_password
+            )
+            new_user = await self.db.users.create(data=_user_data)
+            await self.db.commit()
+            return new_user
+        except ObjectAlreadyExistsException:
+            raise UserAlreadyExistsException
 
 
     async def login_user(

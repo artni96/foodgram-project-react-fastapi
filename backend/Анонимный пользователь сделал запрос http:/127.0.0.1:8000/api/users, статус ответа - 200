@@ -1,0 +1,1 @@
+2024-12-21 14:02:56.103 | INFO     | backend.src.connectors.redis_connector:close:29 - Успешное отключение от Redis
