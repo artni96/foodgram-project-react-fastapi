@@ -1,9 +1,12 @@
-from starlette.requests import Request
-
 from backend.src.schemas.users import UserReadWithRole
 
 
-def api_logger(user: UserReadWithRole, request: Request, status_code: int):
+def api_success_log(user: UserReadWithRole, request):
     if user:
-        return f'Пользователь: {user.email}, запрос: {request}, статус ответа: {status_code}'
-    return f'Аноним, запрос: {request}, статус ответа: {status_code}'
+        return f'Пользователь: {user.email}, запрос: {request}'
+    return f'Аноним, запрос: {request}'
+
+def api_exception_log(user: UserReadWithRole | None, request, ex):
+    if user:
+        return f'При запросе {request} пользователем {user.email} возникла ошибка: {ex}'
+    return f'При запросе {request} неаутентифицированным пользователем возникла ошибка: {ex}'

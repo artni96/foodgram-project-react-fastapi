@@ -1,14 +1,14 @@
 from http import HTTPStatus
 
-from asyncpg import ForeignKeyViolationError, UniqueViolationError
 from fastapi import APIRouter, Path, Query, status, HTTPException
-from sqlalchemy.exc import NoResultFound, IntegrityError
+from loguru import logger
+from starlette.requests import Request
 
-from backend.src import constants
 from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.exceptions.subscriptions import UniqueConstraintSubscriptionException, FollowingYourselfException, \
     SubscriptionNotFoundException
 from backend.src.exceptions.users import UserNotFoundException
+from backend.src.logging.logs_history.foodgram_logger import api_exception_log
 from backend.src.schemas.subscriptions import SubscriptionCreate, SubscriptionListRead
 from backend.src.schemas.users import FollowedUserWithRecipiesRead
 from backend.src.services.subscriptions import SubscriptionService
@@ -27,6 +27,7 @@ subscription_router = APIRouter(tags=['Подписки'], prefix=ROUTER_PREFIX)
     )
 )
 async def get_my_subscriptions(
+    request: Request,
     db: DBDep,
     current_user: UserDep,
     page: int | None = Query(
@@ -42,13 +43,15 @@ async def get_my_subscriptions(
         title='Количество объектов внутри поля recipes.'
     ),
 ) -> SubscriptionListRead | None:
-    return await SubscriptionService(db).get_my_subscriptions(
+    response = await SubscriptionService(db).get_my_subscriptions(
         current_user=current_user,
         router_prefix=ROUTER_PREFIX,
         page=page,
         limit=limit,
         recipes_limit=recipes_limit
     )
+    logger.info(api_logger(user=current_user, request=request.url))
+    return response
 
 
 @subscription_router.post(
@@ -58,6 +61,7 @@ async def get_my_subscriptions(
     description='Доступно только авторизованным пользователям'
 )
 async def subscribe(
+    request: Request,
     db: DBDep,
     current_user: UserDep,
     user_id: int = Path(),
@@ -67,24 +71,26 @@ async def subscribe(
     try:
         subscription = await db.subscriptions.create(data, recipes_limit)
         await db.commit()
-        return subscription
-
     except FollowingYourselfException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex.detail
         )
     except UserNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail=ex.detail
         )
     except UniqueConstraintSubscriptionException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail=ex.detail
         )
-
+    logger.info(f'Пользователь {current_user.email} успешно подписался на пользователя {subscription.email}')
+    return subscription
 
 @subscription_router.delete(
     '/{user_id}/subscribe',
@@ -93,6 +99,7 @@ async def subscribe(
     description='Доступно только авторизованным пользователям'
 )
 async def unsubscribe(
+    request: Request,
     user_id: int,
     db: DBDep,
     current_user: UserDep
@@ -100,12 +107,16 @@ async def unsubscribe(
     try:
         await SubscriptionService(db).unsubscribe(user_id=user_id, current_user=current_user)
     except SubscriptionNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=ex.detail
         )
     except Exception:
+        ex = 'Не удалось отменить подписку'
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Не удалось отменить подписку.'
+            detail=ex
         )
+    logger.info(f'Пользователь {current_user.email} успешно подписался на пользователя с id {user_id}')

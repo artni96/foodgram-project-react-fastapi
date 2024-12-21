@@ -6,7 +6,7 @@ from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
 from backend.src.api.dependencies import DBDep, UserDep, OptionalUserDep
 from backend.src.exceptions.users import IncorrectPasswordException, \
     IncorrectTokenException, UserNotFoundException, UserAlreadyExistsException, AuthRequiredException
-from backend.src.logging.logs_history.foodgram_logger import api_logger
+from backend.src.logging.logs_history.foodgram_logger import api_success_log, api_exception_log
 from backend.src.schemas.users import (UserCreateRequest,
                                        UserPasswordUpdate, UserListRead, UserCreateResponse, FollowedUserRead,
                                        UserLoginRequest)
@@ -33,13 +33,14 @@ async def get_user_list(
         title='Количество объектов на странице'
     )
 ) -> UserListRead:
-    logger.info(api_logger(user=current_user, request=request.url, status_code=status.HTTP_200_OK))
-    return await UserService(db).get_user_list(
+    response =  await UserService(db).get_user_list(
         current_user=current_user,
         router_prefix=ROUTER_PREFIX,
         page=page,
         limit=limit
-)
+    )
+    logger.info(api_success_log(user=current_user, request=request.url))
+    return response
 
 
 @user_router.get(
@@ -53,7 +54,7 @@ async def get_current_user(
     current_user: UserDep
 ) -> FollowedUserRead | None:
     response = await UserService(db).get_current_user(current_user=current_user)
-    logger.info(api_logger(user=current_user, request=request.url, status_code=status.HTTP_200_OK))
+    logger.info(api_success_log(user=current_user, request=request.url))
     return response
 
 @user_router.get(
@@ -75,11 +76,15 @@ async def get_user_by_id(
         options['current_user_id'] = None
     try:
         result = await UserService(db).get_user_by_id(id=id, options=options)
-        logger.info(api_logger(user=current_user, request=request.url, status_code=status.HTTP_200_OK))
-        return result
     except UserNotFoundException as ex:
+        # if current_user:
+        #     logger.warning(f'Пользователь {current_user.email} запросил пользователя с id {id}, которого нет в БД')
+        # else:
+        #     logger.warning(f'Пользователь {current_user.email} запросил пользователя с id {id}, которого нет в БД')
+        logger.warning(api_exception_log(user=current_user, request=request, ex=ex))
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=ex.detail)
-
+    logger.info(api_success_log(user=current_user, request=request.url))
+    return result
 
 @user_router.post(
     '',
@@ -93,8 +98,9 @@ async def create_new_user(
     try:
         response = await UserService(db).create_new_user(user_data=user_data)
     except UserAlreadyExistsException as ex:
+        logger.warning(f'При создать пользователя возникла ошибка: {ex.detail}')
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=ex.detail)
-    logger.info(f'Пользователь {response.username} создан')
+    logger.info(f'Пользователь {response.username} успешно создан')
     return response
 
 @auth_router.post(
@@ -109,7 +115,7 @@ async def login_user(
     try:
         access_token = await UserService(db).login_user(data=data)
     except UserNotFoundException as ex:
-        logger.error(ex.detail)
+        logger.error(f'Текст ошибки - {ex.detail}')
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
     except IncorrectPasswordException as ex:
         logger.warning(f'При попытке аутентификации пользователя {data.email} был введен неверный пароль')
@@ -128,6 +134,7 @@ async def logout(response: Response, user: UserDep):
         response.delete_cookie("auth_token")
         logger.info(f'Пользователь {user.email} вышел из системы')
     except IncorrectTokenException as ex:
+        logger.warning(f'Ошибка при выходе из системы пользователя {user.email}, текст ошибки: {ex.detail}')
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
 
 
@@ -145,6 +152,6 @@ async def change_password(
     try:
         await UserService(db).change_password(password_data=password_data, current_user=current_user)
     except IncorrectPasswordException as ex:
-        logger.warning(f'Ошибка при смене пароль у пользователя {current_user.email}, ошибка: {ex.detail}')
+        logger.warning(f'Ошибка при смене пароль у пользователя {current_user.email}, текст ошибки: {ex.detail}')
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=ex.detail)
     logger.info(f'Пользователь {current_user.email} успешно сменил пароль')
