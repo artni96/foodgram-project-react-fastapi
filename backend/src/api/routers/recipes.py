@@ -2,7 +2,9 @@ import re
 
 from asyncpg import UniqueViolationError, ForeignKeyViolationError
 from fastapi import APIRouter, Body, HTTPException, Query, status
+from loguru import logger
 from sqlalchemy.exc import IntegrityError, NoResultFound
+from starlette.requests import Request
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
 from backend.src import constants
@@ -12,6 +14,7 @@ from backend.src.exceptions.recipes import MainDataRecipeAtModifyingException, R
     OnlyAuthorCanEditRecipeException, RecipeAlreadyIsInShoppingListException, RecipeAlreadyIsFavoritedException, \
     RecipeNotInShoppingListException, RecipeNotFavoritedException
 from backend.src.exceptions.tags import TagNotFoundException
+from backend.src.logging.logs_history.foodgram_logger import api_success_log, api_exception_log
 from backend.src.schemas.recipes import (FavoriteRecipeCreate,
                                          RecipeCreateRequest,
                                          RecipeUpdateRequest,
@@ -21,7 +24,6 @@ from backend.src.services.recipes import RecipeService
 
 ROUTER_PREFIX = '/api/recipes'
 recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
-
 
 
 @recipe_router.get(
@@ -34,23 +36,24 @@ recipe_router = APIRouter(prefix=ROUTER_PREFIX, tags=['Рецепты', ])
     )
 )
 async def get_recipe_list(
-    db: DBDep,
-    current_user: OptionalUserDep,
-    author: int | None = Query(default=None),
-    tags: list[str] | None = Query(default=None),
-    is_favorited: int = Query(default=0),
-    is_in_shopping_cart: int = Query(default=0),
-    page: int | None = Query(default=None, title='Номер страницы'),
-    limit: int | None = Query(
-        default=None,
-        title='Количество объектов на странице.'
-    ),
+        request: Request,
+        db: DBDep,
+        current_user: OptionalUserDep,
+        author: int | None = Query(default=None),
+        tags: list[str] | None = Query(default=None),
+        is_favorited: int = Query(default=0),
+        is_in_shopping_cart: int = Query(default=0),
+        page: int | None = Query(default=None, title='Номер страницы'),
+        limit: int | None = Query(
+            default=None,
+            title='Количество объектов на странице.'
+        ),
 ) -> RecipeListRead | None:
     if not limit:
         limit = constants.PAGINATION_LIMIT
     if not page:
         page = 1
-    return await RecipeService(db).get_recipe_list(
+    response = await RecipeService(db).get_recipe_list(
         current_user=current_user,
         is_favorited=is_favorited,
         is_in_shopping_cart=is_in_shopping_cart,
@@ -59,7 +62,9 @@ async def get_recipe_list(
         limit=limit,
         page=page,
         router_prefix=ROUTER_PREFIX,
-        )
+    )
+    logger.info(api_success_log(user=current_user, request=request.url))
+    return response
 
 
 @recipe_router.get(
@@ -68,11 +73,14 @@ async def get_recipe_list(
     summary='Получение рецепта'
 )
 async def get_recipe(
-    db: DBDep,
-    id: int,
-    current_user: OptionalUserDep
+        request: Request,
+        db: DBDep,
+        id: int,
+        current_user: OptionalUserDep
 ) -> RecipeRead | None:
-    return await RecipeService(db).get_recipe(id=id, current_user=current_user)
+    response = await RecipeService(db).get_recipe(id=id, current_user=current_user)
+    logger.info(api_success_log(user=current_user, request=request.url))
+    return response
 
 
 @recipe_router.post(
@@ -82,30 +90,35 @@ async def get_recipe(
     description='Доступно только авторизованному пользователю'
 )
 async def create_recipe(
-    db: DBDep,
-    current_user: UserDep,
-    recipe_data: RecipeCreateRequest = Body(
-        openapi_examples=RecipeCreateRequest.model_config['json_schema_extra']
-    ),
+        request: Request,
+        db: DBDep,
+        current_user: UserDep,
+        recipe_data: RecipeCreateRequest = Body(
+            openapi_examples=RecipeCreateRequest.model_config['json_schema_extra']
+        ),
 ):
     try:
-        return await RecipeService(db).create_recipe(current_user=current_user, recipe_data=recipe_data)
-
+        response = await RecipeService(db).create_recipe(current_user=current_user, recipe_data=recipe_data)
     except MainDataRecipeAtModifyingException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex.detail
         )
     except TagNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex.detail
         )
     except IngredientNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex.detail
         )
+    logger.info(f'Пользователь {current_user.email} успешно создал рецепт {response.id}')
+    return response
 
 @recipe_router.patch(
     '/{id}',
@@ -114,41 +127,48 @@ async def create_recipe(
     description='Доступно только автору данного рецепта'
 )
 async def update_recipe(
-    db: DBDep,
-    current_user: UserDep,
-    id: int,
-    recipe_data: RecipeUpdateRequest = Body(
-        openapi_examples=RecipeUpdateRequest.model_config['json_schema_extra']
-    ),
+        request: Request,
+        db: DBDep,
+        current_user: UserDep,
+        id: int,
+        recipe_data: RecipeUpdateRequest = Body(
+            openapi_examples=RecipeUpdateRequest.model_config['json_schema_extra']
+        ),
 ) -> RecipeRead:
     try:
-        return await RecipeService(db).update_recipe(current_user=current_user, id=id, recipe_data=recipe_data)
+        response = await RecipeService(db).update_recipe(current_user=current_user, id=id, recipe_data=recipe_data)
     except OnlyAuthorCanEditRecipeException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=ex.detail
         )
     except MainDataRecipeAtModifyingException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex.detail
         )
     except TagNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex.detail
         )
     except IngredientNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex.detail
         )
     except RecipeNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ex.detail
         )
-
+    logger.info(f'Пользователь {current_user.email} успешно обновил рецепт {id}')
+    return response
 
 @recipe_router.delete(
     '/{id}',
@@ -157,24 +177,27 @@ async def update_recipe(
     description='Доступно только автору данного рецепта'
 )
 async def delete_recipe(
+        request: Request,
         db: DBDep,
         current_user: UserDep,
         id: int
 ) -> None:
-
     try:
-        return await RecipeService(db).delete_recipe(current_user=current_user, id=id)
+        response = await RecipeService(db).delete_recipe(current_user=current_user, id=id)
     except OnlyAuthorCanEditRecipeException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=ex.detail
         )
-    except RecipeNotFoundException:
+    except RecipeNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Рецепт с указанным id не найден.'
+            detail=ex.detail
         )
-
+    logger.info(f'Пользователь {current_user.email} успешно удалил рецепт {id}')
+    return response
 
 favorite_recipe_router = APIRouter(
     prefix=ROUTER_PREFIX,
@@ -189,17 +212,21 @@ favorite_recipe_router = APIRouter(
     status_code=status.HTTP_201_CREATED
 )
 async def make_recipe_favorite(
-    id: int,
-    db: DBDep,
-    current_user: UserDep,
+        request: Request,
+        id: int,
+        db: DBDep,
+        current_user: UserDep,
 ) -> FavoriteRecipeRead:
     try:
-        return await RecipeService(db).make_recipe_favorite(id=id, current_user=current_user)
+        response = await RecipeService(db).make_recipe_favorite(id=id, current_user=current_user)
     except RecipeAlreadyIsFavoritedException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=ex.detail)
     except RecipeNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=ex.detail)
-
+    logger.info(f'Пользователь {current_user.email} добавил рецепт {id} в избранное')
+    return response
 
 @favorite_recipe_router.delete(
     '/{id}/favorite',
@@ -208,17 +235,17 @@ async def make_recipe_favorite(
     status_code=status.HTTP_204_NO_CONTENT
 )
 async def cancel_favorite_recipe(
-    id: int,
-    db: DBDep,
-    current_user: UserDep,
+        request: Request,
+        id: int,
+        db: DBDep,
+        current_user: UserDep,
 ) -> None:
     try:
         await RecipeService(db).cancel_favorite_recipe(id=id, current_user=current_user)
+        logger.info(f'Пользователь {current_user.email} удалил рецепт {id} из избранного')
     except RecipeNotFavoritedException as ex:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ex.detail
-        )
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=ex.detail)
 
 
 shopping_cart_router = APIRouter(
@@ -234,9 +261,10 @@ shopping_cart_router = APIRouter(
     description='Скачать файл со списком покупок.'
 )
 async def download_shopping_cart(
-    db: DBDep,
-    current_user: UserDep
+        db: DBDep,
+        current_user: UserDep
 ):
+    logger.info(f'Пользователь {current_user.email} сгенерировал список покупок')
     return await RecipeService(db).download_shopping_cart(current_user=current_user)
 
 
@@ -247,21 +275,25 @@ async def download_shopping_cart(
     status_code=status.HTTP_201_CREATED
 )
 async def add_recipe_to_shopping_cart(
-    id: int,
-    db: DBDep,
-    current_user: UserDep,
+        request: Request,
+        id: int,
+        db: DBDep,
+        current_user: UserDep,
 ) -> ShoppingCartRecipeRead:
-    shopping_cart_recipe_data = ShoppingCartRecipeCreate(
-        recipe_id=id,
-        user_id=current_user.id
-    )
+    # shopping_cart_recipe_data = ShoppingCartRecipeCreate(
+    #     recipe_id=id,
+    #     user_id=current_user.id
+    # )
     try:
-        return await RecipeService(db).add_recipe_to_shopping_cart(id=id, current_user=current_user)
+        response = await RecipeService(db).add_recipe_to_shopping_cart(id=id, current_user=current_user)
     except RecipeAlreadyIsInShoppingListException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=ex.detail)
     except RecipeNotFoundException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=ex.detail)
-
+    logger.info(f'Пользователь {current_user.email} добавил рецепт {id} в список покупок')
+    return response
 
 @shopping_cart_router.delete(
     '/{id}/shopping_cart',
@@ -270,11 +302,14 @@ async def add_recipe_to_shopping_cart(
     status_code=status.HTTP_204_NO_CONTENT
 )
 async def remove_recipe_from_shopping_cart(
-    id: int,
-    db: DBDep,
-    current_user: UserDep,
+        request: Request,
+        id: int,
+        db: DBDep,
+        current_user: UserDep,
 ) -> None:
     try:
         await RecipeService(db).remove_recipe_from_shopping_cart(id=id, current_user=current_user)
+        logger.info(f'Пользователь {current_user.email} удалил рецепт {id} из списка покупок')
     except RecipeNotInShoppingListException as ex:
+        logger.warning(api_exception_log(user=current_user, request=request.url, ex=ex))
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=ex.detail)

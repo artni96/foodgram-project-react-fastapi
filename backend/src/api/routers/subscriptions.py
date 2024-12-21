@@ -8,7 +8,7 @@ from backend.src.api.dependencies import DBDep, UserDep
 from backend.src.exceptions.subscriptions import UniqueConstraintSubscriptionException, FollowingYourselfException, \
     SubscriptionNotFoundException
 from backend.src.exceptions.users import UserNotFoundException
-from backend.src.logging.logs_history.foodgram_logger import api_exception_log
+from backend.src.logging.logs_history.foodgram_logger import api_exception_log, api_success_log
 from backend.src.schemas.subscriptions import SubscriptionCreate, SubscriptionListRead
 from backend.src.schemas.users import FollowedUserWithRecipiesRead
 from backend.src.services.subscriptions import SubscriptionService
@@ -50,7 +50,7 @@ async def get_my_subscriptions(
         limit=limit,
         recipes_limit=recipes_limit
     )
-    logger.info(api_logger(user=current_user, request=request.url))
+    logger.info(api_success_log(user=current_user, request=request.url))
     return response
 
 
