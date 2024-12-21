@@ -23,3 +23,11 @@ class ExpiredTokenException(FoodgramBaseException):
 
 class OnlyForAdminException(FoodgramBaseException):
     detail = 'Доступно только администраторам'
+
+
+class UserAlreadyExistsException(FoodgramBaseException):
+    detail = 'Пользователь с указанными данными уже существует'
+
+
+class AuthRequiredException(IncorrectTokenException):
+    pass

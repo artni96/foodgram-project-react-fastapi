@@ -430,5 +430,4 @@ class TestFilteredRecipe:
 
     @pytest.mark.order(20)
     async def test_clean_up_recipes(self, db, removing_recipes_after_tests):
-        print('Все рецепты успешно удалены')
         assert not removing_recipes_after_tests, 'все рецепты должны быть удалены после тестов'

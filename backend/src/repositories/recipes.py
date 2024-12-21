@@ -2,6 +2,7 @@ import os
 import pathlib
 
 from fastapi import HTTPException, status
+from loguru import logger
 from sqlalchemy import and_, delete, insert, select, update, desc
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
@@ -249,6 +250,7 @@ class RecipeRepository(BaseRepository):
                 name=generated_image_name,
                 base64=image_base64
             )
+
             _recipe_data.image = image_id
             new_obj_stmt = (
                 insert(self.model)
@@ -257,6 +259,7 @@ class RecipeRepository(BaseRepository):
             )
             recipe_result = await self.session.execute(new_obj_stmt)
             recipe_result = recipe_result.scalars().one()
+            logger.info(f'Изображение {generated_image_name} для рецепта {recipe_result.id} успешно создано')
             user_result = await db.users.get_one_or_none(
                 user_id=recipe_result.author,
                 current_user_id=recipe_result.id
@@ -308,6 +311,7 @@ class RecipeRepository(BaseRepository):
             ingredients=ingredients_result,
             image=image_url
         )
+        logger.info(f'Рецепт с id {recipe_result.id} успешно создан')
         return response
 
     async def update(self, db, recipe_data: RecipeUpdateRequest, id: int):
@@ -329,12 +333,8 @@ class RecipeRepository(BaseRepository):
         file_to_delete = file_to_delete.scalars().one()
         try:
             if recipe_data.image:
-                media_path = pathlib.Path(__file__).parent.parent.resolve()
-                image_to_delete = (
-                    f'{media_path}{MOUNT_PATH}/{file_to_delete.name}'
-                )
-                if os.path.exists(image_to_delete):
-                    os.remove(image_to_delete)
+
+
                 image_base64 = recipe_data.image
                 generated_image_name = ImageManager().create_random_name(image_base64)
                 while await self.check_image_name(generated_image_name):
@@ -351,13 +351,23 @@ class RecipeRepository(BaseRepository):
                     base64_string=image_base64,
                     image_name=generated_image_name
                 )
+                logger.info(f'Изображение {generated_image_name} для рецета с id {id} успешно создано')
                 recipe_data.image = image_id
                 updated_image_stmt = (
                     update(ImageModel)
                     .filter_by(id=file_to_delete.id)
                     .values(name=generated_image_name, base64=image_base64)
+                    .returning(ImageModel)
                 )
-                await self.session.execute(updated_image_stmt)
+                updated_image = await self.session.execute(updated_image_stmt)
+                if updated_image:
+                    media_path = pathlib.Path(__file__).parent.parent.resolve()
+                    image_to_delete = (
+                        f'{media_path}{MOUNT_PATH}/{file_to_delete.name}'
+                    )
+                    if os.path.exists(image_to_delete):
+                        os.remove(image_to_delete)
+                    logger.info(f'Изображение {file_to_delete.name} для рецета с id {id} успешно удалено')
             else:
                 image_url = (
                     f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
@@ -422,6 +432,7 @@ class RecipeRepository(BaseRepository):
             ingredients=ingredients_result,
             image=image_url
         )
+        logger.info(f'Рецепт с id {updated_recipe.id} успешно обновлен')
         return response
 
     async def delete(self, id):
@@ -458,6 +469,7 @@ class RecipeRepository(BaseRepository):
         )
         if os.path.exists(image_to_delete):
             os.remove(image_to_delete)
+            logger.info(f'Изображение {image_name_to_delete} для рецета с id {id} успешно удалено')
         recipe_ingredient_amount_ids_to_delete = list()
         for id in recipe_ingredient_amount_ids:
             current_obj_stmt = (
@@ -477,6 +489,7 @@ class RecipeRepository(BaseRepository):
                 )
             )
             await self.session.execute(ids_to_delete)
+            logger.info(f'Рецепт с id {id} успешно удален')
 
     async def check_image_name(self, new_image_name: str):
         """Проверка уникальности названия картинки."""

@@ -21,7 +21,6 @@ async def test_user_repository(db):
     assert len(user_list.results) <= limit, 'limit при фильтрации не работает'
 
     get_one_user_or_none = await db.users.get_one_or_none(user_id=user_list.results[-1].id)
-    print(get_one_user_or_none)
     assert get_one_user_or_none.id, 'поле id не найдено'
     assert get_one_user_or_none.email, 'поле email не найдено'
     assert get_one_user_or_none.username, 'поле username не найдено'

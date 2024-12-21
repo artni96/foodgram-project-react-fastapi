@@ -116,11 +116,10 @@ class UserRepository(BaseRepository):
                 if_subscribed_result = (
                     if_subscribed_result.scalars().one_or_none()
                 )
-                if not if_subscribed_result:
-                    result.is_subscribed = False
+                if if_subscribed_result:
+                    result.is_subscribed = True
                     return result
                 return result
-            result.is_subscribed = False
             return result
         except NoResultFound:
             raise UserNotFoundException

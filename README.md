@@ -1,3 +1,15 @@
-# praktikum_new_diplom
+# Foodgram, «Продуктовый помощник»
 
-sudo apt-get install wkhtmltopdf
+## О проекте
+Foodgram - это сервис, который даёт возможность пользователям публиковать рецепты, подписываться на публикации других пользователей, 
+добавлять понравившиеся рецепты в список «Избранное», а перед походом в магазин скачивать сводный список продуктов, 
+необходимых для приготовления одного или нескольких выбранных блюд.
+## Стек проекта
+- ![image](https://img.shields.io/badge/fastapi-109989?style=for-the-badge&logo=FASTAPI&logoColor=white)
+- ![image](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+- ![image](https://img.shields.io/badge/SQLAlchemy-gray?style=for-the-badge&&logoColor=white)
+- ![image](https://img.shields.io/badge/Alembic-black?style=for-the-badge&&logoColor=white)
+- ![image](https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=Pydantic&logoColor=white)
+- ![image](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
+- ![image](https://img.shields.io/badge/Uvicorn-31becf?style=for-the-badge&logoColor=white)
+- ![image](https://img.shields.io/badge/redis-%23DD0031.svg?&style=for-the-badge&logo=redis&logoColor=white)
