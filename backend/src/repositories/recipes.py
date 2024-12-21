@@ -333,8 +333,13 @@ class RecipeRepository(BaseRepository):
         file_to_delete = file_to_delete.scalars().one()
         try:
             if recipe_data.image:
-
-
+                media_path = pathlib.Path(__file__).parent.parent.resolve()
+                image_to_delete = (
+                    f'{media_path}{MOUNT_PATH}/{file_to_delete.name}'
+                )
+                if os.path.exists(image_to_delete):
+                    os.remove(image_to_delete)
+                logger.info(f'Изображение {file_to_delete.name} для рецета с id {id} успешно удалено')
                 image_base64 = recipe_data.image
                 generated_image_name = ImageManager().create_random_name(image_base64)
                 while await self.check_image_name(generated_image_name):
@@ -359,15 +364,8 @@ class RecipeRepository(BaseRepository):
                     .values(name=generated_image_name, base64=image_base64)
                     .returning(ImageModel)
                 )
-                updated_image = await self.session.execute(updated_image_stmt)
-                if updated_image:
-                    media_path = pathlib.Path(__file__).parent.parent.resolve()
-                    image_to_delete = (
-                        f'{media_path}{MOUNT_PATH}/{file_to_delete.name}'
-                    )
-                    if os.path.exists(image_to_delete):
-                        os.remove(image_to_delete)
-                    logger.info(f'Изображение {file_to_delete.name} для рецета с id {id} успешно удалено')
+                await self.session.execute(updated_image_stmt)
+
             else:
                 image_url = (
                     f'{DOMAIN_ADDRESS}{MOUNT_PATH}'
