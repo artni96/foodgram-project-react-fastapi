@@ -1,5 +1,4 @@
 from fastapi import status
-from backend.src.config import settings
 
 async def test_get_ingredient_by_id(check_test_mode, auth_ac):
     ingredient_id = 1
@@ -8,7 +7,7 @@ async def test_get_ingredient_by_id(check_test_mode, auth_ac):
     )
     assert ingredient.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     not_existent_ingredient = await auth_ac.get(
-        f'api/ingredients/11'
+        'api/ingredients/11'
     )
     assert not not_existent_ingredient.json()
 

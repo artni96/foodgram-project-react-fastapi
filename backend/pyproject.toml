@@ -33,6 +33,7 @@ fastapi-login = "^1.10.3"
 pytz = "^2024.2"
 wkhtmltopdf = "^0.2"
 loguru = "^0.7.3"
+ruff = "^0.8.4"
 
 
 [build-system]

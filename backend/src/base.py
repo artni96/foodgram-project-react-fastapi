@@ -6,3 +6,14 @@ from backend.src.models.recipes import RecipeModel  # noqa
 from backend.src.models.subscriptions import SubscriptionModel  # noqa
 from backend.src.models.tags import TagModel  # noqa
 from backend.src.models.users import UserModel  # noqa
+
+__all__ = [
+    "Base",
+    "IngredientAmountModel",
+    "IngredientModel",
+    "RecipeIngredientModel",
+    "RecipeModel",
+    "SubscriptionModel",
+    "TagModel",
+    "UserModel"
+]

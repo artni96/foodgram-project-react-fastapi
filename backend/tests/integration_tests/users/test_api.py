@@ -20,9 +20,9 @@ from backend.tests.conftest import MAX_EMAIL_LENGTH, USER_PARAMS_MAX_LENGTH
                 ''
         ),
         (
-                f'user3',
+                'user3',
                 f'{"".join(["t"] * (MAX_EMAIL_LENGTH + 1))}@ya.ru',
-                f'string',
+                'string',
                 '',
                 '',
                 status.HTTP_400_BAD_REQUEST,
@@ -30,16 +30,16 @@ from backend.tests.conftest import MAX_EMAIL_LENGTH, USER_PARAMS_MAX_LENGTH
         ),
         (
                 f'{"".join(["t"] * (USER_PARAMS_MAX_LENGTH + 1))}',
-                f'user4@ya.ru',
-                f'string',
+                'user4@ya.ru',
+                'string',
                 '',
                 '',
                 status.HTTP_400_BAD_REQUEST,
                 f'Максимальная длина поля username - {USER_PARAMS_MAX_LENGTH} символов'
         ),
         (
-                f'user5',
-                f'user5@ya.ru',
+                'user5',
+                'user5@ya.ru',
                 f'{"".join(["t"] * (USER_PARAMS_MAX_LENGTH + 1))}',
                 '',
                 '',
@@ -127,7 +127,7 @@ async def test_auth_flow(
     assert user_info['first_name'] == first_name, 'В ответе должно быть поле first_name'
     assert user_info['last_name'] == last_name, 'В ответе должно быть поле last_name'
     assert 'id' in user_info, 'В ответе должно быть поле id'
-    assert user_info['is_subscribed'] == False, ('При запросе /api/users/me значение поля is_subscribed должно быть '
+    assert not user_info['is_subscribed'], ('При запросе /api/users/me значение поля is_subscribed должно быть '
                                                  'False')
     #
     current_user_info = await ac.get(
@@ -137,7 +137,7 @@ async def test_auth_flow(
     assert current_user_info.status_code == status.HTTP_200_OK
 
     user_list = await ac.get(
-        f'/api/users',
+        '/api/users',
         headers={'Authorization': f'Token {jwt_token.json()["auth_token"]}'}
     )
     assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
@@ -177,7 +177,7 @@ async def test_not_auth_flow(ac):
     assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
 
     user_list = await ac.get(
-        f'/api/users',
+        '/api/users',
     )
     assert user_list.status_code == status.HTTP_200_OK, 'статус ответа отличается от 200'
     current_user_info = await ac.get(

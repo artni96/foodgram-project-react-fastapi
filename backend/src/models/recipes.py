@@ -1,9 +1,16 @@
+import typing
+
 from sqlalchemy import (CheckConstraint, ForeignKey, String, Text,
                         UniqueConstraint)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.src.constants import PARAMS_MAX_LENGTH
 from backend.src.db import Base
+
+if typing.TYPE_CHECKING:
+    from backend.src.models.ingredients import IngredientAmountModel
+    from backend.src.models.users import UserModel
+    from backend.src.models.tags import TagModel
 
 
 class ImageModel(Base):

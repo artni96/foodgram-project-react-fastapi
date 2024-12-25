@@ -1,7 +1,7 @@
 import pytest
 from fastapi import status
 
-from backend.tests.conftest import PARAMS_MAX_LENGTH, another_auth_ac
+from backend.tests.conftest import PARAMS_MAX_LENGTH
 
 
 @pytest.mark.parametrize(

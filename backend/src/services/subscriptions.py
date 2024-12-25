@@ -45,7 +45,7 @@ class SubscriptionService(BaseService):
         user_id: int,
         current_user: UserReadWithRole
     ) -> None:
-        response = await self.db.subscriptions.delete(
+        await self.db.subscriptions.delete(
             author_id=user_id,
             subscriber_id=current_user.id
         )

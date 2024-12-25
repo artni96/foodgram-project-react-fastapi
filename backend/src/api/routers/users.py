@@ -76,10 +76,6 @@ async def get_user_by_id(
     try:
         result = await UserService(db).get_user_by_id(id=id, options=options)
     except UserNotFoundException as ex:
-        # if current_user:
-        #     logger.warning(f'Пользователь {current_user.email} запросил пользователя с id {id}, которого нет в БД')
-        # else:
-        #     logger.warning(f'Пользователь {current_user.email} запросил пользователя с id {id}, которого нет в БД')
         logger.warning(api_exception_log(user=current_user, request=request, ex=ex))
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=ex.detail)
     logger.info(api_success_log(user=current_user, request=request.url))

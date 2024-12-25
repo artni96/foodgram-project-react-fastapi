@@ -26,7 +26,7 @@ from backend.src.repositories.utils.paginator import url_paginator
 from backend.src.schemas.recipes import (CheckRecipeRead, ImageRead,
                                          RecipeCreate, RecipeCreateRequest,
                                          RecipeListRead, RecipeRead,
-                                         RecipeUpdate, RecipeUpdateRequest)
+                                         RecipeUpdateRequest)
 from backend.src.schemas.users import FollowedUserRead
 from backend.src.utils.image_manager import ImageManager
 

@@ -1,10 +1,14 @@
 import re
+import typing
 
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 
 from backend.src.constants import PARAMS_MAX_LENGTH
 from backend.src.db import Base
+
+if typing.TYPE_CHECKING:
+    from backend.src.models.recipes import RecipeModel
 
 
 class TagModel(Base):

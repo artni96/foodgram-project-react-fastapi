@@ -4,10 +4,9 @@ import jwt
 from passlib.context import CryptContext
 from sqlalchemy import func, select
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy.sql.functions import current_user
 
 from backend.src.config import settings
-from backend.src.exceptions.users import EmailNotRegisteredException, IncorrectPasswordException, \
+from backend.src.exceptions.users import IncorrectPasswordException, \
     IncorrectTokenException, UserNotFoundException
 from backend.src.models.subscriptions import SubscriptionModel
 from backend.src.models.users import UserModel

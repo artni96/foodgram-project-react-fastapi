@@ -12,8 +12,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 
 from backend.src.base import Base # noqa
 from backend.src.db import settings # noqa
-# from backend.src.models import *
-from backend.src.base import *
+from backend.src.base import * # noqa
 
 
 # this is the Alembic Config object, which provides

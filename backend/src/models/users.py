@@ -1,28 +1,13 @@
-from email.policy import default
-from enum import unique
+import typing
 
-from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.src.constants import USER_PARAMS_MAX_LENGTH, MAX_EMAIL_LENGTH
 from backend.src.db import Base
 
-
-# class UserModel(SQLAlchemyBaseUserTable[int], Base):
-#     username: Mapped[str] = mapped_column(
-#         String(USER_PARAMS_MAX_LENGTH),
-#         unique=True
-#     )
-#     first_name: Mapped[str | None] = mapped_column(
-#         String(USER_PARAMS_MAX_LENGTH)
-#     )
-#     last_name: Mapped[str | None] = mapped_column(
-#         String(USER_PARAMS_MAX_LENGTH)
-#     )
-#     recipe: Mapped[list['RecipeModel']] = relationship(
-#         back_populates='author_info'
-#     )
+if typing.TYPE_CHECKING:
+    from backend.src.models.recipes import RecipeModel
 
 class UserModel(Base):
     email: Mapped[str] = mapped_column(

@@ -1,4 +1,3 @@
-from argon2 import PasswordHasher
 from passlib.context import CryptContext
 
 from backend.src.config import settings

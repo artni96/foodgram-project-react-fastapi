@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+
 import json
 import os
 import pathlib
@@ -18,13 +20,13 @@ from fastapi import status
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select, delete
 
-from backend.src.base import *
+from backend.src.base import Base
 from backend.src.config import settings
 from backend.src.constants import MOUNT_PATH
 from backend.src.db import engine, async_session_maker
 from backend.src.db_manager import DBManager
 from backend.src.main import app
-from backend.src.models.recipes import ImageModel
+from backend.src.models.recipes import ImageModel, RecipeModel
 from backend.src.schemas.ingredients import IngredientCreate
 from backend.src.schemas.recipes import RecipeCreateRequest, RecipeUpdateRequest, ShoppingCartRecipeCreate, \
     FavoriteRecipeCreate

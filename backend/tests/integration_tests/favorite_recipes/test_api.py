@@ -1,4 +1,3 @@
-import pytest
 from fastapi import status
 
 recipe_id = 0

@@ -1,4 +1,3 @@
-from fastapi import HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
