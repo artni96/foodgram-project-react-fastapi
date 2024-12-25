@@ -50,5 +50,4 @@ exclude = [
     ".env-example",
     ".env-test",
     "alembic.ini",
-    ""
 ]
