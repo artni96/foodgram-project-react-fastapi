@@ -22,4 +22,8 @@ jobs:
           poetry install --no-interaction --no-ansi
 
       - name: Ruff linter check
-        run: ruff check
+        run: |
+          ruff check
+          ruff format
+      - name: running tests
+        run: pytest
