@@ -26,4 +26,6 @@ jobs:
           ruff check
           ruff format
       - name: running tests
-        run: pytest
+        run: |
+          cd backend
+          pytest
