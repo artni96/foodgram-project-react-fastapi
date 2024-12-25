@@ -21,4 +21,4 @@ jobs:
           poetry install
 
       - name: Ruff linter check
-        run: python ruff check
+        run: ruff check
