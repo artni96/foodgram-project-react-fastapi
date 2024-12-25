@@ -10,5 +10,4 @@ RUN poetry install --no-interaction --no-ansi
 
 COPY . .
 
-#ENTRYPOINT [ "sh", "entrypoint.sh" ]
 ENTRYPOINT alembic upgrade head; python src/main.py
