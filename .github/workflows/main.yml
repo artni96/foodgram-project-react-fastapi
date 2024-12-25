@@ -22,4 +22,4 @@ jobs:
 
       - name: Ruff linter check
         run: | 
-          python ruff check
+          ruff check
