@@ -7,30 +7,19 @@ from backend.src.schemas.base import ShortRecipeRead
 
 class BaseUser(BaseModel):
     email: str = Field(
-        default='artni@ya.ru',
+        default="artni@ya.ru",
         max_length=MAX_EMAIL_LENGTH,
-        pattern='^[\w-]+@([\w-]+\.)+[\w-]{2,4}$'
+        pattern="^[\w-]+@([\w-]+\.)+[\w-]{2,4}$",
     )
     username: str = Field(
-        default='artni',
-        max_length=USER_PARAMS_MAX_LENGTH,
-        pattern=r'^[\w.@+-]+\z'
+        default="artni", max_length=USER_PARAMS_MAX_LENGTH, pattern=r"^[\w.@+-]+\z"
     )
-    first_name: str | None = Field(
-        default=None,
-        max_length=USER_PARAMS_MAX_LENGTH
-    )
-    last_name: str | None = Field(
-        default=None,
-        max_length=USER_PARAMS_MAX_LENGTH
-    )
+    first_name: str | None = Field(default=None, max_length=USER_PARAMS_MAX_LENGTH)
+    last_name: str | None = Field(default=None, max_length=USER_PARAMS_MAX_LENGTH)
 
 
 class UserCreateRequest(BaseUser):
-    password: str = Field(
-        default='12345qwerty',
-        max_length=USER_PARAMS_MAX_LENGTH
-    )
+    password: str = Field(default="12345qwerty", max_length=USER_PARAMS_MAX_LENGTH)
 
 
 class UserCreate(BaseUser):
@@ -49,12 +38,12 @@ class UserPasswordUpdate(BaseModel):
     current_password: str = Field(max_length=USER_PARAMS_MAX_LENGTH)
     new_password: str = Field(max_length=USER_PARAMS_MAX_LENGTH)
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_passwords(self):
         if self.current_password == self.new_password:
             raise HTTPException(
-                status_code=400,
-                detail='Новый пароль должен отличаться от текущего!')
+                status_code=400, detail="Новый пароль должен отличаться от текущего!"
+            )
         return self
 
 

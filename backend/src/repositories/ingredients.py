@@ -1,13 +1,18 @@
 from sqlalchemy import delete, select
 
-from backend.src.base import (IngredientAmountModel, IngredientModel,
-                              RecipeIngredientModel)
+from backend.src.base import (
+    IngredientAmountModel,
+    IngredientModel,
+    RecipeIngredientModel,
+)
 from backend.src.repositories.base import BaseRepository
-from backend.src.schemas.ingredients import (IngredientAmountCreate,
-                                             IngredientAmountRead,
-                                             IngredientRead,
-                                             RecipeIngredientAmountCreate,
-                                             RecipeIngredientAmountRead)
+from backend.src.schemas.ingredients import (
+    IngredientAmountCreate,
+    IngredientAmountRead,
+    IngredientRead,
+    RecipeIngredientAmountCreate,
+    RecipeIngredientAmountRead,
+)
 
 
 class IngredientRepository(BaseRepository):
@@ -18,14 +23,10 @@ class IngredientRepository(BaseRepository):
         """Получение отфильтрованного списка ингредиентов."""
         filtered_ingredients_stmt = select(self.model)
         if name:
-            filtered_ingredients_stmt = (
-                filtered_ingredients_stmt.filter(
-                    self.model.name.startswith(name.lower())
-                )
+            filtered_ingredients_stmt = filtered_ingredients_stmt.filter(
+                self.model.name.startswith(name.lower())
             )
-        filtered_ingredients = await self.session.execute(
-            filtered_ingredients_stmt
-        )
+        filtered_ingredients = await self.session.execute(filtered_ingredients_stmt)
         filtered_ingredients = filtered_ingredients.scalars().all()
         return [
             self.schema.model_validate(obj, from_attributes=True)
@@ -39,27 +40,19 @@ class IngredientAmountRepository(BaseRepository):
 
     async def add_recipe_ingredients(self, ingredients_data, recipe_id, db):
         """Добавление ингредиентов рецепту."""
-        ingredients_amount_list_to_create: list[IngredientAmountCreate] = (
-            list()
-        )
+        ingredients_amount_list_to_create: list[IngredientAmountCreate] = list()
         existing_ingredients_amount_ids: list[int] = list()
-        ingredients_amount_list_response: list[RecipeIngredientAmountRead] = (
-            list()
-        )
+        ingredients_amount_list_response: list[RecipeIngredientAmountRead] = list()
         for obj in ingredients_data:
-            current_ingredient_amount = (
-                await db.ingredients_amount.get_one_or_none(
-                    ingredient_id=obj.ingredient_id,
-                    amount=obj.amount)
+            current_ingredient_amount = await db.ingredients_amount.get_one_or_none(
+                ingredient_id=obj.ingredient_id, amount=obj.amount
             )
             if current_ingredient_amount:
-                existing_ingredients_amount_ids.append(
-                    current_ingredient_amount.id)
+                existing_ingredients_amount_ids.append(current_ingredient_amount.id)
             else:
                 ingredients_amount_list_to_create.append(
                     IngredientAmountCreate(
-                        ingredient_id=obj.ingredient_id,
-                        amount=obj.amount
+                        ingredient_id=obj.ingredient_id, amount=obj.amount
                     )
                 )
             current_ingredient = await db.ingredients.get_one_or_none(
@@ -70,7 +63,7 @@ class IngredientAmountRepository(BaseRepository):
                     id=current_ingredient.id,
                     name=current_ingredient.name,
                     measurement_unit=current_ingredient.measurement_unit,
-                    amount=obj.amount
+                    amount=obj.amount,
                 )
             )
         if ingredients_amount_list_to_create:
@@ -81,14 +74,10 @@ class IngredientAmountRepository(BaseRepository):
         else:
             ingredients_amount_ids = existing_ingredients_amount_ids
         recipe_ingredients_amount_data = [
-            RecipeIngredientAmountCreate(
-                recipe_id=recipe_id,
-                ingredient_amount_id=_id)
+            RecipeIngredientAmountCreate(recipe_id=recipe_id, ingredient_amount_id=_id)
             for _id in ingredients_amount_ids
         ]
-        await db.recipe_ingredient_amount.bulk_create(
-            recipe_ingredients_amount_data
-        )
+        await db.recipe_ingredient_amount.bulk_create(recipe_ingredients_amount_data)
         return ingredients_amount_list_response
 
     async def change_recipe_ingredients(self, ingredients_data, recipe_id, db):
@@ -98,27 +87,18 @@ class IngredientAmountRepository(BaseRepository):
             .filter_by(recipe_id=recipe_id)
             .scalar_subquery()
         )
-        current_ingredient_ids_stmt = (
-            select(
-                IngredientAmountModel.id,
-                IngredientAmountModel.ingredient_id
-            )
-            .filter(IngredientAmountModel.id.in_(ingredients_amount_stmt))
-        )
-        current_ingredients = await self.session.execute(
-            current_ingredient_ids_stmt
-        )
+        current_ingredient_ids_stmt = select(
+            IngredientAmountModel.id, IngredientAmountModel.ingredient_id
+        ).filter(IngredientAmountModel.id.in_(ingredients_amount_stmt))
+        current_ingredients = await self.session.execute(current_ingredient_ids_stmt)
         current_ingredients = current_ingredients.mappings().all()
         current_ingredient_amount_ids = [obj.id for obj in current_ingredients]
-        ingredients_to_del_stmt = (
-            delete(IngredientAmountModel)
-            .filter(IngredientAmountModel.id.in_(current_ingredient_amount_ids))
+        ingredients_to_del_stmt = delete(IngredientAmountModel).filter(
+            IngredientAmountModel.id.in_(current_ingredient_amount_ids)
         )
         await self.session.execute(ingredients_to_del_stmt)
         new_ingredients = await self.add_recipe_ingredients(
-            ingredients_data=ingredients_data,
-            recipe_id=recipe_id,
-            db=db
+            ingredients_data=ingredients_data, recipe_id=recipe_id, db=db
         )
         return new_ingredients
 

@@ -12,6 +12,6 @@ class SubscriptionCreate(BaseModel):
 
 class SubscriptionListRead(BaseModel):
     count: int
-    next: str | None = 'test123'
-    previous: str | None = 'test123'
+    next: str | None = "test123"
+    previous: str | None = "test123"
     results: list[FollowedUserWithRecipiesRead] = []

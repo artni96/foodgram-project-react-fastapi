@@ -2,31 +2,31 @@ from backend.src.exceptions.base import FoodgramBaseException
 
 
 class EmailNotRegisteredException(FoodgramBaseException):
-    detail = 'Пользователь с указанным email не найден'
+    detail = "Пользователь с указанным email не найден"
 
 
 class UserNotFoundException(FoodgramBaseException):
-    detail = 'Пользователь не найден'
+    detail = "Пользователь не найден"
 
 
 class IncorrectPasswordException(FoodgramBaseException):
-    detail = 'Неверный пароль'
+    detail = "Неверный пароль"
 
 
 class IncorrectTokenException(FoodgramBaseException):
-    detail = 'Невалидный токен'
+    detail = "Невалидный токен"
 
 
 class ExpiredTokenException(FoodgramBaseException):
-    detail = 'Необходимо авторизоваться'
+    detail = "Необходимо авторизоваться"
 
 
 class OnlyForAdminException(FoodgramBaseException):
-    detail = 'Доступно только администраторам'
+    detail = "Доступно только администраторам"
 
 
 class UserAlreadyExistsException(FoodgramBaseException):
-    detail = 'Пользователь с указанными данными уже существует'
+    detail = "Пользователь с указанными данными уже существует"
 
 
 class AuthRequiredException(IncorrectTokenException):

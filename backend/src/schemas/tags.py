@@ -14,57 +14,45 @@ class BaseTag(BaseModel):
 
 class TagCreate(BaseTag):
     model_config = {
-        'json_schema_extra': {
-            'Завтрак': {
-                'summary': 'Завтрак',
-                'value': {
-                    'name': 'Завтрак',
-                    'color': '#f5945c',
-                    'slug': 'breakfast'
-                }
+        "json_schema_extra": {
+            "Завтрак": {
+                "summary": "Завтрак",
+                "value": {"name": "Завтрак", "color": "#f5945c", "slug": "breakfast"},
             },
-            'Обед': {
-                'summary': 'Обед',
-                'value': {
-                    'name': 'Обед',
-                    'color': '#75ba75',
-                    'slug': 'lunch'
-                }
+            "Обед": {
+                "summary": "Обед",
+                "value": {"name": "Обед", "color": "#75ba75", "slug": "lunch"},
             },
-            'Ужин': {
-                'summary': 'Ужин',
-                'value': {
-                    'name': 'Ужин',
-                    'color': '#be95be',
-                    'slug': 'dinner'
-                }
-            }
+            "Ужин": {
+                "summary": "Ужин",
+                "value": {"name": "Ужин", "color": "#be95be", "slug": "dinner"},
+            },
         }
     }
 
-    @field_validator('slug')
+    @field_validator("slug")
     def validate_slug(cls, value):
-        slug_pattern = r'^[-a-zA-Z0-9_]+$'
+        slug_pattern = r"^[-a-zA-Z0-9_]+$"
         if not re.fullmatch(pattern=slug_pattern, string=value):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
-                    'Значение поля slug должно соответсвовать '
-                    f'паттерну {slug_pattern}'
-                )
+                    "Значение поля slug должно соответсвовать "
+                    f"паттерну {slug_pattern}"
+                ),
             )
         return value
 
-    @field_validator('color')
+    @field_validator("color")
     def validate_color(cls, value):
-        color_pattern = r'^#\w{3,6}$'
+        color_pattern = r"^#\w{3,6}$"
         if not re.fullmatch(pattern=color_pattern, string=value):
-
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
-                    'Значение поля color должно соответсвовать '
-                    f'паттерну {color_pattern}')
+                    "Значение поля color должно соответсвовать "
+                    f"паттерну {color_pattern}"
+                ),
             )
         return value
 

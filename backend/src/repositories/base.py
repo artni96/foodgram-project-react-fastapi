@@ -2,7 +2,10 @@ from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
-from backend.src.exceptions.base import ObjectAlreadyExistsException, ObjectNotFoundException
+from backend.src.exceptions.base import (
+    ObjectAlreadyExistsException,
+    ObjectNotFoundException,
+)
 
 
 class BaseRepository:
@@ -14,19 +17,13 @@ class BaseRepository:
 
     async def get_filtered(self, *filter, **filter_by):
         """Получение отфильтрованного списка объектов по указанным параметрам."""
-        stmt = (
-            select(self.model)
-            .filter(*filter)
-            .filter_by(**filter_by)
-        )
+        stmt = select(self.model).filter(*filter).filter_by(**filter_by)
         result = await self.session.execute(stmt)
         result = result.scalars().all()
         if result:
             return [
-                self.schema.model_validate(obj, from_attributes=True)
-                for obj in result
+                self.schema.model_validate(obj, from_attributes=True) for obj in result
             ]
-
 
     async def get_all(self, *args, **kwargs):
         """Получение списка объектов."""
@@ -46,14 +43,11 @@ class BaseRepository:
         """Создание объекта."""
         try:
             new_obj_stmt = (
-                insert(self.model)
-                .values(**data.model_dump())
-                .returning(self.model)
+                insert(self.model).values(**data.model_dump()).returning(self.model)
             )
             result = await self.session.execute(new_obj_stmt)
             result = result.scalars().one()
-            return self.schema.model_validate(
-                result, from_attributes=True)
+            return self.schema.model_validate(result, from_attributes=True)
         except IntegrityError:
             raise ObjectAlreadyExistsException
 
@@ -77,12 +71,7 @@ class BaseRepository:
         except NoResultFound:
             raise ObjectNotFoundException
 
-    async def update(
-        self,
-        data: BaseModel,
-        exclude_unset: bool = False,
-        **filter_by
-    ):
+    async def update(self, data: BaseModel, exclude_unset: bool = False, **filter_by):
         """Обновление объекта."""
         stmt = (
             update(self.model)

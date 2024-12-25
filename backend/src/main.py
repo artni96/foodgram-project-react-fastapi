@@ -13,10 +13,8 @@ from loguru import logger
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from backend.src.logs.logging_config import logging_configuration
-from backend.src.api.routers.ingredients import \
-    router as ingredient_router
-from backend.src.api.routers.only_for_admins import \
-    router as admin_router
+from backend.src.api.routers.ingredients import router as ingredient_router
+from backend.src.api.routers.only_for_admins import router as admin_router
 from backend.src.api.routers.recipes import favorite_recipe_router
 from backend.src.api.routers.recipes import recipe_router, shopping_cart_router
 from backend.src.api.routers.subscriptions import subscription_router
@@ -49,26 +47,33 @@ app = FastAPI(lifespan=lifespan, dependencies=logging_configuration())
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> object:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> object:
     exc_dict = dict()
     for err in exc.errors():
-        if 'String should have at most 150 characters' in err['msg']:
-            exc_dict[err['loc'][1]] = (
+        if "String should have at most 150 characters" in err["msg"]:
+            exc_dict[err["loc"][1]] = (
                 f'Максимальная длина поля {err["loc"][1]} составляет {err["ctx"]["max_length"]} символов.'
             )
-        if 'value is not a valid email address: The email address is too long before the @-sign' in err['msg']:
-            exc_dict[err['loc'][1]] = (
+        if (
+            "value is not a valid email address: The email address is too long before the @-sign"
+            in err["msg"]
+        ):
+            exc_dict[err["loc"][1]] = (
                 f'Максимальная длина поля {err["loc"][1]} составляет {MAX_EMAIL_LENGTH} символов.'
             )
-        if 'String should match pattern' in err['msg']:
-            exc_dict[err['loc'][1]] = (
+        if "String should match pattern" in err["msg"]:
+            exc_dict[err["loc"][1]] = (
                 f'Поле {err["loc"][1]} не соответствует паттерну {err["ctx"]["pattern"]}.'
             )
     content_dict = {}
     if exc_dict:
-        content_dict['content'] = jsonable_encoder({"detail": exc_dict})
+        content_dict["content"] = jsonable_encoder({"detail": exc_dict})
     else:
-        content_dict['content'] = jsonable_encoder({"detail": exc.errors(), "body": exc.body})
+        content_dict["content"] = jsonable_encoder(
+            {"detail": exc.errors(), "body": exc.body}
+        )
     response = JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, **content_dict)
     return response
 
@@ -81,11 +86,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount(
-    MOUNT_PATH,
-    StaticFiles(directory='src/media/recipes/images'),
-    name='media'
-)
+app.mount(MOUNT_PATH, StaticFiles(directory="src/media/recipes/images"), name="media")
 app.include_router(subscription_router)
 app.include_router(user_router)
 app.include_router(auth_router)
@@ -97,8 +98,8 @@ app.include_router(shopping_cart_router)
 app.include_router(recipe_router)
 
 logger.add(sys.stderr, format="{time} {level} {message}", level="INFO")
-if __name__ == '__main__':
-    os.environ['TZ'] = 'Europe/Moscow'
+if __name__ == "__main__":
+    os.environ["TZ"] = "Europe/Moscow"
     logging_configuration()
-    logger.info('Запуск приложения')
-    uvicorn.run('main:app', reload=True, host='0.0.0.0')
+    logger.info("Запуск приложения")
+    uvicorn.run("main:app", reload=True, host="0.0.0.0")

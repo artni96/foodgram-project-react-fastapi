@@ -3,10 +3,7 @@ from backend.src.services.base import BaseService
 
 
 class TagService(BaseService):
-    async def get_tag(
-        self,
-        id: int
-    ) -> TagRead | None:
+    async def get_tag(self, id: int) -> TagRead | None:
         result = await self.db.tags.get_one_or_none(id=id)
         return result
 

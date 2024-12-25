@@ -1,1 +1,24 @@
+name: CI
 
+on:
+  push:
+    branches: [ main ]
+    pull_request: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11.0
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          poetry install
+
+      - name: Ruff linter check
+        run: | 
+          python ruff check

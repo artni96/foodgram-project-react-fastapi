@@ -1,8 +1,10 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 from backend.src.constants import PARAMS_MAX_LENGTH
-from backend.src.schemas.ingredients import (IngredientAmountCreateRequest,
-                                             RecipeIngredientAmountRead)
+from backend.src.schemas.ingredients import (
+    IngredientAmountCreateRequest,
+    RecipeIngredientAmountRead,
+)
 from backend.src.schemas.tags import TagRead
 from backend.src.schemas.users import FollowedUserRead
 
@@ -19,25 +21,24 @@ class RecipeCreateUpdateBaseRequest(BaseRecipe):
     tags: list[int] = []
     ingredients: list[IngredientAmountCreateRequest] = []
 
-
     model_config = {
-        'json_schema_extra': {
-                'Тестовый рецепт': {
-                    'summary': 'Тестовый рецепт',
-                    'value': {
-                        "name": "string",
-                        "text": "string",
-                        "cooking_time": 1,
-                        "tags": [1, 2],
-                        "ingredients": [
-                            {'id': 1, 'amount': 100},
-                            {'id': 2, 'amount': 200},
-                        ],
-                        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==" # noqa
-                    }
-                }
+        "json_schema_extra": {
+            "Тестовый рецепт": {
+                "summary": "Тестовый рецепт",
+                "value": {
+                    "name": "string",
+                    "text": "string",
+                    "cooking_time": 1,
+                    "tags": [1, 2],
+                    "ingredients": [
+                        {"id": 1, "amount": 100},
+                        {"id": 2, "amount": 200},
+                    ],
+                    "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",  # noqa
+                },
             }
         }
+    }
 
 
 class RecipeCreateRequest(RecipeCreateUpdateBaseRequest):

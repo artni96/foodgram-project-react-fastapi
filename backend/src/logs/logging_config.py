@@ -5,7 +5,7 @@ LOGS_DIR = Path(__file__).parent
 
 
 def logging_configuration():
-    logs_file = LOGS_DIR / 'logs_history' / 'foodram_logs.log'
+    logs_file = LOGS_DIR / "logs_history" / "foodram_logs.log"
     logger.remove()
     logger.add(
         logs_file,

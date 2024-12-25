@@ -1,6 +1,7 @@
 import redis.asyncio as redis
 from loguru import logger
 
+
 class RedisManager:
     def __init__(self, host: str, port: int):
         self.host = host
@@ -9,7 +10,7 @@ class RedisManager:
 
     async def connect(self):
         self.redis = await redis.Redis(host=self.host, port=self.port)
-        logger.info('Успешное поключение к Redis')
+        logger.info("Успешное поключение к Redis")
 
     async def set(self, key: str, value: str, expire: int = None):
         if expire:
@@ -26,4 +27,4 @@ class RedisManager:
     async def close(self):
         if self.redis:
             await self.redis.close()
-            logger.info('Успешное отключение от Redis')
+            logger.info("Успешное отключение от Redis")

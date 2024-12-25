@@ -24,8 +24,8 @@ class SubscriptionService(BaseService):
             limit=limit,
             offset=offset,
             page=page,
-            router_prefix=f'{router_prefix}/subscriptions',
-            recipes_limit=recipes_limit
+            router_prefix=f"{router_prefix}/subscriptions",
+            recipes_limit=recipes_limit,
         )
         return user_subs
 
@@ -40,13 +40,8 @@ class SubscriptionService(BaseService):
         await self.db.commit()
         return subscription
 
-    async def unsubscribe(
-        self,
-        user_id: int,
-        current_user: UserReadWithRole
-    ) -> None:
+    async def unsubscribe(self, user_id: int, current_user: UserReadWithRole) -> None:
         await self.db.subscriptions.delete(
-            author_id=user_id,
-            subscriber_id=current_user.id
+            author_id=user_id, subscriber_id=current_user.id
         )
         await self.db.commit()

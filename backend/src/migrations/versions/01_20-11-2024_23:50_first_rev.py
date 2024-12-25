@@ -1,7 +1,7 @@
 """first rev
 
 Revision ID: 01
-Revises: 
+Revises:
 Create Date: 2024-11-20 23:50:25.823391
 
 """
@@ -34,9 +34,7 @@ def upgrade() -> None:
         sa.Column("measurement_unit", sa.String(length=200), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "name", "measurement_unit", name="unique ingredients"
-        ),
+        sa.UniqueConstraint("name", "measurement_unit", name="unique ingredients"),
     )
     op.create_table(
         "tag",
@@ -83,9 +81,7 @@ def upgrade() -> None:
         sa.Column("cooking_time", sa.Integer(), nullable=False),
         sa.Column("image", sa.Integer(), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.CheckConstraint(
-            "cooking_time > 0", name="check_cooking_time_non_negative"
-        ),
+        sa.CheckConstraint("cooking_time > 0", name="check_cooking_time_non_negative"),
         sa.ForeignKeyConstraint(["author"], ["user.id"], ondelete="cascade"),
         sa.ForeignKeyConstraint(
             ["image"],
@@ -101,30 +97,20 @@ def upgrade() -> None:
         sa.CheckConstraint(
             "author_id <> subscriber_id", name="author cannot follow themself"
         ),
-        sa.ForeignKeyConstraint(
-            ["author_id"], ["user.id"], ondelete="CASCADE"
-        ),
-        sa.ForeignKeyConstraint(
-            ["subscriber_id"], ["user.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["author_id"], ["user.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["subscriber_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "author_id", "subscriber_id", name="unique subscriptions"
-        ),
+        sa.UniqueConstraint("author_id", "subscriber_id", name="unique subscriptions"),
     )
     op.create_table(
         "favoriterecipe",
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("recipe_id", sa.Integer(), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["recipe_id"], ["recipe.id"], ondelete="cascade"
-        ),
+        sa.ForeignKeyConstraint(["recipe_id"], ["recipe.id"], ondelete="cascade"),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="cascade"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "user_id", "recipe_id", name="unique favorite recipe"
-        ),
+        sa.UniqueConstraint("user_id", "recipe_id", name="unique favorite recipe"),
     )
     op.create_table(
         "recipeingredient",
@@ -166,9 +152,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("recipe_id", sa.Integer(), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["recipe_id"], ["recipe.id"], ondelete="cascade"
-        ),
+        sa.ForeignKeyConstraint(["recipe_id"], ["recipe.id"], ondelete="cascade"),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="cascade"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(

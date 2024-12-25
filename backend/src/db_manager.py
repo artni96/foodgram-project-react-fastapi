@@ -1,6 +1,8 @@
 from backend.src.repositories.ingredients import (
-    IngredientAmountRepository, IngredientRepository,
-    RecipeIngredientAmountRepository)
+    IngredientAmountRepository,
+    IngredientRepository,
+    RecipeIngredientAmountRepository,
+)
 from backend.src.repositories.recipes import RecipeRepository, ImageRepository
 from backend.src.repositories.subscriptions import SubscriptionRepository
 from backend.src.repositories.tags import RecipeTagRepository, TagRepository
@@ -22,9 +24,7 @@ class DBManager:
         self.recipes = RecipeRepository(self.session)
         self.recipe_tags = RecipeTagRepository(self.session)
         self.ingredients_amount = IngredientAmountRepository(self.session)
-        self.recipe_ingredient_amount = RecipeIngredientAmountRepository(
-            self.session
-        )
+        self.recipe_ingredient_amount = RecipeIngredientAmountRepository(self.session)
         self.images = ImageRepository(self.session)
         self.favorite_recipes = FavoriteRecipeRepository(self.session)
         self.shopping_cart = ShoppingCartRepository(self.session)
