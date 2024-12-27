@@ -76,5 +76,5 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: 3600
           ALGORITHM: HS256
         run: |
-          cd ../backend
+          cd backend
           pytest
