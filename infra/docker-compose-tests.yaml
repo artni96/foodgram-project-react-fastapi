@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+  db:
+    container_name: 'foodgram-test'
+    image: postgres:16
+    ports:
+      - '6432:5432'
+#    environment:
+#      - POSTGRES_USER=${DB_USER}
+#      - POSTGRES_PASSWORD=${DB_USER_PASSWORD}
+#      - POSTGRES_DB=${DB_NAME}
+    networks:
+      - foodgram-network
+    volumes:
+      - pg-foodgram-data:/var/lib/postgresql/data
+    env_file:
+      - ../backend/.env

@@ -40,10 +40,10 @@ from backend.src.schemas.tags import TagCreate
 MAX_EMAIL_LENGTH = 254
 USER_PARAMS_MAX_LENGTH = 150
 PARAMS_MAX_LENGTH = 200
-
-
-def pytest_configure():
-    return {"recipe": None}
+#
+#
+# def pytest_configure():
+#     return {"recipe": None}
 
 
 @pytest.fixture(scope="session", autouse=True)
