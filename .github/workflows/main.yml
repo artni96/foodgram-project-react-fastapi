@@ -63,25 +63,18 @@ jobs:
           ruff format
 
       - name: running pytest
+        env:
+          MODE: TEST
+          DB_NAME: foodgram-test
+          DB_USER: postgres
+          DB_USER_PASSWORD: postgres
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          SECRET_KEY: dfdsfd
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
+          ALGORITHM: HS256
         run: |
-          cd backend
+          cd ../backend
           pytest
-
-#      - name: running pytest
-#        env:
-#          MODE: TEST
-#          DB_NAME: foodgram-test
-#          DB_USER: postgres
-#          DB_USER_PASSWORD: postgres
-#          DB_HOST: 127.0.0.1
-#          DB_PORT: 5432
-#          SECRET_KEY: dfdsfd
-#          REDIS_HOST: 127.0.0.1
-#          REDIS_PORT: 6379
-#          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
-#          ALGORITHM: HS256
-#        run: |
-#          cd infra
-#          docker compose -f docker-compose-tests.yaml up -d --build
-##          cd ../backend
-##          pytest
