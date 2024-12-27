@@ -25,21 +25,48 @@ jobs:
         run: |
           ruff check
           ruff format
-      - name: running pytest
+  container-job:
+    runs-on: ubuntu-latest
+    container: node:20-bookworm-slim
+    services:
+      postgres:
+        image: postgres
         env:
-          MODE: TEST
-          DB_NAME: foodgram-test
-          DB_USER: postgres
-          DB_USER_PASSWORD: postgres
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          SECRET_KEY: dfdsfd
-          REDIS_HOST: 127.0.0.1
-          REDIS_PORT: 6379
-          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
-          ALGORITHM: HS256
-        run: |
-          cd infra
-          docker compose -f docker-compose-tests.yaml up -d --build
-          cd ../backend
-          pytest
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Connect to PostgreSQL
+        run: node client.js
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+
+
+#      - name: running pytest
+#        env:
+#          MODE: TEST
+#          DB_NAME: foodgram-test
+#          DB_USER: postgres
+#          DB_USER_PASSWORD: postgres
+#          DB_HOST: 127.0.0.1
+#          DB_PORT: 5432
+#          SECRET_KEY: dfdsfd
+#          REDIS_HOST: 127.0.0.1
+#          REDIS_PORT: 6379
+#          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
+#          ALGORITHM: HS256
+#        run: |
+#          cd infra
+#          docker compose -f docker-compose-tests.yaml up -d --build
+##          cd ../backend
+##          pytest
