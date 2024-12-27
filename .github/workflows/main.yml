@@ -32,7 +32,6 @@ jobs:
           DB_USER: postgres
           DB_USER_PASSWORD: postgres
           DB_HOST: localhost
-          #DB_HOST=foodgram-db
           DB_PORT: 5432
           SECRET_KEY: dfdsfd
           REDIS_HOST: 127.0.0.1
@@ -40,5 +39,7 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: 3600
           ALGORITHM: HS256
         run: |
+          cd infra
+          docker compose up -f docker-compose-tests.yaml -d --build
           cd backend
           pytest
