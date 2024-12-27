@@ -40,6 +40,6 @@ jobs:
           ALGORITHM: HS256
         run: |
           cd infra
-          docker compose up -f docker-compose-tests.yaml -d --build
-          cd backend
+          docker compose -f docker-compose-tests.yaml up -d --build
+          cd ../backend
           pytest
