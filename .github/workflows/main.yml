@@ -42,25 +42,25 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
-    build:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v2
-        - name: Set up Python
-          uses: actions/setup-python@v2
-          with:
-            python-version: 3.11.0
-        - name: Install dependencies
-          run: |
-            cd backend
-            pip install poetry
-            poetry config virtualenvs.create false
-            poetry install --no-interaction --no-ansi
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11.0
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --no-ansi
 
-        - name: Ruff linter check
-          run: |
-            ruff check
-            ruff format
+      - name: Ruff linter check
+        run: |
+          ruff check
+          ruff format
 
 #      - name: running pytest
 #        env:
