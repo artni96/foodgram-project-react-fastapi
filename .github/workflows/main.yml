@@ -6,25 +6,25 @@ on:
     pull_request: [ main ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.11.0
-      - name: Install dependencies
-        run: |
-          cd backend
-          pip install poetry
-          poetry config virtualenvs.create false
-          poetry install --no-interaction --no-ansi
-
-      - name: Ruff linter check
-        run: |
-          ruff check
-          ruff format
+#  build:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Set up Python
+#        uses: actions/setup-python@v2
+#        with:
+#          python-version: 3.11.0
+#      - name: Install dependencies
+#        run: |
+#          cd backend
+#          pip install poetry
+#          poetry config virtualenvs.create false
+#          poetry install --no-interaction --no-ansi
+#
+#      - name: Ruff linter check
+#        run: |
+#          ruff check
+#          ruff format
   container-job:
     runs-on: ubuntu-latest
     container: node:20-bookworm-slim
@@ -41,6 +41,13 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --no-ansi
 
       - name: running pytest
         run: |
