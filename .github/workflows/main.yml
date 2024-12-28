@@ -75,7 +75,7 @@ jobs:
 #          REDIS_PORT: 6379
 #          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
 #          ALGORITHM: HS256
-        run: |
+        run:
 #          cd infra
 #          docker compose -f docker-compose-tests.yaml up -d --build
           docker ps -a
