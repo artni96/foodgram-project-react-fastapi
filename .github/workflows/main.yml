@@ -78,7 +78,7 @@ jobs:
           ALGORITHM: HS256
         run: |
           cd infra
-          docker compose -f docker-compose.yaml up -d --build
+          docker compose -f docker-compose.yml up -d --build
           docker ps -a
           docker exec -ti foodgram-backend bash
           cd backend
