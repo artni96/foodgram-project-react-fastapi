@@ -79,6 +79,5 @@ jobs:
         run: |
           cd infra
           docker compose -f docker-compose-tests.yaml up -d --build
-#          docker ps -a
-#          cd ../backend
-#          pytest
+          cd ../backend
+          pytest
