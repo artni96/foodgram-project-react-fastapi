@@ -25,22 +25,22 @@ jobs:
 #        run: |
 #          ruff check
 #          ruff format
-  container-job:
-    runs-on: ubuntu-latest
-    container: node:20-bookworm-slim
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
+#  container-job:
+#    runs-on: ubuntu-latest
+#    container: node:20-bookworm-slim
+#    services:
+#      postgres:
+#        image: postgres
+#        env:
+#          POSTGRES_PASSWORD: postgres
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
+#    steps:
+#      - name: Check out repository code
+#        uses: actions/checkout@v4
 
   build:
     runs-on: ubuntu-latest
@@ -76,5 +76,7 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: 3600
           ALGORITHM: HS256
         run: |
-          cd backend
+          cd infra
+          docker compose up -d --build
+          cd ../backend
           pytest
