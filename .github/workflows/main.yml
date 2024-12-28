@@ -25,22 +25,22 @@ jobs:
 #        run: |
 #          ruff check
 #          ruff format
-  container-job:
-    runs-on: ubuntu-latest
-    container: node:20-bookworm-slim
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
+#  container-job:
+#    runs-on: ubuntu-latest
+#    container: node:20-bookworm-slim
+#    services:
+#      postgres:
+#        image: postgres
+#        env:
+#          POSTGRES_PASSWORD: postgres
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
+#    steps:
+#      - name: Check out repository code
+#        uses: actions/checkout@v4
 
   build:
     runs-on: ubuntu-latest
@@ -61,24 +61,24 @@ jobs:
         run: |
           ruff check
           ruff format
-          sudo -u postgres psql -l
+#          sudo -u postgres psql -l
 
-#      - name: running pytest
-#        env:
-#          MODE: TEST
-#          DB_NAME: foodgram-test
-#          DB_USER: postgres
-#          DB_USER_PASSWORD: postgres
-#          DB_HOST: foodgram-test
-#          DB_PORT: 5432
-#          SECRET_KEY: dfdsfd
-#          REDIS_HOST: 127.0.0.1
-#          REDIS_PORT: 6379
-#          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
-#          ALGORITHM: HS256
-#        run: |
-#          cd infra
-#          docker compose -f docker-compose-tests.yaml up -d --build
+      - name: running pytest
+        env:
+          MODE: TEST
+          DB_NAME: foodgram
+          DB_USER: postgres
+          DB_USER_PASSWORD: postgres
+          DB_HOST: 0.0.0.0
+          DB_PORT: 7432
+          SECRET_KEY: dfdsfd
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
+          ALGORITHM: HS256
+        run: |
+          cd infra
+          docker compose -f docker-compose-tests.yaml up -d --build
 #          docker ps -a
 #          cd ../backend
 #          pytest
