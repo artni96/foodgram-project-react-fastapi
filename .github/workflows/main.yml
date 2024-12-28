@@ -63,7 +63,7 @@ jobs:
           ruff format
 #          sudo -u postgres psql -l
 
-      - name: running pytest
+      - name: setup db for tests
         env:
           MODE: TEST
           DB_NAME: foodgram
@@ -80,5 +80,7 @@ jobs:
           cd infra
           docker compose -f docker-compose-tests.yaml up -d --build
           docker ps -a
-#          cd ../backend
-#          pytest
+      - name: running tests
+        run: |
+          cd backend
+          pytest
