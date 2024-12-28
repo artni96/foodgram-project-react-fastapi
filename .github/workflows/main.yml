@@ -68,7 +68,7 @@ jobs:
           DB_NAME: foodgram-test
           DB_USER: postgres
           DB_USER_PASSWORD: postgres
-          DB_HOST: 0.0.0.0
+          DB_HOST: foodgram-test
           DB_PORT: 5432
           SECRET_KEY: dfdsfd
           REDIS_HOST: 127.0.0.1
