@@ -78,7 +78,8 @@ jobs:
           ALGORITHM: HS256
         run: |
           cd infra
-          docker compose -f docker-compose-tests.yaml up -d --build
+          docker compose -f docker-compose.yaml up -d --build
           docker ps -a
-          cd ../backend
+          docker exec -ti foodgram-backend bash
+          cd backend
           pytest
