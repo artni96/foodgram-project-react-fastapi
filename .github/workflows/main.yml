@@ -41,47 +41,56 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Connect to PostgreSQL
+        run: node client.js
+
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
       - name: check db
         run: |
           docker ps -a
           docker exec foodgram-test curl localhost/status
 
-#  build:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Set up Python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: 3.11.0
-#      - name: Install dependencies
-#        run: |
-#          cd backend
-#          pip install poetry
-#          poetry config virtualenvs.create false
-#          poetry install --no-interaction --no-ansi
-#
-#      - name: Ruff linter check
-#        run: |
-#          ruff check
-#          ruff format
-##          sudo -u postgres psql -l
-#
-#      - name: tests
-#        env:
-#          MODE: TEST
-#          DB_NAME: foodgram
-#          DB_USER: postgres
-#          DB_USER_PASSWORD: postgres
-#          DB_HOST: 127.0.0.1
-#          DB_PORT: 5432
-#          SECRET_KEY: dfdsfd
-#          REDIS_HOST: 127.0.0.1
-#          REDIS_PORT: 6379
-#          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
-#          ALGORITHM: HS256
-#        run: |
-#          docker ps -a
-#          docker exec foodgram-test curl localhost/status
-#          cd ../backend
-#          pytest
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11.0
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --no-ansi
+
+      - name: Ruff linter check
+        run: |
+          ruff check
+          ruff format
+
+      - name: tests
+        env:
+          MODE: TEST
+          DB_NAME: foodgram
+          DB_USER: postgres
+          DB_USER_PASSWORD: postgres
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          SECRET_KEY: dfdsfd
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          ACCESS_TOKEN_EXPIRE_MINUTES: 3600
+          ALGORITHM: HS256
+        run: |
+          docker ps -a
+          docker exec foodgram-test curl localhost/status
+          cd ../backend
+          pytest
