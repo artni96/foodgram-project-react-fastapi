@@ -79,7 +79,7 @@ jobs:
       - name: tests
         env:
           MODE: TEST
-          DB_NAME: foodgram
+          DB_NAME: tests
           DB_USER: postgres
           DB_USER_PASSWORD: postgres
           DB_HOST: localhost
