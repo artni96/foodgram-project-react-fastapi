@@ -90,12 +90,12 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: 3600
           ALGORITHM: HS256
         run: |
-          docker run --name foodgram-test
-          -p 5432:5432
-          -e POSTGRES_USER=postgres
-          -e POSTGRES_PASSWORD=postgres
-          -e POSTGRES_DB=foodgram
-          --volume pg-foodgram-data:/var/lib/postgresql/data
+          docker run --name foodgram-test \
+          -p 5432:5432 \
+          -e POSTGRES_USER=postgres \
+          -e POSTGRES_PASSWORD=postgres \
+          -e POSTGRES_DB=foodgram \
+          --volume pg-foodgram-data:/var/lib/postgresql/data \
           -d postgres:16
           docker ps -a
 #        run: |
