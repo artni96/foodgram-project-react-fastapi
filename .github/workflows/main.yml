@@ -89,22 +89,12 @@ jobs:
           REDIS_PORT: 6379
           ACCESS_TOKEN_EXPIRE_MINUTES: 3600
           ALGORITHM: HS256
+
         run: |
-          docker run --name foodgram-test \
-          -p 5432:5432 \
-          -e POSTGRES_USER=postgres \
-          -e POSTGRES_PASSWORD=postgres \
-          -e POSTGRES_DB=foodgram \
-          --volume pg-foodgram-data:/var/lib/postgresql/data \
-          -d postgres:16
+          cd infra
+          docker compose -f docker-compose-tests.yml up -d --build
           docker ps -a
-          cd backend
+          docker exec -i foodgram-test bash
+          docker exec foodgram-test curl localhost/status
+          cd ../backend
           pytest
-#        run: |
-#          cd infra
-#          docker compose -f docker-compose-tests.yml up -d --build
-#          docker ps -a
-#          docker exec -i foodgram-test bash
-#          docker exec foodgram-test curl localhost/status
-#          cd ../backend
-#          pytest

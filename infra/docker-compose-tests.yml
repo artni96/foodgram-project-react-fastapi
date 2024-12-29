@@ -1,13 +1,13 @@
 version: '3.3'
 services:
   db:
-    container_name: 'foodgram-test'
+    container_name: 'tests'
     image: postgres:16
     ports:
-      - '5432:5432'
+      - '7432:5432'
     volumes:
-      - pg-foodgram-data:/var/lib/postgresql/data
+      - pg-tests-data:/var/lib/postgresql/data
 
 volumes:
-  pg-foodgram-data:
+  pg-tests-data:
 #
