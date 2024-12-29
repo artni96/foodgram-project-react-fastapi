@@ -63,16 +63,16 @@ jobs:
           ruff format
 #          sudo -u postgres psql -l
 
-      - name: setup db for tests
+      - name: tests
         env:
           MODE: TEST
           DB_NAME: foodgram
           DB_USER: postgres
           DB_USER_PASSWORD: postgres
-          DB_HOST: 0.0.0.0
+          DB_HOST: 127.0.0.1
           DB_PORT: 5432
           SECRET_KEY: dfdsfd
-          REDIS_HOST: 0.0.0.0
+          REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
           ACCESS_TOKEN_EXPIRE_MINUTES: 3600
           ALGORITHM: HS256
