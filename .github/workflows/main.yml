@@ -80,5 +80,6 @@ jobs:
           cd infra
           docker compose -f docker-compose-tests.yml up -d --build
           docker ps -a
+          docker exec foodgram-test curl localhost/status
           cd ../backend
           pytest
