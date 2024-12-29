@@ -98,6 +98,7 @@ jobs:
           --volume pg-foodgram-data:/var/lib/postgresql/data \
           -d postgres:16
           docker ps -a
+          docker exec foodgram-test curl localhost/status
 #        run: |
 #          cd infra
 #          docker compose -f docker-compose-tests.yml up -d --build
