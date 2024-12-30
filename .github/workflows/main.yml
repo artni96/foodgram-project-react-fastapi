@@ -83,7 +83,7 @@ jobs:
           DB_USER: postgres
           DB_USER_PASSWORD: postgres
           DB_HOST: 0.0.0.0
-          DB_PORT: 5432
+          DB_PORT: 7432
           SECRET_KEY: donotshareme
           REDIS_HOST: 0.0.0.0
           REDIS_PORT: 6379
