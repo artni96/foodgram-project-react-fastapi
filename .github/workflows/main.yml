@@ -30,7 +30,7 @@ jobs:
           ruff check
           ruff format
 
-      - name: tests
+      - name: Run tests
         env:
           MODE: ${{ secrets.MODE }}
           DB_NAME: ${{ secrets.DB_NAME }}
