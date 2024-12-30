@@ -1782,17 +1782,7 @@ files = [
 [package.extras]
 dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 
-[[package]]
-name = "wkhtmltopdf"
-version = "0.2"
-description = "Simple python wrapper for wkhtmltopdf"
-optional = false
-python-versions = "*"
-files = [
-    {file = "wkhtmltopdf-0.2.tar.gz", hash = "sha256:530fffb5d1faf4f4cd5248c14fd1b4b7fe311541d0660dc2c2272c32b3c72211"},
-]
-
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11"
-content-hash = "86ea131d600dbae68889d6783415d303635a884c1283eaebae912eed7144028e"
+content-hash = "ea78cc1fe88902f55302518f846965b9c58a7a8c57f5e97f7c8753e2f0fbdea1"
