@@ -53,16 +53,19 @@ async def check_test_mode():
 
 @pytest.fixture(scope="session", autouse=True)
 async def setup_database():
-    # async with engine.connect() as conn:
-    #     media_path = pathlib.Path(__file__).parent.parent.resolve()
-    #     images_to_del_stmt = select(ImageModel.name)
-    #     image_list = await conn.execute(images_to_del_stmt)
-    #     image_list = image_list.scalars().all()
-    #     for image in image_list:
-    #         image_to_delete = f"{media_path}/src{MOUNT_PATH}/{image}"
-    #         # print(image_to_delete)
-    #         if os.path.exists(image_to_delete):
-    #             os.remove(image_to_delete)
+    try:
+        async with engine.connect() as conn:
+            media_path = pathlib.Path(__file__).parent.parent.resolve()
+            images_to_del_stmt = select(ImageModel.name)
+            image_list = await conn.execute(images_to_del_stmt)
+            image_list = image_list.scalars().all()
+            for image in image_list:
+                image_to_delete = f"{media_path}/src{MOUNT_PATH}/{image}"
+                # print(image_to_delete)
+                if os.path.exists(image_to_delete):
+                    os.remove(image_to_delete)
+    except Exception:
+        pass
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
