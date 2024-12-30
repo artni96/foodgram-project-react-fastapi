@@ -71,7 +71,9 @@ jobs:
           poetry config virtualenvs.create false
           poetry install --no-interaction --no-ansi
       - name: Install wkhtmltopdf
-        run: sudo apt-get install wkhtmltopdf
+        run: |
+          sudo apt-get update
+          sudo apt-get install wkhtmltopdf
 
       - name: Ruff linter check
         run: |
