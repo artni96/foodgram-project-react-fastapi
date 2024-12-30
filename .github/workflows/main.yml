@@ -70,7 +70,7 @@ jobs:
           pip install poetry
           poetry config virtualenvs.create false
           poetry install --no-interaction --no-ansi
-          apt-get install wkhtmltopdf
+          sudo apt-get install wkhtmltopdf
 
       - name: Ruff linter check
         run: |
