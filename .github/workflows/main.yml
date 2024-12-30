@@ -82,10 +82,10 @@ jobs:
           DB_NAME: tests
           DB_USER: postgres
           DB_USER_PASSWORD: postgres
-          DB_HOST: tests
+          DB_HOST: 0.0.0.0
           DB_PORT: 5432
           SECRET_KEY: donotshareme
-          REDIS_HOST: tests
+          REDIS_HOST: 0.0.0.0
           REDIS_PORT: 6379
           ACCESS_TOKEN_EXPIRE_MINUTES: 3600
           ALGORITHM: HS256
@@ -93,6 +93,7 @@ jobs:
         run: |
           cd infra
           docker compose -f docker-compose-tests.yml up -d --build
+          docker container logs tests
           docker ps -a
           cd ../backend
           docker ps -a
