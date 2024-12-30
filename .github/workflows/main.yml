@@ -94,7 +94,5 @@ jobs:
           cd infra
           docker compose -f docker-compose-tests.yml up -d --build
           docker container logs tests
-          docker ps -a
           cd ../backend
-          docker ps -a
           pytest
