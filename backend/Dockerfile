@@ -3,7 +3,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=on
 RUN pip install poetry
 
 WORKDIR /backend
-COPY ./backend/poetry.lock ./backend/pyproject.toml ./
+COPY ./poetry.lock ./pyproject.toml ./
 
 RUN poetry config virtualenvs.create false
 RUN poetry install --no-interaction --no-ansi
