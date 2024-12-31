@@ -26,7 +26,6 @@ services:
       - static_value:/backend/src/logs/logs_history
     env_file:
       - ../backend/.env
-#    entrypoint: ["docker exec -ti foodgram-backend bash", "apt-get update", "apt-get install wkhtmltopdf"]
 
   frontend:
     container_name: 'foodgram_frontend'

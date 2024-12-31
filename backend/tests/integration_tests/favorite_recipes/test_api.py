@@ -40,7 +40,6 @@ async def test_delete_favorite_recipe_by_another(another_auth_ac, test_recipe):
     delete_favorite_recipe_by_another_user = await another_auth_ac.delete(
         "/api/recipes/10/favorite"
     )
-    print(delete_favorite_recipe_by_another_user.status_code)
     assert (
         delete_favorite_recipe_by_another_user.status_code
         == status.HTTP_400_BAD_REQUEST

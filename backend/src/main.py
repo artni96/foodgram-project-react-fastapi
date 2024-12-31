@@ -13,6 +13,7 @@ from loguru import logger
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from backend.src.logs.logging_config import logging_configuration
+from backend.src.constants import MAIN_HOST
 from backend.src.api.routers.ingredients import router as ingredient_router
 from backend.src.api.routers.only_for_admins import router as admin_router
 from backend.src.api.routers.recipes import favorite_recipe_router
@@ -102,4 +103,4 @@ if __name__ == "__main__":
     os.environ["TZ"] = "Europe/Moscow"
     logging_configuration()
     logger.info("Запуск приложения")
-    uvicorn.run("main:app", reload=True, host="0.0.0.0")
+    uvicorn.run("main:app", reload=True, host=MAIN_HOST)

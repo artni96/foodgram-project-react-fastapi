@@ -7,7 +7,7 @@ from sqlalchemy import and_, delete, insert, select, update, desc
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
 
-from backend.src.constants import DOMAIN_ADDRESS, MOUNT_PATH
+from backend.src.constants import MAIN_URL, MOUNT_PATH
 from backend.src.exceptions.ingredients import IngredientNotFoundException
 from backend.src.exceptions.recipes import (
     MainDataRecipeAtModifyingException,
@@ -175,7 +175,7 @@ class RecipeRepository(BaseRepository):
             recipe_body_result = await self.session.execute(recipe_body_stmt)
             recipe_body_result = recipe_body_result.scalars().one()
             recipe_image = await db.images.get_one_or_none(id=recipe_body_result.image)
-            recipe_image_url = f"{DOMAIN_ADDRESS}{MOUNT_PATH}" f"/{recipe_image.name}"
+            recipe_image_url = f"{MAIN_URL}{MOUNT_PATH}" f"/{recipe_image.name}"
             author_schema_response = FollowedUserRead.model_validate(
                 recipe_body_result.author_info, from_attributes=True
             )
@@ -223,7 +223,7 @@ class RecipeRepository(BaseRepository):
             while await self.check_image_name(generated_image_name):
                 generated_image_name = ImageManager().create_random_name(image_base64)
 
-            image_url = f"{DOMAIN_ADDRESS}{MOUNT_PATH}" f"/{generated_image_name}"
+            image_url = f"{MAIN_URL}{MOUNT_PATH}" f"/{generated_image_name}"
             image_id = await self.create_image(
                 name=generated_image_name, base64=image_base64
             )
@@ -311,7 +311,7 @@ class RecipeRepository(BaseRepository):
                     generated_image_name = ImageManager().create_random_name(
                         image_base64
                     )
-                image_url = f"{DOMAIN_ADDRESS}{MOUNT_PATH}" f"/{generated_image_name}"
+                image_url = f"{MAIN_URL}{MOUNT_PATH}" f"/{generated_image_name}"
                 image_id = await self.create_image(
                     name=generated_image_name, base64=image_base64
                 )
@@ -331,7 +331,7 @@ class RecipeRepository(BaseRepository):
                 await self.session.execute(updated_image_stmt)
 
             else:
-                image_url = f"{DOMAIN_ADDRESS}{MOUNT_PATH}" f"/{file_to_delete.name}"
+                image_url = f"{MAIN_URL}{MOUNT_PATH}" f"/{file_to_delete.name}"
 
             updated_recipe_stmt = (
                 update(self.model)

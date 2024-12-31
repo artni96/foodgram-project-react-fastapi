@@ -264,10 +264,6 @@ async def add_recipe_to_shopping_cart(
     db: DBDep,
     current_user: UserDep,
 ) -> ShoppingCartRecipeRead:
-    # shopping_cart_recipe_data = ShoppingCartRecipeCreate(
-    #     recipe_id=id,
-    #     user_id=current_user.id
-    # )
     try:
         response = await RecipeService(db).add_recipe_to_shopping_cart(
             id=id, current_user=current_user

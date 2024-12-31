@@ -14,6 +14,6 @@ def url_paginator(page, limit, count, router_prefix):
             previous = url + f"?limit={limit}"
         else:
             previous = url + f"?page={page-1}&limit={limit}"
-    if (page - 1) * limit > count:  # нужно проверить как работает на фронте
+    if (page - 1) * limit > count:
         previous = None
     return {"next": next, "previous": previous}

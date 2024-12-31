@@ -40,10 +40,6 @@ from backend.src.schemas.tags import TagCreate
 MAX_EMAIL_LENGTH = 254
 USER_PARAMS_MAX_LENGTH = 150
 PARAMS_MAX_LENGTH = 200
-#
-#
-# def pytest_configure():
-#     return {"recipe": None}
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -61,7 +57,6 @@ async def setup_database():
             image_list = image_list.scalars().all()
             for image in image_list:
                 image_to_delete = f"{media_path}/src{MOUNT_PATH}/{image}"
-                # print(image_to_delete)
                 if os.path.exists(image_to_delete):
                     os.remove(image_to_delete)
     except Exception:
@@ -135,7 +130,6 @@ async def auth_ac(ac):
     )
     assert jwt_token.status_code == status.HTTP_201_CREATED
     assert isinstance(jwt_token.json()["auth_token"], str)
-    # return ac
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
