@@ -70,7 +70,8 @@ jobs:
             password: ${{ secrets.DOCKERHUB_PASSWORD }}
         - name: Push to Docker Hub
           uses: docker/build-push-action@v3
+          working-directory: backend
           with:
-            file: backend/Dockerfile
+            file: Dockerfile
             push: true
             tags: ${{ secrets.DOCKERHUB_USERNAME }}/foodgram-backend-fastapi:latest
