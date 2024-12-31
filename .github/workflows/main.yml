@@ -57,6 +57,9 @@ jobs:
   build_and_push_to_docker_hub:
       name: Push Docker image to Docker Hub
       runs-on: ubuntu-latest
+      defaults:
+        run:
+          working-directory: ./backend
       needs: tests
       steps:
         - name: Check out the repo
@@ -70,10 +73,7 @@ jobs:
             password: ${{ secrets.DOCKERHUB_PASSWORD }}
         - name: Push to Docker Hub
           uses: docker/build-push-action@v3
-          defaults:
-            run:
-              working-directory: ./backend
           with:
-            file: Dockerfile
+            file: ./backend/Dockerfile
             push: true
             tags: ${{ secrets.DOCKERHUB_USERNAME }}/foodgram-backend-fastapi:latest
