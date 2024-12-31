@@ -57,6 +57,9 @@ jobs:
   build_and_push_to_docker_hub:
       name: Push Docker image to Docker Hub
       runs-on: ubuntu-latest
+      defaults:
+        run:
+          working-directory: ./backend
       needs: tests
       steps:
         - name: Check out the repo
@@ -68,8 +71,6 @@ jobs:
           with:
             username: ${{ secrets.DOCKERHUB_USERNAME }}
             password: ${{ secrets.DOCKERHUB_PASSWORD }}
-        - name: change repo
-          run: cd backend
         - name: Push to Docker Hub
           uses: docker/build-push-action@v3
           with:
