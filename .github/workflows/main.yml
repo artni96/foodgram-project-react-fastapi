@@ -51,6 +51,5 @@ jobs:
           echo POSTGRES_USER=${{ secrets.DB_USER }} >> .env
           echo POSTGRES_PASSWORD=${{ secrets.DB_USER_PASSWORD }} >> .env          
           docker compose -f docker-compose-tests.yml up -d --build
-          docker container logs tests
           cd ../backend
           pytest

@@ -5,10 +5,6 @@ services:
     image: postgres:16
     ports:
       - '6432:5432'
-#    environment:
-#      - POSTGRES_USER=${DB_USER}
-#      - POSTGRES_PASSWORD=${DB_USER_PASSWORD}
-#      - POSTGRES_DB=${DB_NAME}
     networks:
       - foodgram-network
     volumes:
@@ -18,11 +14,7 @@ services:
 
   backend:
     container_name: 'foodgram-backend'
-    build:
-      context: ../backend/
-      dockerfile: Dockerfile
-#    ports:
-#      - '8000:8000'
+    image: artni96/foodgram-backend-fastapi:latest
     depends_on:
       - db
     networks:
@@ -35,9 +27,7 @@ services:
 
   frontend:
     container_name: 'foodgram_frontend'
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: artni96/foodgram-frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
