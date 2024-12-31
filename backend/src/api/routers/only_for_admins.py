@@ -9,7 +9,7 @@ from backend.src.services.only_for_admins import OnlyForAdminService
 
 router = APIRouter(
     prefix="/api/only-for-admins",
-    tags=["Для админов"],
+    tags=["Для администраторов"],
     dependencies=[Depends(get_current_superuser)],
 )
 
